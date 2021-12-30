@@ -21,7 +21,7 @@ class OBSQTDisplay : public QWidget {
 
 signals:
     void DisplayCreated(OBSQTDisplay *window);
-    void DisplayResized();
+    void DisplayResized(int cx, int cy);
 
 public:
     OBSQTDisplay(QWidget *parent = nullptr,

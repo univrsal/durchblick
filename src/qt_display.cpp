@@ -214,12 +214,12 @@ void OBSQTDisplay::resizeEvent(QResizeEvent *event)
 
     CreateDisplay();
 
+    QSize size = GetPixelSize(this);
     if (isVisible() && display) {
-        QSize size = GetPixelSize(this);
         obs_display_resize(display, size.width(), size.height());
     }
 
-    emit DisplayResized();
+    emit DisplayResized(size.width(), size.height());
 }
 
 void OBSQTDisplay::paintEvent(QPaintEvent *event)

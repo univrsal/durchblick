@@ -21,6 +21,8 @@
 #include <vector>
 #include <memory>
 #include <obs-module.h>
+#include <QMouseEvent>
+#include "util.h"
 
 inline void startRegion(int vX, int vY, int vCX, int vCY, float oL,
                    float oR, float oT, float oB)
@@ -63,27 +65,64 @@ inline void GetScaleAndCenterPos(int baseCX, int baseCY, int windowCX,
 
 // Default item, renders black rectangle
 class LayoutItem {
+    bool m_mouse_over {false};
 public:
-    int m_column{}, m_row{}, m_width{}, m_height{};
+    struct {
+        int col{}, row{}, w{}, h{};
+    } m_cell;
+    int m_left{}, m_top{}, m_right{}, m_bottom{}, // position inside the entire display
+    m_rel_left{}, m_rel_top{}, m_rel_right{}, m_rel_bottom{}, // position relative to multiview origin
+    m_width{}, m_height{}, m_inner_width{}, m_inner_height{};
+
     struct Config {
+        int x{}, y{}; // Origin of multiview
+        float scale{};
         float border = 4;
         float border2 = border * 2;
         float cell_width, cell_height;
     };
 
-    LayoutItem(int x, int y, int w = 1, int h = 1)
-        : m_column(x)
-        , m_row(y)
-        , m_width(w)
-        , m_height(h)
-    {
+    struct MouseData {
+        int x, y;
+        Qt::KeyboardModifiers modifiers;
+        Qt::MouseButtons buttons;
+    };
 
+    LayoutItem(int x, int y, int w = 1, int h = 1)
+    {
+        m_cell = { x, y, w, h };
     }
 
     virtual void Render(Config const& cfg)
     {
-        DrawBox(cfg.border, cfg.border, cfg.cell_width * m_width - cfg.border2,
-                cfg.cell_height * m_height - cfg.border2, 0xFF000000);
+        if (m_mouse_over) {
+            DrawBox(0, 0, cfg.cell_width * m_width, cfg.cell_height * m_height, 0xFF000000);
+        }
+        DrawBox(cfg.border, cfg.border, m_inner_width, m_inner_height, 0xFF000000);
+    }
+
+    virtual void MouseEvent(MouseData const& e, Config const& cfg)
+    {
+        if (m_cell.col == 0 && m_cell.row == 0)
+            binfo("%i %i // %i %i %i %i", e.x, e.y, m_left, m_top, m_right, m_bottom);
+        m_mouse_over = e.x >= m_rel_left && e.x < m_rel_right &&
+            e.y >= m_rel_top && e.y < m_rel_bottom;
+    }
+
+    virtual void Update(Config const& cfg)
+    {
+        m_rel_left = cfg.cell_width * m_cell.col;
+        m_left = cfg.x + m_rel_left;
+        m_rel_right = cfg.cell_width * (m_cell.col + 1);
+        m_right = cfg.x + m_rel_right;
+        m_rel_top = cfg.cell_height * m_cell.row;
+        m_top = cfg.y + m_rel_top;
+        m_rel_bottom = cfg.cell_height * (m_cell.row + 1);
+        m_bottom = cfg.y + m_rel_bottom;
+        m_width = cfg.cell_width * m_cell.w;
+        m_height = cfg.cell_height * m_cell.h;
+        m_inner_width = m_width - cfg.border2;
+        m_inner_height = m_height - cfg.border2;
     }
 
     static void DrawBox(float cx, float cy, uint32_t colorVal) {
@@ -120,24 +159,30 @@ public:
         }
     }
 
+    void MouseMoved(QMouseEvent* e)
+    {
+        LayoutItem::MouseData d {
+            .x = int((e->x() - m_cfg.x) / m_cfg.scale),
+            .y = int((e->y() - m_cfg.y) / m_cfg.scale),
+            .modifiers = e->modifiers(),
+            .buttons = e->buttons()
+        };
+        for (auto& Item : m_layout_items)
+            Item->MouseEvent(d, m_cfg);
+    }
+
     void Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy)
     {
-        int x, y;
-        float scale;
-        GetScaleAndCenterPos(target_cx, target_cy, cx, cy, x, y, scale);
-
-        m_cfg.cell_width = float(target_cx) / m_size;
-        m_cfg.cell_height = float(target_cy) / m_size;
         // Define the whole usable region for the multiview
-        startRegion(x, y, target_cx * scale, target_cy * scale, 0.0f, target_cx,
+        startRegion(m_cfg.x, m_cfg.y, target_cx * m_cfg.scale, target_cy * m_cfg.scale, 0.0f, target_cx,
                     0.0f, target_cy);
         LayoutItem::DrawBox(target_cx, target_cy, 0xFFD0D0D0);
 
         auto setRegion = [&](float bx, float by, float cx, float cy) {
-            float vX = int(x + bx * scale);
-            float vY = int(y + by * scale);
-            float vCX = int(cx * scale);
-            float vCY = int(cy * scale);
+            float vX = int(m_cfg.x + bx * m_cfg.scale);
+            float vY = int(m_cfg.y + by * m_cfg.scale);
+            float vCX = int(cx * m_cfg.scale);
+            float vCY = int(cy * m_cfg.scale);
 
             float oL = bx;
             float oT = by;
@@ -147,14 +192,23 @@ public:
         };
         for (auto& Item : m_layout_items) {
             // Change region to item dimensions
-            setRegion(Item->m_column * m_cfg.cell_width, Item->m_row * m_cfg.cell_height,
-                      Item->m_width * m_cfg.cell_width, Item->m_height * m_cfg.cell_height);
+            setRegion(Item->m_rel_left, Item->m_rel_top, Item->m_width, Item->m_height);
             gs_matrix_push();
-            gs_matrix_translate3f(Item->m_column * m_cfg.cell_width, Item->m_row * m_cfg.cell_height, 0);
+            gs_matrix_translate3f(Item->m_rel_left, Item->m_rel_top, 0);
             Item->Render(m_cfg);
             gs_matrix_pop();
             endRegion();
         }
         endRegion();
+    }
+
+    void Resize(int target_cx, int target_cy, int cx, int cy)
+    {
+        // We calculate most layout values only on resize here
+        GetScaleAndCenterPos(target_cx, target_cy, cx, cy, m_cfg.x, m_cfg.y, m_cfg.scale);
+        m_cfg.cell_width = float(target_cx) / m_size;
+        m_cfg.cell_height = float(target_cy) / m_size;
+        for (auto& Item : m_layout_items)
+            Item->Update(m_cfg);
     }
 };

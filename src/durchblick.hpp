@@ -36,7 +36,9 @@ private slots:
     //void OpenWindowedProjector();
     //void AlwaysOnTopToggled(bool alwaysOnTop);
     void ScreenRemoved(QScreen *screen_);
-
+    void Resize(int cx, int cy);
+protected:
+    virtual void mouseMoveEvent(QMouseEvent*) override;
 public:
     Durchblick(QWidget *widget = nullptr);
     ~Durchblick();
@@ -51,4 +53,5 @@ public:
     bool IsAlwaysOnTopOverridden() const;
     void SetIsAlwaysOnTop(bool isAlwaysOnTop, bool isOverridden);
     void Update();
+
 };

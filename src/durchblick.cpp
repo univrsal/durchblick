@@ -36,6 +36,17 @@ void Durchblick::ScreenRemoved(QScreen *screen_)
         EscapeTriggered();
 }
 
+void Durchblick::Resize(int cx, int cy)
+{
+    m_layout.Resize(m_fw, m_fh, cx, cy);
+}
+
+void Durchblick::mouseMoveEvent(QMouseEvent *e)
+{
+    QWidget::mouseMoveEvent(e);
+    m_layout.MouseMoved(e);
+}
+
 Durchblick::Durchblick(QWidget *widget)
     : OBSQTDisplay(widget, Qt::Window)
 {
@@ -49,7 +60,7 @@ Durchblick::Durchblick(QWidget *widget)
     setAttribute(Qt::WA_DeleteOnClose, true);
     //disable application quit when last window closed
     setAttribute(Qt::WA_QuitOnClose, false);
-
+    setMouseTracking(true);
     //qApp->IncrementSleephibition();
 
     auto addDrawCallback = [this]() {
@@ -60,13 +71,16 @@ Durchblick::Durchblick(QWidget *widget)
     connect(this, &OBSQTDisplay::DisplayCreated, addDrawCallback);
     connect(qApp, &QGuiApplication::screenRemoved, this,
         &Durchblick::ScreenRemoved);
-
+    connect(this, &OBSQTDisplay::DisplayResized, this, &Durchblick::Resize);
     m_ready = true;
     show();
 
     // We need it here to allow keyboard input in X11 to listen to Escape
     activateWindow();
     Update();
+    // Calculate initial layout values
+    auto s = size() * devicePixelRatioF();
+    Resize(s.width(), s.height());
 }
 
 Durchblick::~Durchblick()
