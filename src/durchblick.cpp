@@ -39,6 +39,7 @@ void Durchblick::ScreenRemoved(QScreen *screen_)
 Durchblick::Durchblick(QWidget *widget)
     : OBSQTDisplay(widget, Qt::Window)
 {
+    setWindowTitle("Durchblick");
 #ifdef __APPLE__
     setWindowIcon(
         QIcon::fromTheme("obs", QIcon(":/res/images/obs_256x256.png")));
@@ -50,8 +51,6 @@ Durchblick::Durchblick(QWidget *widget)
     setAttribute(Qt::WA_QuitOnClose, false);
 
     //qApp->IncrementSleephibition();
-
-    //installEventFilter(CreateShortcutFilter());
 
     auto addDrawCallback = [this]() {
         obs_display_add_draw_callback(GetDisplay(), RenderLayout, this);

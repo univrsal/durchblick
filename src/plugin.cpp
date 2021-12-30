@@ -29,7 +29,7 @@
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("durchblick", "en-US")
 
-Test* dp = nullptr;
+Durchblick* dp = nullptr;
 
 
 bool obs_module_load()
@@ -45,7 +45,7 @@ bool obs_module_load()
     obs_frontend_pop_ui_translation();
 
     const auto menu_cb = [main_window] {
-        dp = new Test();
+        dp = new Durchblick();
         dp->show();
     };
     QAction::connect(menu_action, &QAction::triggered, menu_cb);

@@ -38,7 +38,7 @@ private slots:
     void ScreenRemoved(QScreen *screen_);
 
 public:
-    Durchblick(QWidget *widget);
+    Durchblick(QWidget *widget = nullptr);
     ~Durchblick();
 
     static void RenderLayout(void *data, uint32_t cx, uint32_t cy);
@@ -51,39 +51,4 @@ public:
     bool IsAlwaysOnTopOverridden() const;
     void SetIsAlwaysOnTop(bool isAlwaysOnTop, bool isOverridden);
     void Update();
-};
-
-class Test : public QWidget {
-    Q_OBJECT
-
-    QVBoxLayout *mainLayout{};
-    Durchblick *preview{};
-public:
-    OBSSource source;
-    Test(QWidget* parent = nullptr)
-        : QWidget(parent)
-    {
-        mainLayout = new QVBoxLayout(this);
-        setObjectName(QStringLiteral("contextContainer"));
-        setLayout(mainLayout);
-        preview = new Durchblick(this);
-        preview->setObjectName(QStringLiteral("preview"));
-        QSizePolicy sizePolicy1(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        sizePolicy1.setHorizontalStretch(0);
-        sizePolicy1.setVerticalStretch(0);
-        sizePolicy1.setHeightForWidth(
-            preview->sizePolicy().hasHeightForWidth());
-        preview->setSizePolicy(sizePolicy1);
-        preview->setMinimumSize(QSize(24, 24));
-
-        preview->setMouseTracking(true);
-        preview->setFocusPolicy(Qt::StrongFocus);
-        mainLayout->addWidget(preview);
-    }
-
-    ~Test()
-    {
-        mainLayout->removeWidget(preview);
-        preview->deleteLater();
-    }
 };
