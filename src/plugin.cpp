@@ -16,21 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 
+#include "durchblick.hpp"
+#include "util.h"
 #include <QAction>
-#include <QMainWindow>
-#include <obs-frontend-api.h>
-#include <obs-module.h>
 #include <QDialog>
 #include <QLayout>
+#include <QMainWindow>
 #include <QVBoxLayout>
-#include "util.h"
-#include "durchblick.hpp"
+#include <obs-frontend-api.h>
+#include <obs-module.h>
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("durchblick", "en-US")
 
 Durchblick* dp = nullptr;
-
 
 bool obs_module_load()
 {
@@ -39,9 +38,9 @@ bool obs_module_load()
     /* UI registration from
      * https://github.com/Palakis/obs-websocket/
      */
-    const auto menu_action = static_cast<QAction *>(obs_frontend_add_tools_menu_qaction(T_MENU_OPTION));
+    const auto menu_action = static_cast<QAction*>(obs_frontend_add_tools_menu_qaction(T_MENU_OPTION));
     obs_frontend_push_ui_translation(obs_module_get_string);
-    const auto main_window = static_cast<QMainWindow *>(obs_frontend_get_main_window());
+    const auto main_window = static_cast<QMainWindow*>(obs_frontend_get_main_window());
     obs_frontend_pop_ui_translation();
 
     const auto menu_cb = [main_window] {

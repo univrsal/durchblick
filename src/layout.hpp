@@ -18,14 +18,14 @@
 
 #pragma once
 
-#include <vector>
+#include "util.h"
+#include <QMouseEvent>
 #include <memory>
 #include <obs-module.h>
-#include <QMouseEvent>
-#include "util.h"
+#include <vector>
 
 inline void startRegion(int vX, int vY, int vCX, int vCY, float oL,
-                   float oR, float oT, float oB)
+    float oR, float oT, float oB)
 {
     gs_projection_push();
     gs_viewport_push();
@@ -40,8 +40,8 @@ inline void endRegion()
 }
 
 inline void GetScaleAndCenterPos(int baseCX, int baseCY, int windowCX,
-                    int windowCY, int &x, int &y,
-                    float &scale)
+    int windowCY, int& x, int& y,
+    float& scale)
 {
     double windowAspect, baseAspect;
     int newCX, newCY;
@@ -65,18 +65,19 @@ inline void GetScaleAndCenterPos(int baseCX, int baseCY, int windowCX,
 
 // Default item, renders black rectangle
 class LayoutItem {
-    bool m_mouse_over {false};
+    bool m_mouse_over { false };
+
 public:
     struct {
-        int col{}, row{}, w{}, h{};
+        int col {}, row {}, w {}, h {};
     } m_cell;
-    int m_left{}, m_top{}, m_right{}, m_bottom{}, // position inside the entire display
-    m_rel_left{}, m_rel_top{}, m_rel_right{}, m_rel_bottom{}, // position relative to multiview origin
-    m_width{}, m_height{}, m_inner_width{}, m_inner_height{};
+    int m_left {}, m_top {}, m_right {}, m_bottom {},                 // position inside the entire display
+        m_rel_left {}, m_rel_top {}, m_rel_right {}, m_rel_bottom {}, // position relative to multiview origin
+        m_width {}, m_height {}, m_inner_width {}, m_inner_height {};
 
     struct Config {
-        int x{}, y{}; // Origin of multiview
-        float scale{};
+        int x {}, y {}; // Origin of multiview
+        float scale {};
         float border = 4;
         float border2 = border * 2;
         float cell_width, cell_height;
@@ -105,8 +106,7 @@ public:
     {
         if (m_cell.col == 0 && m_cell.row == 0)
             binfo("%i %i // %i %i %i %i", e.x, e.y, m_left, m_top, m_right, m_bottom);
-        m_mouse_over = e.x >= m_rel_left && e.x < m_rel_right &&
-            e.y >= m_rel_top && e.y < m_rel_bottom;
+        m_mouse_over = e.x >= m_rel_left && e.x < m_rel_right && e.y >= m_rel_top && e.y < m_rel_bottom;
     }
 
     virtual void Update(Config const& cfg)
@@ -125,10 +125,10 @@ public:
         m_inner_height = m_height - cfg.border2;
     }
 
-    static void DrawBox(float cx, float cy, uint32_t colorVal) {
-        gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
-        gs_eparam_t *color =
-            gs_effect_get_param_by_name(solid, "color");
+    static void DrawBox(float cx, float cy, uint32_t colorVal)
+    {
+        gs_effect_t* solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+        gs_eparam_t* color = gs_effect_get_param_by_name(solid, "color");
 
         gs_effect_set_color(color, colorVal);
         while (gs_effect_loop(solid, "Solid"))
@@ -148,6 +148,7 @@ class Layout {
     int m_size;
     std::vector<std::unique_ptr<LayoutItem>> m_layout_items;
     LayoutItem::Config m_cfg;
+
 public:
     Layout(int size = 4)
         : m_size(size)
@@ -175,7 +176,7 @@ public:
     {
         // Define the whole usable region for the multiview
         startRegion(m_cfg.x, m_cfg.y, target_cx * m_cfg.scale, target_cy * m_cfg.scale, 0.0f, target_cx,
-                    0.0f, target_cy);
+            0.0f, target_cy);
         LayoutItem::DrawBox(target_cx, target_cy, 0xFFD0D0D0);
 
         auto setRegion = [&](float bx, float by, float cx, float cy) {

@@ -16,34 +16,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 #pragma once
+#include "layout.hpp"
 #include "qt_display.hpp"
 #include <QScreen>
 #include <QVBoxLayout>
-#include "layout.hpp"
 
 class Durchblick : public OBSQTDisplay {
     Q_OBJECT
 public:
     bool m_ready { false };
-    QScreen *m_screen {nullptr};
+    QScreen* m_screen { nullptr };
     Layout m_layout;
-    uint32_t m_fw{}, m_fh{};
-    float m_ratio{16/9.};
+    uint32_t m_fw {}, m_fh {};
+    float m_ratio { 16 / 9. };
 private slots:
     void EscapeTriggered();
-    //void OpenFullScreenProjector();
-    //void ResizeToContent();
-    //void OpenWindowedProjector();
-    //void AlwaysOnTopToggled(bool alwaysOnTop);
-    void ScreenRemoved(QScreen *screen_);
+    // void OpenFullScreenProjector();
+    // void ResizeToContent();
+    // void OpenWindowedProjector();
+    // void AlwaysOnTopToggled(bool alwaysOnTop);
+    void ScreenRemoved(QScreen* screen_);
     void Resize(int cx, int cy);
+
 protected:
     virtual void mouseMoveEvent(QMouseEvent*) override;
+
 public:
-    Durchblick(QWidget *widget = nullptr);
+    Durchblick(QWidget* widget = nullptr);
     ~Durchblick();
 
-    static void RenderLayout(void *data, uint32_t cx, uint32_t cy);
+    static void RenderLayout(void* data, uint32_t cx, uint32_t cy);
 
     int GetMonitor();
     void RenameProjector(QString oldName, QString newName);
@@ -53,5 +55,4 @@ public:
     bool IsAlwaysOnTopOverridden() const;
     void SetIsAlwaysOnTop(bool isAlwaysOnTop, bool isOverridden);
     void Update();
-
 };

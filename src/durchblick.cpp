@@ -17,17 +17,17 @@
  *************************************************************************/
 
 #include "durchblick.hpp"
+#include "obs.hpp"
+#include <QApplication>
+#include <QIcon>
 #include <obs-frontend-api.h>
 #include <obs-module.h>
-#include <QIcon>
-#include <QApplication>
-#include "obs.hpp"
 
 void Durchblick::EscapeTriggered()
 {
 }
 
-void Durchblick::ScreenRemoved(QScreen *screen_)
+void Durchblick::ScreenRemoved(QScreen* screen_)
 {
     if (GetMonitor() < 0 || !m_screen)
         return;
@@ -41,13 +41,13 @@ void Durchblick::Resize(int cx, int cy)
     m_layout.Resize(m_fw, m_fh, cx, cy);
 }
 
-void Durchblick::mouseMoveEvent(QMouseEvent *e)
+void Durchblick::mouseMoveEvent(QMouseEvent* e)
 {
     QWidget::mouseMoveEvent(e);
     m_layout.MouseMoved(e);
 }
 
-Durchblick::Durchblick(QWidget *widget)
+Durchblick::Durchblick(QWidget* widget)
     : OBSQTDisplay(widget, Qt::Window)
 {
     setWindowTitle("Durchblick");
@@ -58,10 +58,10 @@ Durchblick::Durchblick(QWidget *widget)
     setWindowIcon(QIcon::fromTheme("obs", QIcon(":/res/images/obs.png")));
 #endif
     setAttribute(Qt::WA_DeleteOnClose, true);
-    //disable application quit when last window closed
+    // disable application quit when last window closed
     setAttribute(Qt::WA_QuitOnClose, false);
     setMouseTracking(true);
-    //qApp->IncrementSleephibition();
+    // qApp->IncrementSleephibition();
 
     auto addDrawCallback = [this]() {
         obs_display_add_draw_callback(GetDisplay(), RenderLayout, this);
@@ -89,9 +89,9 @@ Durchblick::~Durchblick()
     m_screen = nullptr;
 }
 
-void Durchblick::RenderLayout(void *data, uint32_t cx, uint32_t cy)
+void Durchblick::RenderLayout(void* data, uint32_t cx, uint32_t cy)
 {
-    auto *w = (Durchblick *)data;
+    auto* w = (Durchblick*)data;
     if (!w->m_ready)
         return;
     w->m_layout.Render(w->m_fw, w->m_fh, cx, cy);
