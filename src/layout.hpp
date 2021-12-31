@@ -104,8 +104,6 @@ public:
 
     virtual void MouseEvent(MouseData const& e, Config const& cfg)
     {
-        if (m_cell.col == 0 && m_cell.row == 0)
-            binfo("%i %i // %i %i %i %i", e.x, e.y, m_left, m_top, m_right, m_bottom);
         m_mouse_over = e.x >= m_rel_left && e.x < m_rel_right && e.y >= m_rel_top && e.y < m_rel_bottom;
     }
 
