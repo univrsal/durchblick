@@ -97,7 +97,7 @@ public:
     virtual void Render(Config const& cfg)
     {
         if (m_mouse_over) {
-            DrawBox(0, 0, cfg.cell_width * m_width, cfg.cell_height * m_height, 0xFF000000);
+            DrawBox(0, 0, cfg.cell_width * m_width, cfg.cell_height * m_height, 0xFF004400);
         }
         DrawBox(cfg.border, cfg.border, m_inner_width, m_inner_height, 0xFF000000);
     }
