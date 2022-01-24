@@ -95,6 +95,9 @@ set(durchblick_sources
     ./src/item.hpp
     ./src/source_item.cpp
     ./src/source_item.hpp
+    ./src/custom_item.cpp
+    ./src/custom_item.hpp
+    ./src/callbacks.h
     ${durchblick_ui_headers}
 )
 
