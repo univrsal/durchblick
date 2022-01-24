@@ -18,6 +18,7 @@
 
 #include "durchblick.hpp"
 #include "util.h"
+#include "registry.hpp"
 #include <QAction>
 #include <QDialog>
 #include <QLayout>
@@ -34,6 +35,7 @@ Durchblick* dp = nullptr;
 bool obs_module_load()
 {
     binfo("Loading v%s build time %s", PLUGIN_VERSION, BUILD_TIME);
+    Registry::RegisterDefaults();
 
     /* UI registration from
      * https://github.com/Palakis/obs-websocket/
@@ -48,6 +50,7 @@ bool obs_module_load()
         dp->show();
     };
     QAction::connect(menu_action, &QAction::triggered, menu_cb);
+
     return true;
 }
 

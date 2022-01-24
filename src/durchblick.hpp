@@ -40,7 +40,7 @@ private slots:
 
 protected:
     virtual void mouseMoveEvent(QMouseEvent*) override;
-
+    virtual void contextMenuEvent(QContextMenuEvent*) override;
 public:
     Durchblick(QWidget* widget = nullptr);
     ~Durchblick();

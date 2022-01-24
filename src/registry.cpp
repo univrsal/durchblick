@@ -1,7 +1,7 @@
 /*************************************************************************
  * This file is part of input-overlay
  * git.vrsal.xyz/alex/durchblick
- * Copyright 2021 univrsal <uni@vrsal.xyz>.
+ * Copyright 2022 univrsal <uni@vrsal.xyz>.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,21 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 
-#pragma once
-#include <obs-module.h>
+#include "registry.hpp"
+#include "source_item.hpp"
 
-#define write_log(log_level, format, ...) blog(log_level, "[durchblick] " format, ##__VA_ARGS__)
+namespace Registry {
+QList<ItemRegistry::Entry> ItemRegistry::Entries;
 
-#define bdebug(format, ...) write_log(LOG_DEBUG, format, ##__VA_ARGS__)
-#define binfo(format, ...) write_log(LOG_INFO, format, ##__VA_ARGS__)
-#define bwarn(format, ...) write_log(LOG_WARNING, format, ##__VA_ARGS__)
-#define berr(format, ...) write_log(LOG_ERROR, format, ##__VA_ARGS__)
+void ItemRegistry::Register(const Constructor &c, const char *n, void *p)
+{
+    Entries.append(Entry { c, p, n});
+}
 
-/* clang-format off */
+void RegisterDefaults()
+{
+    Registry::Register<SourceItem>("Source Display");
+}
 
-/* Misc */
-#define T_(v)                           obs_module_text(v)
-#define T_MENU_OPTION                   T_("Menu.Option")
-#define T_SELECT_TYPE_DIALOG            T_("Dialog.Select.ItemType")
-#define T_SELECT_TYPE                   T_("Label.Select.ItemType")
-/* clang-format on */
+}

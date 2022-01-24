@@ -88,6 +88,13 @@ set(durchblick_sources
     ./src/layout.hpp
     ./src/qt_display.hpp
     ./src/qt_display.cpp
+    ./src/new_item_dialog.cpp
+    ./src/new_item_dialog.hpp
+    ./src/registry.cpp
+    ./src/registry.hpp
+    ./src/item.hpp
+    ./src/source_item.cpp
+    ./src/source_item.hpp
     ${durchblick_ui_headers}
 )
 

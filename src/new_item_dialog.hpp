@@ -1,7 +1,7 @@
 /*************************************************************************
  * This file is part of input-overlay
  * git.vrsal.xyz/alex/durchblick
- * Copyright 2021 univrsal <uni@vrsal.xyz>.
+ * Copyright 2022 univrsal <uni@vrsal.xyz>.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,20 +17,25 @@
  *************************************************************************/
 
 #pragma once
-#include <obs-module.h>
 
-#define write_log(log_level, format, ...) blog(log_level, "[durchblick] " format, ##__VA_ARGS__)
+#include <QDialog>
+#include <QComboBox>
+#include <QLabel>
+#include <QDialogButtonBox>
+#include <QVBoxLayout>
 
-#define bdebug(format, ...) write_log(LOG_DEBUG, format, ##__VA_ARGS__)
-#define binfo(format, ...) write_log(LOG_INFO, format, ##__VA_ARGS__)
-#define bwarn(format, ...) write_log(LOG_WARNING, format, ##__VA_ARGS__)
-#define berr(format, ...) write_log(LOG_ERROR, format, ##__VA_ARGS__)
+class Layout;
 
-/* clang-format off */
+class NewItemDialog : public QDialog {
+    Q_OBJECT
+    QComboBox* m_select_type;
+    QVBoxLayout* m_vboxlayout;
+    QDialogButtonBox* m_button_box;
+    Layout* m_layout;
+private slots:
+    void ok_clicked();
+    void cancel_clicked();
 
-/* Misc */
-#define T_(v)                           obs_module_text(v)
-#define T_MENU_OPTION                   T_("Menu.Option")
-#define T_SELECT_TYPE_DIALOG            T_("Dialog.Select.ItemType")
-#define T_SELECT_TYPE                   T_("Label.Select.ItemType")
-/* clang-format on */
+public:
+    NewItemDialog(QWidget* parent, Layout* layout);
+};

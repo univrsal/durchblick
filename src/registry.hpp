@@ -1,7 +1,7 @@
 /*************************************************************************
  * This file is part of input-overlay
  * git.vrsal.xyz/alex/durchblick
- * Copyright 2021 univrsal <uni@vrsal.xyz>.
+ * Copyright 2022 univrsal <uni@vrsal.xyz>.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,20 +17,34 @@
  *************************************************************************/
 
 #pragma once
-#include <obs-module.h>
+#include <functional>
+#include <QList>
+#include <QString>
 
-#define write_log(log_level, format, ...) blog(log_level, "[durchblick] " format, ##__VA_ARGS__)
+class LayoutItem;
+class Layout;
 
-#define bdebug(format, ...) write_log(LOG_DEBUG, format, ##__VA_ARGS__)
-#define binfo(format, ...) write_log(LOG_INFO, format, ##__VA_ARGS__)
-#define bwarn(format, ...) write_log(LOG_WARNING, format, ##__VA_ARGS__)
-#define berr(format, ...) write_log(LOG_ERROR, format, ##__VA_ARGS__)
+namespace Registry {
+class ItemRegistry {
+public:
+    using Constructor = std::function<LayoutItem*(Layout*, int, int, int, int, void*)>;
+    struct Entry {
+        Constructor construct;
+        void* priv{};
+        QString name;
+    };
+    static QList<Entry> Entries;
 
-/* clang-format off */
+    static void Register(Constructor const&, char const*, void* = nullptr);
+};
 
-/* Misc */
-#define T_(v)                           obs_module_text(v)
-#define T_MENU_OPTION                   T_("Menu.Option")
-#define T_SELECT_TYPE_DIALOG            T_("Dialog.Select.ItemType")
-#define T_SELECT_TYPE                   T_("Label.Select.ItemType")
-/* clang-format on */
+extern void RegisterDefaults();
+
+template<class T>
+void Register(char const* name, void* = nullptr)
+{
+    ItemRegistry::Register([](Layout* p, int x, int y, int w, int h, void*) {
+        return new T(p, x, y, w, h);
+    }, name, nullptr);
+}
+}

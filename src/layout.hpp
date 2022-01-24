@@ -1,7 +1,7 @@
 /*************************************************************************
  * This file is part of input-overlay
  * git.vrsal.xyz/alex/durchblick
- * Copyright 2021 univrsal <uni@vrsal.xyz>.
+ * Copyright 2022 univrsal <uni@vrsal.xyz>.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,11 @@
 #pragma once
 
 #include "util.h"
+#include "item.hpp"
+#include "new_item_dialog.hpp"
+#include "registry.hpp"
+#include <mutex>
+#include <algorithm>
 #include <QMouseEvent>
 #include <memory>
 #include <obs-module.h>
@@ -63,99 +68,34 @@ inline void GetScaleAndCenterPos(int baseCX, int baseCY, int windowCX,
     y = windowCY / 2 - newCY / 2;
 }
 
-// Default item, renders black rectangle
-class LayoutItem {
-    bool m_mouse_over { false };
-
-public:
-    struct {
-        int col {}, row {}, w {}, h {};
-    } m_cell;
-    int m_left {}, m_top {}, m_right {}, m_bottom {},                 // position inside the entire display
-        m_rel_left {}, m_rel_top {}, m_rel_right {}, m_rel_bottom {}, // position relative to multiview origin
-        m_width {}, m_height {}, m_inner_width {}, m_inner_height {};
-
-    struct Config {
-        int x {}, y {}; // Origin of multiview
-        float scale {};
-        float border = 4;
-        float border2 = border * 2;
-        float cell_width, cell_height;
-    };
-
-    struct MouseData {
-        int x, y;
-        Qt::KeyboardModifiers modifiers;
-        Qt::MouseButtons buttons;
-    };
-
-    LayoutItem(int x, int y, int w = 1, int h = 1)
-    {
-        m_cell = { x, y, w, h };
-    }
-
-    virtual void Render(Config const& cfg)
-    {
-        if (m_mouse_over) {
-            DrawBox(0, 0, cfg.cell_width * m_width, cfg.cell_height * m_height, 0xFF004400);
-        }
-        DrawBox(cfg.border, cfg.border, m_inner_width, m_inner_height, 0xFF000000);
-    }
-
-    virtual void MouseEvent(MouseData const& e, Config const& cfg)
-    {
-        m_mouse_over = e.x >= m_rel_left && e.x < m_rel_right && e.y >= m_rel_top && e.y < m_rel_bottom;
-    }
-
-    virtual void Update(Config const& cfg)
-    {
-        m_rel_left = cfg.cell_width * m_cell.col;
-        m_left = cfg.x + m_rel_left;
-        m_rel_right = cfg.cell_width * (m_cell.col + 1);
-        m_right = cfg.x + m_rel_right;
-        m_rel_top = cfg.cell_height * m_cell.row;
-        m_top = cfg.y + m_rel_top;
-        m_rel_bottom = cfg.cell_height * (m_cell.row + 1);
-        m_bottom = cfg.y + m_rel_bottom;
-        m_width = cfg.cell_width * m_cell.w;
-        m_height = cfg.cell_height * m_cell.h;
-        m_inner_width = m_width - cfg.border2;
-        m_inner_height = m_height - cfg.border2;
-    }
-
-    static void DrawBox(float cx, float cy, uint32_t colorVal)
-    {
-        gs_effect_t* solid = obs_get_base_effect(OBS_EFFECT_SOLID);
-        gs_eparam_t* color = gs_effect_get_param_by_name(solid, "color");
-
-        gs_effect_set_color(color, colorVal);
-        while (gs_effect_loop(solid, "Solid"))
-            gs_draw_sprite(nullptr, 0, (uint32_t)cx, (uint32_t)cy);
-    }
-
-    static void DrawBox(float tx, float ty, float cx, float cy, uint32_t color)
-    {
-        gs_matrix_push();
-        gs_matrix_translate3f(tx, ty, 0.0f);
-        DrawBox(cx, cy, color);
-        gs_matrix_pop();
-    };
-};
-
-class Layout {
+class Layout : public QObject {
     int m_size;
     std::vector<std::unique_ptr<LayoutItem>> m_layout_items;
     LayoutItem::Config m_cfg;
+    QWidget* m_parent_widget{};
+    QAction* m_new_widget_action{};
+    LayoutItem::Cell m_selection{};
+    std::mutex m_layout_mutex;
+    Q_OBJECT
+private slots:
+
+    void ShowSetWidgetDialog()
+    {
+        NewItemDialog dlg(m_parent_widget, this);
+        dlg.exec();
+    }
 
 public:
-    Layout(int size = 4)
-        : m_size(size)
+    Layout(QWidget* parent, int size = 4)
+        : QObject(parent), m_size(size), m_parent_widget(parent)
     {
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
-                m_layout_items.emplace_back(new LayoutItem(x, y));
+                m_layout_items.emplace_back(new LayoutItem(this, x, y));
             }
         }
+        m_new_widget_action = new QAction("Set widget", this);
+        connect(m_new_widget_action, SIGNAL(triggered()), this, SLOT(ShowSetWidgetDialog()));
     }
 
     void MouseMoved(QMouseEvent* e)
@@ -166,8 +106,64 @@ public:
             .modifiers = e->modifiers(),
             .buttons = e->buttons()
         };
-        for (auto& Item : m_layout_items)
+
+        LayoutItem::Cell pos;
+        for (auto& Item : m_layout_items) {
             Item->MouseEvent(d, m_cfg);
+            if (Item->Hovered())
+                pos = Item->m_cell;
+        }
+        if (e->buttons() & Qt::LeftButton) {
+            // Dragging
+        } else {
+            m_selection = pos;
+        }
+    }
+
+    void HandleContextMenu(QContextMenuEvent* e)
+    {
+        QMenu m(T_MENU_OPTION, m_parent_widget);
+        m.addAction(m_new_widget_action);
+        m.addSeparator();
+        for (auto& Item : m_layout_items) {
+            if (Item->IsMouseOver(e->pos().x(), e->pos().y())) {
+                Item->ContextMenu(e, m);
+                break;
+            }
+        }
+        m.exec(QCursor::pos());
+    }
+
+    void FreeSpace(LayoutItem::Cell const& c)
+    {
+        auto it = std::remove_if(m_layout_items.begin(), m_layout_items.end(), [c](std::unique_ptr<LayoutItem> const& item)
+        {
+            return c.Overlaps(item->m_cell);
+        });
+        m_layout_items.erase(it);
+    }
+
+    void AddWidget(Registry::ItemRegistry::Entry const& entry)
+    {
+        std::lock_guard<std::mutex> lock(m_layout_mutex);
+        FreeSpace(m_selection);
+        auto* Item = entry.construct(this, m_selection.col, m_selection.row, m_selection.w, m_selection.h, entry.priv);
+        Item->Update(m_cfg);
+        m_layout_items.emplace_back(Item);
+    }
+
+    void SetRegion(float bx, float by, float cx, float cy)
+    {
+        float vX = int(m_cfg.x + bx * m_cfg.scale);
+        float vY = int(m_cfg.y + by * m_cfg.scale);
+        float vCX = int(cx * m_cfg.scale);
+        float vCY = int(cy * m_cfg.scale);
+
+        float oL = bx;
+        float oT = by;
+        float oR = (bx + cx);
+        float oB = (by + cy);
+        startRegion(vX, vY, vCX, vCY, oL, oR, oT, oB);
     }
 
     void Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy)
@@ -177,27 +173,16 @@ public:
             0.0f, target_cy);
         LayoutItem::DrawBox(target_cx, target_cy, 0xFFD0D0D0);
 
-        auto setRegion = [&](float bx, float by, float cx, float cy) {
-            float vX = int(m_cfg.x + bx * m_cfg.scale);
-            float vY = int(m_cfg.y + by * m_cfg.scale);
-            float vCX = int(cx * m_cfg.scale);
-            float vCY = int(cy * m_cfg.scale);
-
-            float oL = bx;
-            float oT = by;
-            float oR = (bx + cx);
-            float oB = (by + cy);
-            startRegion(vX, vY, vCX, vCY, oL, oR, oT, oB);
-        };
+        m_layout_mutex.lock();
         for (auto& Item : m_layout_items) {
             // Change region to item dimensions
-            setRegion(Item->m_rel_left, Item->m_rel_top, Item->m_width, Item->m_height);
+            SetRegion(Item->m_rel_left, Item->m_rel_top, Item->m_width, Item->m_height);
             gs_matrix_push();
-            gs_matrix_translate3f(Item->m_rel_left, Item->m_rel_top, 0);
             Item->Render(m_cfg);
             gs_matrix_pop();
             endRegion();
         }
+        m_layout_mutex.unlock();
         endRegion();
     }
 
