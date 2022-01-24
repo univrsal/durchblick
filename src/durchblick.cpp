@@ -1,7 +1,7 @@
 /*************************************************************************
  * This file is part of input-overlay
  * git.vrsal.xyz/alex/durchblick
- * Copyright 2021 univrsal <uni@vrsal.xyz>.
+ * Copyright 2022 univrsal <uni@vrsal.xyz>.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
