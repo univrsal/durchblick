@@ -1,5 +1,5 @@
 /*************************************************************************
- * This file is part of input-overlay
+ * This file is part of durchblick
  * git.vrsal.xyz/alex/durchblick
  * Copyright 2022 univrsal <uni@vrsal.xyz>.
  *
@@ -41,6 +41,12 @@ private slots:
 protected:
     virtual void mouseMoveEvent(QMouseEvent*) override;
     virtual void contextMenuEvent(QContextMenuEvent*) override;
+
+protected:
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dragMoveEvent(QDragMoveEvent *event) override;
+    void dragLeaveEvent(QDragLeaveEvent *event) override; // TODO: dragging cells?
+    void dropEvent(QDropEvent* event) override;
 
 public:
     Durchblick(QWidget* widget = nullptr);

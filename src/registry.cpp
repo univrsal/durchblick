@@ -1,5 +1,5 @@
 /*************************************************************************
- * This file is part of input-overlay
+ * This file is part of durchblick
  * git.vrsal.xyz/alex/durchblick
  * Copyright 2022 univrsal <uni@vrsal.xyz>.
  *

@@ -1,5 +1,5 @@
 /*************************************************************************
- * This file is part of input-overlay
+ * This file is part of durchblick
  * git.vrsal.xyz/alex/durchblick
  * Copyright 2022 univrsal <uni@vrsal.xyz>.
  *
@@ -25,6 +25,9 @@
 #define binfo(format, ...) write_log(LOG_INFO, format, ##__VA_ARGS__)
 #define bwarn(format, ...) write_log(LOG_WARNING, format, ##__VA_ARGS__)
 #define berr(format, ...) write_log(LOG_ERROR, format, ##__VA_ARGS__)
+
+#define utf8_to_qt(_str) QString::fromUtf8(_str)
+#define qt_to_utf8(_str) _str.toUtf8().constData()
 
 /* clang-format off */
 
