@@ -26,6 +26,7 @@ class SourceItem : public LayoutItem {
     OBSSignal removedSignal;
 
 public:
+    static void InitPlaceholder();
     static void OBSSourceRemoved(void* data, calldata_t* params);
     SourceItem(Layout* parent, int x, int y, int w = 1, int h = 1);
     ~SourceItem();

@@ -18,6 +18,7 @@
 
 #include "durchblick.hpp"
 #include "registry.hpp"
+#include "source_item.hpp"
 #include "util.h"
 #include <QAction>
 #include <QDialog>
@@ -36,6 +37,7 @@ bool obs_module_load()
 {
     binfo("Loading v%s build time %s", PLUGIN_VERSION, BUILD_TIME);
     Registry::RegisterDefaults();
+    SourceItem::InitPlaceholder();
 
     /* UI registration from
      * https://github.com/Palakis/obs-websocket/

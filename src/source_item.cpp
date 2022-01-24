@@ -5,7 +5,7 @@
 
 static obs_source_t* placeholder_source = nullptr;
 
-static void InitPlaceholder()
+void SourceItem::InitPlaceholder()
 {
     obs_data_t* settings = obs_data_create();
     const char* placeholder_path = obs_module_file("placeholder.png");
@@ -26,9 +26,7 @@ void SourceItem::OBSSourceRemoved(void* data, calldata_t* params)
 SourceItem::SourceItem(Layout* parent, int x, int y, int w, int h)
     : LayoutItem(parent, x, y, w, h)
 {
-    //    if (!placeholder_source)
-    //        InitPlaceholder();
-    SetSource(obs_frontend_get_current_scene());
+    SetSource(placeholder_source);
 }
 
 SourceItem::~SourceItem()
