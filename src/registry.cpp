@@ -22,9 +22,9 @@
 namespace Registry {
 QList<ItemRegistry::Entry> ItemRegistry::Entries;
 
-void ItemRegistry::Register(const Constructor &c, const char *n, void *p)
+void ItemRegistry::Register(const Constructor& c, const char* n, void* p)
 {
-    Entries.append(Entry { c, p, n});
+    Entries.append(Entry { c, p, n });
 }
 
 void RegisterDefaults()

@@ -24,11 +24,12 @@ class SourceItem : public LayoutItem {
     Q_OBJECT
     OBSSource m_src;
     OBSSignal removedSignal;
+
 public:
-    static void OBSSourceRemoved(void *data, calldata_t *params);
+    static void OBSSourceRemoved(void* data, calldata_t* params);
     SourceItem(Layout* parent, int x, int y, int w = 1, int h = 1);
     ~SourceItem();
 
     void SetSource(obs_source_t* src);
-    virtual void Render(const Config &cfg) override;
+    virtual void Render(const Config& cfg) override;
 };

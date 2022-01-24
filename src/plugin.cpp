@@ -17,8 +17,8 @@
  *************************************************************************/
 
 #include "durchblick.hpp"
-#include "util.h"
 #include "registry.hpp"
+#include "util.h"
 #include <QAction>
 #include <QDialog>
 #include <QLayout>

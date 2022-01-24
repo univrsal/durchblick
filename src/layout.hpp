@@ -18,14 +18,14 @@
 
 #pragma once
 
-#include "util.h"
 #include "item.hpp"
 #include "new_item_dialog.hpp"
 #include "registry.hpp"
-#include <mutex>
-#include <algorithm>
+#include "util.h"
 #include <QMouseEvent>
+#include <algorithm>
 #include <memory>
+#include <mutex>
 #include <obs-module.h>
 #include <vector>
 
@@ -72,9 +72,9 @@ class Layout : public QObject {
     int m_size;
     std::vector<std::unique_ptr<LayoutItem>> m_layout_items;
     LayoutItem::Config m_cfg;
-    QWidget* m_parent_widget{};
-    QAction* m_new_widget_action{};
-    LayoutItem::Cell m_selection{};
+    QWidget* m_parent_widget {};
+    QAction* m_new_widget_action {};
+    LayoutItem::Cell m_selection {};
     std::mutex m_layout_mutex;
     Q_OBJECT
 private slots:
@@ -87,7 +87,9 @@ private slots:
 
 public:
     Layout(QWidget* parent, int size = 4)
-        : QObject(parent), m_size(size), m_parent_widget(parent)
+        : QObject(parent)
+        , m_size(size)
+        , m_parent_widget(parent)
     {
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
@@ -122,22 +124,21 @@ public:
 
     void HandleContextMenu(QContextMenuEvent* e)
     {
-        QMenu m(T_MENU_OPTION, m_parent_widget);
-        m.addAction(m_new_widget_action);
-        m.addSeparator();
         for (auto& Item : m_layout_items) {
-            if (Item->IsMouseOver(e->pos().x(), e->pos().y())) {
+            if (Item->Hovered()) {
+                QMenu m(T_MENU_OPTION, m_parent_widget);
+                m.addAction(m_new_widget_action);
+                m.addSeparator();
                 Item->ContextMenu(e, m);
+                m.exec(QCursor::pos());
                 break;
             }
         }
-        m.exec(QCursor::pos());
     }
 
     void FreeSpace(LayoutItem::Cell const& c)
     {
-        auto it = std::remove_if(m_layout_items.begin(), m_layout_items.end(), [c](std::unique_ptr<LayoutItem> const& item)
-        {
+        auto it = std::remove_if(m_layout_items.begin(), m_layout_items.end(), [c](std::unique_ptr<LayoutItem> const& item) {
             return c.Overlaps(item->m_cell);
         });
         m_layout_items.erase(it);
@@ -176,11 +177,21 @@ public:
         m_layout_mutex.lock();
         for (auto& Item : m_layout_items) {
             // Change region to item dimensions
-            SetRegion(Item->m_rel_left, Item->m_rel_top, Item->m_width, Item->m_height);
             gs_matrix_push();
-            Item->Render(m_cfg);
-            gs_matrix_pop();
+            gs_matrix_translate3f(Item->m_rel_left, Item->m_rel_top, 0);
+
+            SetRegion(Item->m_rel_left, Item->m_rel_top, Item->m_width, Item->m_height);
+            if (Item->Hovered())
+                LayoutItem::DrawBox(0, 0, m_cfg.cell_width * Item->m_width, m_cfg.cell_height * Item->m_height, 0xFF004400);
             endRegion();
+            gs_matrix_pop();
+
+            gs_matrix_push();
+            gs_matrix_translate3f(Item->m_rel_left + m_cfg.border, Item->m_rel_top + m_cfg.border, 0);
+            SetRegion(Item->m_rel_left + m_cfg.border, Item->m_rel_top + m_cfg.border, Item->m_inner_width, Item->m_inner_height);
+            Item->Render(m_cfg);
+            endRegion();
+            gs_matrix_pop();
         }
         m_layout_mutex.unlock();
         endRegion();

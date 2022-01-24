@@ -17,9 +17,9 @@
  *************************************************************************/
 
 #pragma once
-#include <functional>
 #include <QList>
 #include <QString>
+#include <functional>
 
 class LayoutItem;
 class Layout;
@@ -30,7 +30,7 @@ public:
     using Constructor = std::function<LayoutItem*(Layout*, int, int, int, int, void*)>;
     struct Entry {
         Constructor construct;
-        void* priv{};
+        void* priv {};
         QString name;
     };
     static QList<Entry> Entries;
@@ -45,6 +45,7 @@ void Register(char const* name, void* = nullptr)
 {
     ItemRegistry::Register([](Layout* p, int x, int y, int w, int h, void*) {
         return new T(p, x, y, w, h);
-    }, name, nullptr);
+    },
+        name, nullptr);
 }
 }

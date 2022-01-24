@@ -47,13 +47,14 @@ void Durchblick::mouseMoveEvent(QMouseEvent* e)
     m_layout.MouseMoved(e);
 }
 
-void Durchblick::contextMenuEvent(QContextMenuEvent *e)
+void Durchblick::contextMenuEvent(QContextMenuEvent* e)
 {
     m_layout.HandleContextMenu(e);
 }
 
 Durchblick::Durchblick(QWidget* widget)
-    : OBSQTDisplay(widget, Qt::Window), m_layout(this)
+    : OBSQTDisplay(widget, Qt::Window)
+    , m_layout(this)
 {
     setWindowTitle("Durchblick");
 #ifdef __APPLE__

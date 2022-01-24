@@ -17,10 +17,10 @@
  *************************************************************************/
 
 #pragma once
-#include <QObject>
 #include <QContextMenuEvent>
-#include <obs-module.h>
 #include <QMenu>
+#include <QObject>
+#include <obs-module.h>
 
 class Layout;
 
@@ -29,10 +29,11 @@ class LayoutItem : public QObject {
     Q_OBJECT
 protected:
     bool m_mouse_over { false };
-    Layout* m_layout{};
+    Layout* m_layout {};
+
 public:
     struct Cell {
-        int col {}, row {}, w {1}, h {1};
+        int col {}, row {}, w { 1 }, h { 1 };
 
         int left() const { return col; }
         int right() const { return col + w; }
@@ -40,8 +41,7 @@ public:
         int bottom() const { return row + h; }
         bool Overlaps(Cell const& other) const
         {
-            return top() >= other.top() && bottom() <= other.bottom() &&
-                    left() >= other.left() && right() <= other.right();
+            return top() >= other.top() && bottom() <= other.bottom() && left() >= other.left() && right() <= other.right();
         }
     } m_cell;
     int m_left {}, m_top {}, m_right {}, m_bottom {},                 // position inside the entire display
@@ -54,6 +54,7 @@ public:
         float border = 4;
         float border2 = border * 2;
         float cell_width, cell_height;
+        bool m_fill_cell { true }; // strech item to cell (disregards aspect ratio)
     };
 
     struct MouseData {
@@ -63,7 +64,8 @@ public:
     };
 
     LayoutItem(Layout* parent, int x, int y, int w = 1, int h = 1)
-        : QObject((QObject*)parent), m_layout(parent)
+        : QObject((QObject*)parent)
+        , m_layout(parent)
     {
         m_cell = { x, y, w, h };
     }
@@ -72,14 +74,11 @@ public:
     {
     }
 
-    virtual void ContextMenu(QContextMenuEvent* e, QMenu&) {}
+    virtual void ContextMenu(QContextMenuEvent* e, QMenu&) { }
 
     virtual void Render(Config const& cfg)
     {
-        gs_matrix_translate3f(m_rel_left, m_rel_top, 0);
-        if (m_mouse_over)
-            DrawBox(0, 0, cfg.cell_width * m_width, cfg.cell_height * m_height, 0xFF004400);
-        DrawBox(cfg.border, cfg.border, m_inner_width, m_inner_height, 0xFF000000);
+        DrawBox(0, 0, m_inner_width, m_inner_height, 0xFF000000);
     }
 
     virtual void MouseEvent(MouseData const& e, Config const& cfg)

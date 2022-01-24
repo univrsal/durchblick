@@ -1,7 +1,7 @@
 #include "new_item_dialog.hpp"
-#include "util.h"
-#include "registry.hpp"
 #include "layout.hpp"
+#include "registry.hpp"
+#include "util.h"
 #include <QPushButton>
 
 void NewItemDialog::ok_clicked()
@@ -19,7 +19,8 @@ void NewItemDialog::cancel_clicked()
 }
 
 NewItemDialog::NewItemDialog(QWidget* parent, Layout* layout)
-    : QDialog(parent), m_layout(layout)
+    : QDialog(parent)
+    , m_layout(layout)
 {
     m_vboxlayout = new QVBoxLayout(this);
     m_vboxlayout->addWidget(new QLabel(T_SELECT_TYPE, this));

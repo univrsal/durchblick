@@ -18,10 +18,10 @@
 
 #pragma once
 
-#include <QDialog>
 #include <QComboBox>
-#include <QLabel>
+#include <QDialog>
 #include <QDialogButtonBox>
+#include <QLabel>
 #include <QVBoxLayout>
 
 class Layout;
