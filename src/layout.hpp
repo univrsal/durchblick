@@ -144,11 +144,12 @@ public:
         m_layout_items.erase(it);
     }
 
-    void AddWidget(Registry::ItemRegistry::Entry const& entry)
+    void AddWidget(Registry::ItemRegistry::Entry const& entry, QWidget* custom_widget)
     {
         std::lock_guard<std::mutex> lock(m_layout_mutex);
         FreeSpace(m_selection);
         auto* Item = entry.construct(this, m_selection.col, m_selection.row, m_selection.w, m_selection.h, entry.priv);
+        Item->LoadConfigFromWidget(custom_widget);
         Item->Update(m_cfg);
         m_layout_items.emplace_back(Item);
     }

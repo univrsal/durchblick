@@ -36,4 +36,6 @@
 #define T_MENU_OPTION                   T_("Menu.Option")
 #define T_SELECT_TYPE_DIALOG            T_("Dialog.Select.ItemType")
 #define T_SELECT_TYPE                   T_("Label.Select.ItemType")
+#define T_WIDGET_SETTINGS               T_("Label.WidgetSettings")
+#define T_SOURCE_NAME                   T_("Label.SourceName")
 /* clang-format on */

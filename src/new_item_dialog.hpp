@@ -29,12 +29,14 @@ class Layout;
 class NewItemDialog : public QDialog {
     Q_OBJECT
     QComboBox* m_select_type;
-    QVBoxLayout* m_vboxlayout;
+    QVBoxLayout *m_vboxlayout, *m_config_layout;
     QDialogButtonBox* m_button_box;
+    QWidget *m_config_panel, *m_last_config_widget = nullptr;
     Layout* m_layout;
 private slots:
     void ok_clicked();
     void cancel_clicked();
+    void entry_selected(int);
 
 public:
     NewItemDialog(QWidget* parent, Layout* layout);
