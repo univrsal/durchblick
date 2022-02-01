@@ -74,6 +74,9 @@ public:
     {
     }
 
+    virtual QWidget* GetConfigWidget() { return nullptr; }
+    virtual void LoadConfigFromWidget(QWidget*) { }
+
     virtual void ContextMenu(QContextMenuEvent* e, QMenu&) { }
 
     virtual void Render(Config const& cfg)

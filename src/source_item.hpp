@@ -18,7 +18,28 @@
 
 #pragma once
 #include "item.hpp"
+#include "util.h"
+#include <QComboBox>
+#include <QFormLayout>
+#include <QVBoxLayout>
 #include <obs.hpp>
+
+class CustomWidget : public QWidget {
+    Q_OBJECT
+public:
+    QComboBox* m_combo_box;
+    CustomWidget(QWidget* parent = nullptr)
+        : QWidget(parent)
+    {
+        auto* l = new QFormLayout();
+        setLayout(l);
+        l->setContentsMargins(0, 0, 0, 0);
+        m_combo_box = new QComboBox();
+        m_combo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        l->addRow(T_SOURCE_NAME, m_combo_box);
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    }
+};
 
 class SourceItem : public LayoutItem {
     Q_OBJECT
@@ -30,6 +51,9 @@ public:
     static void OBSSourceRemoved(void* data, calldata_t* params);
     SourceItem(Layout* parent, int x, int y, int w = 1, int h = 1);
     ~SourceItem();
+
+    QWidget* GetConfigWidget() override;
+    void LoadConfigFromWidget(QWidget*) override;
 
     void SetSource(obs_source_t* src);
     virtual void Render(const Config& cfg) override;

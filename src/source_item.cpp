@@ -1,6 +1,5 @@
 #include "source_item.hpp"
 #include "layout.hpp"
-#include "util.h"
 #include <obs-frontend-api.h>
 
 static obs_source_t* placeholder_source = nullptr;
@@ -33,6 +32,30 @@ SourceItem::~SourceItem()
 {
     if (m_src)
         obs_source_dec_showing(m_src);
+}
+
+QWidget* SourceItem::GetConfigWidget()
+{
+    auto* w = new CustomWidget();
+    obs_enum_sources([](void* d, obs_source_t* src) -> bool {
+        auto flags = obs_source_get_output_flags(src);
+        if (flags & OBS_OUTPUT_VIDEO) {
+            auto* cb = static_cast<QComboBox*>(d);
+            cb->addItem(utf8_to_qt(obs_source_get_name(src)));
+        }
+        return true;
+    },
+        w->m_combo_box);
+    return w;
+}
+
+void SourceItem::LoadConfigFromWidget(QWidget* w)
+{
+    auto* custom = dynamic_cast<CustomWidget*>(w);
+    if (custom) {
+        auto* src = obs_get_source_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
+        SetSource(src);
+    }
 }
 
 void SourceItem::SetSource(obs_source_t* src)
