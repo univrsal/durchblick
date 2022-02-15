@@ -1,8 +1,19 @@
 #include "source_item.hpp"
+#include "display-helpers.hpp"
 #include "layout.hpp"
+#include <QApplication>
+#include <QMainWindow>
 #include <obs-frontend-api.h>
 
 static obs_source_t* placeholder_source = nullptr;
+
+void SourceItem::toggle_safe_borders(bool)
+{
+    if (!m_safe_margins_initialized) {
+        m_safe_margins_initialized = true;
+        InitSafeAreas(&m_action_safe_margin, &m_graphics_safe_margin, &m_four_by_three_safe_margin, &m_left_line, &m_top_line, &m_right_line);
+    }
+}
 
 void SourceItem::InitPlaceholder()
 {
@@ -26,12 +37,28 @@ SourceItem::SourceItem(Layout* parent, int x, int y, int w, int h)
     : LayoutItem(parent, x, y, w, h)
 {
     SetSource(placeholder_source);
+
+    m_toggle_safe_borders = new QAction(QCoreApplication::translate("", "Basic.Settings.General.Multiview.DrawSafeAreas"), this);
+    m_toggle_safe_borders->setCheckable(true);
+    connect(m_toggle_safe_borders, SIGNAL(triggered(bool)), this, SLOT(toggle_safe_borders));
+
+    obs_enter_graphics();
+    InitSafeAreas(&m_action_safe_margin, &m_graphics_safe_margin, &m_four_by_three_safe_margin, &m_left_line, &m_top_line, &m_right_line);
+    obs_leave_graphics();
 }
 
 SourceItem::~SourceItem()
 {
     if (m_src)
         obs_source_dec_showing(m_src);
+    obs_enter_graphics();
+    gs_vertexbuffer_destroy(m_action_safe_margin);
+    gs_vertexbuffer_destroy(m_graphics_safe_margin);
+    gs_vertexbuffer_destroy(m_four_by_three_safe_margin);
+    gs_vertexbuffer_destroy(m_left_line);
+    gs_vertexbuffer_destroy(m_top_line);
+    gs_vertexbuffer_destroy(m_right_line);
+    obs_leave_graphics();
 }
 
 QWidget* SourceItem::GetConfigWidget()
@@ -73,6 +100,7 @@ void SourceItem::SetSource(obs_source_t* src)
 void SourceItem::Render(const Config& cfg)
 {
     LayoutItem::Render(cfg);
+
     if (!m_src)
         return;
     if (m_src) {
@@ -88,5 +116,18 @@ void SourceItem::Render(const Config& cfg)
             gs_matrix_scale3f(scale, scale, 1);
         }
         obs_source_video_render(m_src);
+        if (m_toggle_safe_borders->isChecked()) {
+            RenderSafeAreas(m_action_safe_margin, w, h);
+            RenderSafeAreas(m_graphics_safe_margin, w, h);
+            RenderSafeAreas(m_four_by_three_safe_margin, w, h);
+            RenderSafeAreas(m_left_line, w, h);
+            RenderSafeAreas(m_top_line, w, h);
+            RenderSafeAreas(m_right_line, w, h);
+        }
     }
+}
+
+void SourceItem::ContextMenu(QContextMenuEvent* e, QMenu& m)
+{
+    m.addAction(m_toggle_safe_borders);
 }

@@ -45,6 +45,17 @@ class SourceItem : public LayoutItem {
     Q_OBJECT
     OBSSource m_src;
     OBSSignal removedSignal;
+    QAction* m_toggle_safe_borders;
+
+    bool m_safe_margins_initialized = false;
+    gs_vertbuffer_t* m_action_safe_margin {};
+    gs_vertbuffer_t* m_graphics_safe_margin {};
+    gs_vertbuffer_t* m_four_by_three_safe_margin {};
+    gs_vertbuffer_t* m_left_line {};
+    gs_vertbuffer_t* m_top_line {};
+    gs_vertbuffer_t* m_right_line {};
+public slots:
+    void toggle_safe_borders(bool);
 
 public:
     static void InitPlaceholder();
@@ -57,4 +68,5 @@ public:
 
     void SetSource(obs_source_t* src);
     virtual void Render(const Config& cfg) override;
+    virtual void ContextMenu(QContextMenuEvent* e, QMenu&) override;
 };
