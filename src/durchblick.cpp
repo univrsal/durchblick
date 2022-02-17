@@ -93,6 +93,7 @@ Durchblick::~Durchblick()
 {
     obs_display_remove_draw_callback(GetDisplay(), RenderLayout, this);
     m_screen = nullptr;
+    deleteLater();
 }
 
 void Durchblick::RenderLayout(void* data, uint32_t cx, uint32_t cy)
