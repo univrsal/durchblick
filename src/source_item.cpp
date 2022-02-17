@@ -87,6 +87,7 @@ void SourceItem::LoadConfigFromWidget(QWidget* w)
     if (custom) {
         auto* src = obs_get_source_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
         SetSource(src);
+        obs_source_release(src);
     }
 }
 
