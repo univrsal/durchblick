@@ -40,6 +40,8 @@ bool obs_module_load()
 
     QAction::connect(static_cast<QAction*>(obs_frontend_add_tools_menu_qaction(T_MENU_OPTION)),
         &QAction::triggered, [] {
+            if (dp)
+                delete dp;
             dp = new Durchblick();
             dp->show();
         });
@@ -49,5 +51,9 @@ bool obs_module_load()
 
 void obs_module_unload()
 {
+    if (dp) {
+        delete dp;
+        dp = nullptr;
+    }
     Registry::Free();
 }
