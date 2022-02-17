@@ -34,11 +34,13 @@ public:
         QString name;
     };
     static QList<Entry> Entries;
+    static QList<std::function<void()>> DeinitCallbacks;
 
     static void Register(Constructor const&, char const*, void* = nullptr);
 };
 
 extern void RegisterDefaults();
+extern void Free();
 
 template<class T>
 void Register(char const* name, void* = nullptr)
@@ -47,5 +49,7 @@ void Register(char const* name, void* = nullptr)
         return new T(p, x, y, w, h);
     },
         name, nullptr);
+    T::Init();
+    ItemRegistry::DeinitCallbacks.append(T::Deinit);
 }
 }

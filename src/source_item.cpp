@@ -6,25 +6,43 @@
 #include <obs-frontend-api.h>
 
 static obs_source_t* placeholder_source = nullptr;
+static struct {
+    gs_vertbuffer_t* action {};
+    gs_vertbuffer_t* graphics {};
+    gs_vertbuffer_t* four_by_three {};
+    gs_vertbuffer_t* left_line {};
+    gs_vertbuffer_t* top_line {};
+    gs_vertbuffer_t* right_line {};
+} safe_margin = {};
 
-void SourceItem::toggle_safe_borders(bool)
-{
-    if (!m_safe_margins_initialized) {
-        m_safe_margins_initialized = true;
-        InitSafeAreas(&m_action_safe_margin, &m_graphics_safe_margin, &m_four_by_three_safe_margin, &m_left_line, &m_top_line, &m_right_line);
-    }
-}
-
-void SourceItem::InitPlaceholder()
+void SourceItem::Init()
 {
     obs_data_t* settings = obs_data_create();
     const char* placeholder_path = obs_module_file("placeholder.png");
     obs_data_set_string(settings, "file", placeholder_path);
     placeholder_source = obs_source_create_private("image_source", "durchblick_placeholder", settings);
     bfree((void*)placeholder_path);
+    obs_data_release(settings);
 
     if (!placeholder_source)
         berr("Failed to create placeholder source!");
+    obs_enter_graphics();
+    InitSafeAreas(&safe_margin.action, &safe_margin.graphics, &safe_margin.four_by_three,
+        &safe_margin.left_line, &safe_margin.top_line, &safe_margin.right_line);
+    obs_leave_graphics();
+}
+
+void SourceItem::Deinit()
+{
+    obs_enter_graphics();
+    gs_vertexbuffer_destroy(safe_margin.action);
+    gs_vertexbuffer_destroy(safe_margin.graphics);
+    gs_vertexbuffer_destroy(safe_margin.four_by_three);
+    gs_vertexbuffer_destroy(safe_margin.left_line);
+    gs_vertexbuffer_destroy(safe_margin.top_line);
+    gs_vertexbuffer_destroy(safe_margin.right_line);
+    obs_leave_graphics();
+    obs_source_release(placeholder_source);
 }
 
 void SourceItem::OBSSourceRemoved(void* data, calldata_t* params)
@@ -40,25 +58,12 @@ SourceItem::SourceItem(Layout* parent, int x, int y, int w, int h)
 
     m_toggle_safe_borders = new QAction(QCoreApplication::translate("", "Basic.Settings.General.Multiview.DrawSafeAreas"), this);
     m_toggle_safe_borders->setCheckable(true);
-    connect(m_toggle_safe_borders, SIGNAL(triggered(bool)), this, SLOT(toggle_safe_borders));
-
-    obs_enter_graphics();
-    InitSafeAreas(&m_action_safe_margin, &m_graphics_safe_margin, &m_four_by_three_safe_margin, &m_left_line, &m_top_line, &m_right_line);
-    obs_leave_graphics();
 }
 
 SourceItem::~SourceItem()
 {
     if (m_src)
         obs_source_dec_showing(m_src);
-    obs_enter_graphics();
-    gs_vertexbuffer_destroy(m_action_safe_margin);
-    gs_vertexbuffer_destroy(m_graphics_safe_margin);
-    gs_vertexbuffer_destroy(m_four_by_three_safe_margin);
-    gs_vertexbuffer_destroy(m_left_line);
-    gs_vertexbuffer_destroy(m_top_line);
-    gs_vertexbuffer_destroy(m_right_line);
-    obs_leave_graphics();
 }
 
 QWidget* SourceItem::GetConfigWidget()
@@ -89,6 +94,9 @@ void SourceItem::SetSource(obs_source_t* src)
 {
     if (!src)
         return;
+    if (m_src)
+        obs_source_dec_showing(m_src);
+
     m_src = src;
     if (m_src) {
         removedSignal = OBSSignal(obs_source_get_signal_handler(m_src), "remove",
@@ -117,12 +125,12 @@ void SourceItem::Render(const Config& cfg)
         }
         obs_source_video_render(m_src);
         if (m_toggle_safe_borders->isChecked()) {
-            RenderSafeAreas(m_action_safe_margin, w, h);
-            RenderSafeAreas(m_graphics_safe_margin, w, h);
-            RenderSafeAreas(m_four_by_three_safe_margin, w, h);
-            RenderSafeAreas(m_left_line, w, h);
-            RenderSafeAreas(m_top_line, w, h);
-            RenderSafeAreas(m_right_line, w, h);
+            RenderSafeAreas(safe_margin.action, w, h);
+            RenderSafeAreas(safe_margin.graphics, w, h);
+            RenderSafeAreas(safe_margin.four_by_three, w, h);
+            RenderSafeAreas(safe_margin.left_line, w, h);
+            RenderSafeAreas(safe_margin.top_line, w, h);
+            RenderSafeAreas(safe_margin.right_line, w, h);
         }
     }
 }

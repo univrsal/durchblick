@@ -37,7 +37,6 @@ bool obs_module_load()
 {
     binfo("Loading v%s build time %s", PLUGIN_VERSION, BUILD_TIME);
     Registry::RegisterDefaults();
-    SourceItem::InitPlaceholder();
 
     QAction::connect(static_cast<QAction*>(obs_frontend_add_tools_menu_qaction(T_MENU_OPTION)),
         &QAction::triggered, [] {
@@ -50,4 +49,5 @@ bool obs_module_load()
 
 void obs_module_unload()
 {
+    Registry::Free();
 }

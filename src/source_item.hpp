@@ -47,18 +47,9 @@ class SourceItem : public LayoutItem {
     OBSSignal removedSignal;
     QAction* m_toggle_safe_borders;
 
-    bool m_safe_margins_initialized = false;
-    gs_vertbuffer_t* m_action_safe_margin {};
-    gs_vertbuffer_t* m_graphics_safe_margin {};
-    gs_vertbuffer_t* m_four_by_three_safe_margin {};
-    gs_vertbuffer_t* m_left_line {};
-    gs_vertbuffer_t* m_top_line {};
-    gs_vertbuffer_t* m_right_line {};
-public slots:
-    void toggle_safe_borders(bool);
-
 public:
-    static void InitPlaceholder();
+    static void Init();
+    static void Deinit();
     static void OBSSourceRemoved(void* data, calldata_t* params);
     SourceItem(Layout* parent, int x, int y, int w = 1, int h = 1);
     ~SourceItem();

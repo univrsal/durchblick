@@ -20,11 +20,19 @@
 #include "source_item.hpp"
 
 namespace Registry {
+
 QList<ItemRegistry::Entry> ItemRegistry::Entries;
+QList<std::function<void()>> ItemRegistry::DeinitCallbacks;
 
 void ItemRegistry::Register(const Constructor& c, const char* n, void* p)
 {
     Entries.append(Entry { c, p, n });
+}
+
+void Free()
+{
+    for (auto& Callback : ItemRegistry::DeinitCallbacks)
+        Callback();
 }
 
 void RegisterDefaults()
