@@ -117,11 +117,11 @@ public:
     {
         m_rel_left = cfg.cell_width * m_cell.col;
         m_left = cfg.x + m_rel_left;
-        m_rel_right = cfg.cell_width * (m_cell.col + 1);
+        m_rel_right = cfg.cell_width * (m_cell.col + m_cell.w);
         m_right = cfg.x + m_rel_right;
         m_rel_top = cfg.cell_height * m_cell.row;
         m_top = cfg.y + m_rel_top;
-        m_rel_bottom = cfg.cell_height * (m_cell.row + 1);
+        m_rel_bottom = cfg.cell_height * (m_cell.row + m_cell.h);
         m_bottom = cfg.y + m_rel_bottom;
         m_width = cfg.cell_width * m_cell.w;
         m_height = cfg.cell_height * m_cell.h;
