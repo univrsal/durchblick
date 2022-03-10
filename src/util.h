@@ -43,5 +43,8 @@
 #define T_SOURCE_ITEM_LABEL             T_("SourceItem.Label")
 #define T_WIDGET_SOURCE                 T_("Widget.SourceDisplay")
 #define T_WIDGET_SCENE                  T_("Widget.SceneDisplay")
+#define T_WIDGET_PREVIEW_PROGRAM        T_("Widget.PreviewProgramDisplay")
 
+#define T_PREVIEW                       "StudioMode.Preview"
+#define T_PROGRAM                       "StudioMode.Program"
 /* clang-format on */

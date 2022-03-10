@@ -17,53 +17,47 @@
  *************************************************************************/
 
 #pragma once
-#include "item.hpp"
+
+#include "source_item.hpp"
 #include "util.h"
-#include <QComboBox>
-#include <QFormLayout>
-#include <QVBoxLayout>
+#include <QApplication>
+#include <QHBoxLayout>
+#include <QRadioButton>
 #include <obs.hpp>
 
-class SourceItemWidget : public QWidget {
+class PreviewProgramItemWidget : public QWidget {
     Q_OBJECT
 public:
-    QComboBox* m_combo_box;
-    SourceItemWidget(QWidget* parent = nullptr)
+    QRadioButton *m_preview, *m_program;
+    PreviewProgramItemWidget(QWidget* parent = nullptr)
         : QWidget(parent)
     {
-        auto* l = new QFormLayout();
+        auto* l = new QHBoxLayout();
         setLayout(l);
         l->setContentsMargins(0, 0, 0, 0);
-        m_combo_box = new QComboBox();
-        m_combo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-        l->addRow(T_SOURCE_NAME, m_combo_box);
+        m_preview = new QRadioButton(QApplication::translate("", T_PREVIEW));
+        m_program = new QRadioButton(QApplication::translate("", T_PROGRAM));
+        m_preview->setChecked(true);
+        l->addWidget(m_preview);
+        l->addWidget(m_program);
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     }
 };
 
-class SourceItem : public LayoutItem {
+class PreviewProgramItem : public SourceItem {
     Q_OBJECT
-protected:
-    OBSSource m_src;
-    OBSSource m_label;
-    OBSSignal removedSignal;
-    QAction* m_toggle_safe_borders;
-    QAction* m_toggle_label;
-
-    void RenderSafeMargins(int w, int h);
-    static OBSSource CreateLabel(const char* name, size_t h);
+    bool m_program { false };
 
 public:
-    static void Init();
-    static void Deinit();
-    static void OBSSourceRemoved(void* data, calldata_t* params);
-    SourceItem(Layout* parent, int x, int y, int w = 1, int h = 1);
-    ~SourceItem();
+    PreviewProgramItem(Layout* parent, int x, int y, int w = 1, int h = 1)
+        : SourceItem(parent, x, y, w, h)
+    {
+    }
+
+    ~PreviewProgramItem() = default;
 
     QWidget* GetConfigWidget() override;
     void LoadConfigFromWidget(QWidget*) override;
 
-    void SetSource(obs_source_t* src);
-    virtual void Render(const Config& cfg) override;
-    virtual void ContextMenu(QMenu&) override;
+    void Render(const Config& cfg) override;
 };

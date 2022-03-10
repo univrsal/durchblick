@@ -98,6 +98,8 @@ set(durchblick_sources
     ./src/scene_item.hpp
     ./src/source_item.cpp
     ./src/source_item.hpp
+    ./src/preview_program_item.cpp
+    ./src/preview_program_item.hpp
     ./src/custom_item.cpp
     ./src/custom_item.hpp
     ./src/callbacks.h

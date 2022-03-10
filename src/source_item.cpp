@@ -6,7 +6,7 @@
 #include <obs/obs-frontend-api.h>
 
 /* yoinked from obs window-projector.cpp */
-static OBSSource CreateLabel(const char* name, size_t h)
+OBSSource SourceItem::CreateLabel(const char* name, size_t h)
 {
     OBSDataAutoRelease settings = obs_data_create();
     OBSDataAutoRelease font = obs_data_create();
@@ -50,6 +50,16 @@ static struct {
     gs_vertbuffer_t* top_line {};
     gs_vertbuffer_t* right_line {};
 } safe_margin = {};
+
+void SourceItem::RenderSafeMargins(int w, int h)
+{
+    RenderSafeAreas(safe_margin.action, w, h);
+    RenderSafeAreas(safe_margin.graphics, w, h);
+    RenderSafeAreas(safe_margin.four_by_three, w, h);
+    RenderSafeAreas(safe_margin.left_line, w, h);
+    RenderSafeAreas(safe_margin.top_line, w, h);
+    RenderSafeAreas(safe_margin.right_line, w, h);
+}
 
 void SourceItem::Init()
 {
@@ -164,39 +174,31 @@ void SourceItem::Render(const Config& cfg)
 
     if (!m_src)
         return;
-    if (m_src) {
-        auto w = obs_source_get_width(m_src);
-        auto h = obs_source_get_height(m_src);
-        if (m_toggle_stretch->isChecked()) {
-            gs_matrix_scale3f(m_inner_width / float(w), m_inner_height / float(h), 1);
-        } else {
-            int x, y;
-            float scale;
-            GetScaleAndCenterPos(w, h, m_inner_width, m_inner_height, x, y, scale);
-            gs_matrix_translate3f(x, y, 0);
-            gs_matrix_scale3f(scale, scale, 1);
-        }
-        obs_source_video_render(m_src);
-
-        if (m_toggle_label->isChecked() && m_label) {
-            auto lw = obs_source_get_width(m_label);
-            auto lh = obs_source_get_height(m_label);
-            gs_matrix_push();
-            gs_matrix_translate3f((cfg.cx - lw) / 2, cfg.cy * 0.85, 0.0f);
-            DrawBox(lw, lh, labelColor);
-            gs_matrix_translate3f(0, -(lh * 0.08), 0.0f);
-            obs_source_video_render(m_label);
-            gs_matrix_pop();
-        }
-        if (m_toggle_safe_borders->isChecked()) {
-            RenderSafeAreas(safe_margin.action, w, h);
-            RenderSafeAreas(safe_margin.graphics, w, h);
-            RenderSafeAreas(safe_margin.four_by_three, w, h);
-            RenderSafeAreas(safe_margin.left_line, w, h);
-            RenderSafeAreas(safe_margin.top_line, w, h);
-            RenderSafeAreas(safe_margin.right_line, w, h);
-        }
+    auto w = obs_source_get_width(m_src);
+    auto h = obs_source_get_height(m_src);
+    if (m_toggle_stretch->isChecked()) {
+        gs_matrix_scale3f(m_inner_width / float(w), m_inner_height / float(h), 1);
+    } else {
+        int x, y;
+        float scale;
+        GetScaleAndCenterPos(w, h, m_inner_width, m_inner_height, x, y, scale);
+        gs_matrix_translate3f(x, y, 0);
+        gs_matrix_scale3f(scale, scale, 1);
     }
+    obs_source_video_render(m_src);
+
+    if (m_toggle_label->isChecked() && m_label) {
+        auto lw = obs_source_get_width(m_label);
+        auto lh = obs_source_get_height(m_label);
+        gs_matrix_push();
+        gs_matrix_translate3f((cfg.cx - lw) / 2, cfg.cy * 0.85, 0.0f);
+        DrawBox(lw, lh, labelColor);
+        gs_matrix_translate3f(0, -(lh * 0.08), 0.0f);
+        obs_source_video_render(m_label);
+        gs_matrix_pop();
+    }
+    if (m_toggle_safe_borders->isChecked())
+        RenderSafeMargins(w, h);
 }
 
 void SourceItem::ContextMenu(QMenu& m)

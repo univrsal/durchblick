@@ -27,8 +27,11 @@ void NewItemDialog::entry_selected(int index)
     auto* Widget = Item->GetConfigWidget();
     if (Widget) {
         Widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        if (m_last_config_widget)
+        if (m_last_config_widget) {
             m_config_layout->removeWidget(m_last_config_widget);
+            m_last_config_widget->hide();
+            m_last_config_widget->deleteLater();
+        }
         m_config_layout->addWidget(Widget);
         m_last_config_widget = Widget;
     }

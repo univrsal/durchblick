@@ -17,6 +17,7 @@
  *************************************************************************/
 
 #include "registry.hpp"
+#include "preview_program_item.hpp"
 #include "scene_item.hpp"
 #include "source_item.hpp"
 #include "util.h"
@@ -41,6 +42,7 @@ void RegisterDefaults()
 {
     Registry::Register<SourceItem>(T_WIDGET_SOURCE);
     Registry::Register<SceneItem>(T_WIDGET_SCENE);
+    Registry::Register<PreviewProgramItem>(T_WIDGET_PREVIEW_PROGRAM);
 }
 
 }
