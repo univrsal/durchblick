@@ -38,4 +38,5 @@
 #define T_SELECT_TYPE                   T_("Label.Select.ItemType")
 #define T_WIDGET_SETTINGS               T_("Label.WidgetSettings")
 #define T_SOURCE_NAME                   T_("Label.SourceName")
+#define T_WIDGET_STRETCH                T_("Widget.Stretch")
 /* clang-format on */

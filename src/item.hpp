@@ -17,6 +17,7 @@
  *************************************************************************/
 
 #pragma once
+#include "util.h"
 #include <QContextMenuEvent>
 #include <QMenu>
 #include <QObject>
@@ -30,6 +31,7 @@ class LayoutItem : public QObject {
 protected:
     bool m_mouse_over { false };
     Layout* m_layout {};
+    QAction* m_toggle_stretch;
 
 public:
     struct Cell {
@@ -69,7 +71,6 @@ public:
         float border = 4;
         float border2 = border * 2;
         float cell_width, cell_height;
-        bool m_fill_cell { true }; // strech item to cell (disregards aspect ratio)
     };
 
     struct MouseData {
@@ -84,6 +85,8 @@ public:
         , m_layout(parent)
     {
         m_cell = { x, y, w, h };
+        m_toggle_stretch = new QAction(T_WIDGET_STRETCH, this);
+        m_toggle_stretch->setCheckable(true);
     }
 
     virtual ~LayoutItem()
@@ -93,7 +96,10 @@ public:
     virtual QWidget* GetConfigWidget() { return nullptr; }
     virtual void LoadConfigFromWidget(QWidget*) { }
 
-    virtual void ContextMenu(QMenu&) { }
+    virtual void ContextMenu(QMenu& m)
+    {
+        m.addAction(m_toggle_stretch);
+    }
 
     virtual void Render(Config const& cfg)
     {

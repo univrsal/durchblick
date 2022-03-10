@@ -115,7 +115,7 @@ void SourceItem::Render(const Config& cfg)
     if (m_src) {
         auto w = obs_source_get_width(m_src);
         auto h = obs_source_get_height(m_src);
-        if (cfg.m_fill_cell) {
+        if (m_toggle_stretch->isChecked()) {
             gs_matrix_scale3f(m_inner_width / float(w), m_inner_height / float(h), 1);
         } else {
             int x, y;
@@ -138,5 +138,6 @@ void SourceItem::Render(const Config& cfg)
 
 void SourceItem::ContextMenu(QMenu& m)
 {
+    LayoutItem::ContextMenu(m);
     m.addAction(m_toggle_safe_borders);
 }
