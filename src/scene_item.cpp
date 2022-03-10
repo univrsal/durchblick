@@ -17,6 +17,7 @@
  *************************************************************************/
 
 #include "scene_item.hpp"
+#include <obs/obs-frontend-api.h>
 
 QWidget* SceneItem::GetConfigWidget()
 {
@@ -37,5 +38,31 @@ void SceneItem::LoadConfigFromWidget(QWidget* w)
         auto* src = obs_get_scene_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
         SetSource(obs_scene_get_source(src));
         obs_scene_release(src);
+    }
+}
+
+static const uint32_t previewColor = 0x7700D000;
+static const uint32_t programColor = 0x77D00000;
+
+void SceneItem::Render(const Config& cfg)
+{
+    SourceItem::Render(cfg);
+
+    OBSSource previewSrc = obs_frontend_get_current_preview_scene();
+    OBSSource programSrc = obs_frontend_get_current_scene();
+    bool studioMode = obs_frontend_preview_program_mode_active();
+
+    auto color = 0;
+    if (m_src == programSrc)
+        color = programColor;
+    else if (m_src == previewSrc)
+        color = studioMode ? previewColor : programColor;
+
+    // Draw indicator, that this scene is on preview/program
+    if (color != 0) {
+        gs_matrix_push();
+        gs_matrix_translate3f(cfg.cx / 16, cfg.cy / 16, 0);
+        DrawBox(cfg.cx / 32, cfg.cx / 32, color);
+        gs_matrix_pop();
     }
 }

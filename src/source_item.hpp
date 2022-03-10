@@ -43,6 +43,7 @@ public:
 
 class SourceItem : public LayoutItem {
     Q_OBJECT
+protected:
     OBSSource m_src;
     OBSSource m_label;
     OBSSignal removedSignal;

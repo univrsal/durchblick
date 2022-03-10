@@ -53,4 +53,6 @@ public:
 
     QWidget* GetConfigWidget() override;
     void LoadConfigFromWidget(QWidget*) override;
+
+    void Render(const Config& cfg) override;
 };
