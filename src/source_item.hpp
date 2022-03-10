@@ -59,5 +59,5 @@ public:
 
     void SetSource(obs_source_t* src);
     virtual void Render(const Config& cfg) override;
-    virtual void ContextMenu(QContextMenuEvent* e, QMenu&) override;
+    virtual void ContextMenu(QMenu&) override;
 };

@@ -86,6 +86,7 @@ set(durchblick_sources
     ./src/durchblick.hpp
     ./src/durchblick.cpp
     ./src/layout.hpp
+    ./src/layout.cpp
     ./src/qt_display.hpp
     ./src/qt_display.cpp
     ./src/new_item_dialog.cpp

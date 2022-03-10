@@ -20,8 +20,8 @@
 #include "obs.hpp"
 #include <QApplication>
 #include <QIcon>
-#include <obs-frontend-api.h>
 #include <obs-module.h>
+#include <obs/obs-frontend-api.h>
 
 void Durchblick::EscapeTriggered()
 {
@@ -47,9 +47,22 @@ void Durchblick::mouseMoveEvent(QMouseEvent* e)
     m_layout.MouseMoved(e);
 }
 
+void Durchblick::mousePressEvent(QMouseEvent* e)
+{
+    QWidget::mousePressEvent(e);
+    m_layout.MousePressed(e);
+}
+
+void Durchblick::mouseReleaseEvent(QMouseEvent* e)
+{
+    QWidget::mousePressEvent(e);
+    m_layout.MouseReleased(e);
+    if (e->button() == Qt::RightButton)
+        m_layout.HandleContextMenu(nullptr);
+}
+
 void Durchblick::contextMenuEvent(QContextMenuEvent* e)
 {
-    m_layout.HandleContextMenu(e);
 }
 
 Durchblick::Durchblick(QWidget* widget)

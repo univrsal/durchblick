@@ -41,8 +41,23 @@ public:
         int bottom() const { return row + h; }
         bool Overlaps(Cell const& other) const
         {
-            return top() >= other.top() && bottom() <= other.bottom() && left() >= other.left() && right() <= other.right();
+            if (other.col >= col && other.col < right() && other.row >= row && other.row < bottom())
+                return true;
+            if (other.right() > col && other.right() <= right() && other.bottom() > row && other.bottom() <= bottom())
+                return true;
+            if (other.left() >= col && other.left() < right() && other.bottom() > row && other.bottom() < bottom())
+                return true;
+            if (other.right() > col && other.right() <= right() && other.top() >= row && other.top() < bottom())
+                return true;
+            return false;
         }
+
+        bool IsSame(Cell const& other) const
+        {
+            return col == other.col && row == other.row && w == other.w && h == other.h;
+        }
+        void clear() { col = row = w = h = 0; }
+        bool empty() const { return col == 0 && row == 0 && w == 0 && h == 0; }
     } m_cell;
     int m_left {}, m_top {}, m_right {}, m_bottom {},                 // position inside the entire display
         m_rel_left {}, m_rel_top {}, m_rel_right {}, m_rel_bottom {}, // position relative to multiview origin
@@ -61,6 +76,7 @@ public:
         int x, y;
         Qt::KeyboardModifiers modifiers;
         Qt::MouseButtons buttons;
+        QEvent::Type type;
     };
 
     LayoutItem(Layout* parent, int x, int y, int w = 1, int h = 1)
@@ -77,7 +93,7 @@ public:
     virtual QWidget* GetConfigWidget() { return nullptr; }
     virtual void LoadConfigFromWidget(QWidget*) { }
 
-    virtual void ContextMenu(QContextMenuEvent* e, QMenu&) { }
+    virtual void ContextMenu(QMenu&) { }
 
     virtual void Render(Config const& cfg)
     {
@@ -86,7 +102,8 @@ public:
 
     virtual void MouseEvent(MouseData const& e, Config const& cfg)
     {
-        m_mouse_over = IsMouseOver(e.x, e.y);
+        if (e.type == QEvent::MouseMove)
+            m_mouse_over = IsMouseOver(e.x, e.y);
     }
 
     bool IsMouseOver(int x, int y) const

@@ -32,7 +32,7 @@ public:
     CustomItem(Layout* parent, int x, int y, int w = 1, int h = 1, void* priv = nullptr);
     ~CustomItem();
 
-    virtual void ContextMenu(QContextMenuEvent* e, QMenu&) override;
+    virtual void ContextMenu(QMenu&) override;
     virtual void MouseEvent(const MouseData& e, const Config& cfg) override;
     virtual void Render(const Config& cfg) override;
 };

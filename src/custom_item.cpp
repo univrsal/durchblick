@@ -28,10 +28,10 @@ CustomItem::~CustomItem()
 {
 }
 
-void CustomItem::ContextMenu(QContextMenuEvent* e, QMenu& m)
+void CustomItem::ContextMenu(QMenu& m)
 {
     if (m_context_cb)
-        m_context_cb(this, m_private_data, e, &m);
+        m_context_cb(this, m_private_data, nullptr, &m);
 }
 
 void CustomItem::MouseEvent(const MouseData& e, const Config& cfg)

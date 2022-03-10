@@ -3,7 +3,7 @@
 #include "layout.hpp"
 #include <QApplication>
 #include <QMainWindow>
-#include <obs-frontend-api.h>
+#include <obs/obs-frontend-api.h>
 
 static obs_source_t* placeholder_source = nullptr;
 static struct {
@@ -136,7 +136,7 @@ void SourceItem::Render(const Config& cfg)
     }
 }
 
-void SourceItem::ContextMenu(QContextMenuEvent* e, QMenu& m)
+void SourceItem::ContextMenu(QMenu& m)
 {
     m.addAction(m_toggle_safe_borders);
 }
