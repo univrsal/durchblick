@@ -147,3 +147,13 @@ public:
         gs_matrix_pop();
     };
 };
+
+class PlaceholderItem : public LayoutItem {
+    Q_OBJECT
+public:
+    PlaceholderItem(Layout* parent, int x, int y, int w = 1, int h = 1)
+        : LayoutItem(parent, x, y, w, h)
+    {
+    }
+    void ContextMenu(QMenu& m) override { }
+};

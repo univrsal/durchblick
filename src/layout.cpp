@@ -25,7 +25,7 @@ Layout::Layout(QWidget* parent, int size)
 {
     for (int x = 0; x < size; x++) {
         for (int y = 0; y < size; y++) {
-            m_layout_items.emplace_back(new LayoutItem(this, x, y));
+            m_layout_items.emplace_back(new PlaceholderItem(this, x, y));
         }
     }
     m_new_widget_action = new QAction("Set widget", this);
