@@ -5,6 +5,42 @@
 #include <QMainWindow>
 #include <obs/obs-frontend-api.h>
 
+/* yoinked from obs window-projector.cpp */
+static OBSSource CreateLabel(const char* name, size_t h)
+{
+    OBSDataAutoRelease settings = obs_data_create();
+    OBSDataAutoRelease font = obs_data_create();
+
+    std::string text;
+    text += " ";
+    text += name;
+    text += " ";
+
+#if defined(_WIN32)
+    obs_data_set_string(font, "face", "Arial");
+#elif defined(__APPLE__)
+    obs_data_set_string(font, "face", "Helvetica");
+#else
+    obs_data_set_string(font, "face", "Monospace");
+#endif
+    obs_data_set_int(font, "flags", 1); // Bold text
+    obs_data_set_int(font, "size", int(h / 9.81));
+
+    obs_data_set_obj(settings, "font", font);
+    obs_data_set_string(settings, "text", text.c_str());
+    obs_data_set_bool(settings, "outline", false);
+
+#ifdef _WIN32
+    const char* text_source_id = "text_gdiplus";
+#else
+    const char* text_source_id = "text_ft2_source";
+#endif
+
+    OBSSourceAutoRelease txtSource = obs_source_create_private(text_source_id, name, settings);
+
+    return txtSource.Get();
+}
+
 static obs_source_t* placeholder_source = nullptr;
 static struct {
     gs_vertbuffer_t* action {};
@@ -54,10 +90,13 @@ void SourceItem::OBSSourceRemoved(void* data, calldata_t* params)
 SourceItem::SourceItem(Layout* parent, int x, int y, int w, int h)
     : LayoutItem(parent, x, y, w, h)
 {
-    SetSource(placeholder_source);
 
     m_toggle_safe_borders = new QAction(QCoreApplication::translate("", "Basic.Settings.General.Multiview.DrawSafeAreas"), this);
     m_toggle_safe_borders->setCheckable(true);
+    m_toggle_label = new QAction(T_SOURCE_ITEM_LABEL, this);
+    m_toggle_label->setCheckable(true);
+    SetSource(placeholder_source);
+    m_toggle_label->setChecked(true);
 }
 
 SourceItem::~SourceItem()
@@ -103,8 +142,21 @@ void SourceItem::SetSource(obs_source_t* src)
         removedSignal = OBSSignal(obs_source_get_signal_handler(m_src), "remove",
             SourceItem::OBSSourceRemoved, this);
         obs_source_inc_showing(m_src);
+        if (m_toggle_label->isChecked()) {
+            struct obs_video_info ovi;
+            obs_get_video_info(&ovi);
+
+            uint32_t h = ovi.base_height;
+            m_label = CreateLabel(obs_source_get_name(m_src), h / 1.5);
+        }
     }
 }
+
+static const uint32_t outerColor = 0xFFD0D0D0;
+static const uint32_t labelColor = 0xD91F1F1F;
+static const uint32_t backgroundColor = 0xFF000000;
+static const uint32_t previewColor = 0xFF00D000;
+static const uint32_t programColor = 0xFFD00000;
 
 void SourceItem::Render(const Config& cfg)
 {
@@ -125,6 +177,17 @@ void SourceItem::Render(const Config& cfg)
             gs_matrix_scale3f(scale, scale, 1);
         }
         obs_source_video_render(m_src);
+
+        if (m_toggle_label->isChecked() && m_label) {
+            auto lw = obs_source_get_width(m_label);
+            auto lh = obs_source_get_height(m_label);
+            gs_matrix_push();
+            gs_matrix_translate3f((cfg.cx - lw) / 2, cfg.cy * 0.85, 0.0f);
+            DrawBox(lw, lh, labelColor);
+            gs_matrix_translate3f(0, -(lh * 0.08), 0.0f);
+            obs_source_video_render(m_label);
+            gs_matrix_pop();
+        }
         if (m_toggle_safe_borders->isChecked()) {
             RenderSafeAreas(safe_margin.action, w, h);
             RenderSafeAreas(safe_margin.graphics, w, h);
@@ -140,4 +203,5 @@ void SourceItem::ContextMenu(QMenu& m)
 {
     LayoutItem::ContextMenu(m);
     m.addAction(m_toggle_safe_borders);
+    m.addAction(m_toggle_label);
 }

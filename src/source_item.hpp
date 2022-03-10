@@ -44,8 +44,10 @@ public:
 class SourceItem : public LayoutItem {
     Q_OBJECT
     OBSSource m_src;
+    OBSSource m_label;
     OBSSignal removedSignal;
     QAction* m_toggle_safe_borders;
+    QAction* m_toggle_label;
 
 public:
     static void Init();

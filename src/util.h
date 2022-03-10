@@ -39,4 +39,5 @@
 #define T_WIDGET_SETTINGS               T_("Label.WidgetSettings")
 #define T_SOURCE_NAME                   T_("Label.SourceName")
 #define T_WIDGET_STRETCH                T_("Widget.Stretch")
+#define T_SOURCE_ITEM_LABEL             T_("SourceItem.Label")
 /* clang-format on */

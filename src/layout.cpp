@@ -203,6 +203,8 @@ void Layout::Resize(int target_cx, int target_cy, int cx, int cy)
     GetScaleAndCenterPos(target_cx, target_cy, cx, cy, m_cfg.x, m_cfg.y, m_cfg.scale);
     m_cfg.cell_width = float(target_cx) / m_size;
     m_cfg.cell_height = float(target_cy) / m_size;
+    m_cfg.cx = target_cx;
+    m_cfg.cy = target_cy;
     for (auto& Item : m_layout_items)
         Item->Update(m_cfg);
 }
