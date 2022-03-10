@@ -53,12 +53,12 @@ NewItemDialog::NewItemDialog(QWidget* parent, Layout* layout)
     entry_selected(0);
     m_vboxlayout->addWidget(m_select_type);
     m_vboxlayout->addWidget(m_config_panel);
-    m_vboxlayout->addWidget(m_button_box);
     m_vboxlayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
+    m_vboxlayout->addWidget(m_button_box);
     setLayout(m_vboxlayout);
     connect(m_button_box->button(QDialogButtonBox::Ok), SIGNAL(pressed()), this, SLOT(ok_clicked()));
     connect(m_button_box->button(QDialogButtonBox::Cancel), SIGNAL(pressed()), this, SLOT(cancel_clicked()));
-    connect(m_select_type, SIGNAL(currentIndexChanged()), this, SLOT(entry_selected()));
+    connect(m_select_type, SIGNAL(currentIndexChanged(int)), this, SLOT(entry_selected(int)));
     setWindowTitle(T_SELECT_TYPE_DIALOG);
     resize(minimumSizeHint());
     // Center dialog at mouse position

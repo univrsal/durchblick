@@ -107,7 +107,7 @@ SourceItem::~SourceItem()
 
 QWidget* SourceItem::GetConfigWidget()
 {
-    auto* w = new CustomWidget();
+    auto* w = new SourceItemWidget();
     obs_enum_sources([](void* d, obs_source_t* src) -> bool {
         auto flags = obs_source_get_output_flags(src);
         if (flags & OBS_OUTPUT_VIDEO) {
@@ -122,7 +122,7 @@ QWidget* SourceItem::GetConfigWidget()
 
 void SourceItem::LoadConfigFromWidget(QWidget* w)
 {
-    auto* custom = dynamic_cast<CustomWidget*>(w);
+    auto* custom = dynamic_cast<SourceItemWidget*>(w);
     if (custom) {
         auto* src = obs_get_source_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
         SetSource(src);

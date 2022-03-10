@@ -94,6 +94,8 @@ set(durchblick_sources
     ./src/registry.cpp
     ./src/registry.hpp
     ./src/item.hpp
+    ./src/scene_item.cpp
+    ./src/scene_item.hpp
     ./src/source_item.cpp
     ./src/source_item.hpp
     ./src/custom_item.cpp

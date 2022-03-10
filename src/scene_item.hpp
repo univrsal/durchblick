@@ -17,18 +17,19 @@
  *************************************************************************/
 
 #pragma once
-#include "item.hpp"
+
+#include "source_item.hpp"
 #include "util.h"
 #include <QComboBox>
 #include <QFormLayout>
 #include <QVBoxLayout>
 #include <obs.hpp>
 
-class SourceItemWidget : public QWidget {
+class SceneItemWidget : public QWidget {
     Q_OBJECT
 public:
     QComboBox* m_combo_box;
-    SourceItemWidget(QWidget* parent = nullptr)
+    SceneItemWidget(QWidget* parent = nullptr)
         : QWidget(parent)
     {
         auto* l = new QFormLayout();
@@ -36,30 +37,20 @@ public:
         l->setContentsMargins(0, 0, 0, 0);
         m_combo_box = new QComboBox();
         m_combo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-        l->addRow(T_SOURCE_NAME, m_combo_box);
+        l->addRow(T_SCENE_NAME, m_combo_box);
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     }
 };
 
-class SourceItem : public LayoutItem {
+class SceneItem : public SourceItem {
     Q_OBJECT
-    OBSSource m_src;
-    OBSSource m_label;
-    OBSSignal removedSignal;
-    QAction* m_toggle_safe_borders;
-    QAction* m_toggle_label;
-
 public:
-    static void Init();
-    static void Deinit();
-    static void OBSSourceRemoved(void* data, calldata_t* params);
-    SourceItem(Layout* parent, int x, int y, int w = 1, int h = 1);
-    ~SourceItem();
+    SceneItem(Layout* parent, int x, int y, int w = 1, int h = 1)
+        : SourceItem(parent, x, y, w, h)
+    {
+    }
+    ~SceneItem() = default;
 
     QWidget* GetConfigWidget() override;
     void LoadConfigFromWidget(QWidget*) override;
-
-    void SetSource(obs_source_t* src);
-    virtual void Render(const Config& cfg) override;
-    virtual void ContextMenu(QMenu&) override;
 };

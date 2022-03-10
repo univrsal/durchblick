@@ -16,31 +16,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 
-#include "registry.hpp"
 #include "scene_item.hpp"
-#include "source_item.hpp"
-#include "util.h"
 
-namespace Registry {
-
-QList<ItemRegistry::Entry> ItemRegistry::Entries;
-QList<std::function<void()>> ItemRegistry::DeinitCallbacks;
-
-void ItemRegistry::Register(const Constructor& c, const char* n, void* p)
+QWidget* SceneItem::GetConfigWidget()
 {
-    Entries.append(Entry { c, p, n });
+    auto* w = new SceneItemWidget();
+    obs_enum_scenes([](void* d, obs_source_t* src) -> bool {
+        auto* cb = static_cast<QComboBox*>(d);
+        cb->addItem(utf8_to_qt(obs_source_get_name(src)));
+        return true;
+    },
+        w->m_combo_box);
+    return w;
 }
 
-void Free()
+void SceneItem::LoadConfigFromWidget(QWidget* w)
 {
-    for (auto& Callback : ItemRegistry::DeinitCallbacks)
-        Callback();
-}
-
-void RegisterDefaults()
-{
-    Registry::Register<SourceItem>(T_WIDGET_SOURCE);
-    Registry::Register<SceneItem>(T_WIDGET_SCENE);
-}
-
+    auto* custom = dynamic_cast<SceneItemWidget*>(w);
+    if (custom) {
+        auto* src = obs_get_scene_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
+        SetSource(obs_scene_get_source(src));
+        obs_scene_release(src);
+    }
 }
