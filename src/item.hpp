@@ -60,7 +60,8 @@ public:
         }
         void clear() { col = row = w = h = 0; }
         bool empty() const { return col == 0 && row == 0 && w == 0 && h == 0; }
-    } m_cell;
+    } m_cell, m_hovered_cell; // m_cell is the actual size which can span multiple cells, hovered cell is the exact subregion which the mouse is over
+
     int m_left {}, m_top {}, m_right {}, m_bottom {},                 // position inside the entire display
         m_rel_left {}, m_rel_top {}, m_rel_right {}, m_rel_bottom {}, // position relative to multiview origin
         m_width {}, m_height {}, m_inner_width {}, m_inner_height {};
@@ -111,6 +112,12 @@ public:
     {
         if (e.type == QEvent::MouseMove)
             m_mouse_over = IsMouseOver(e.x, e.y);
+        if (m_mouse_over) {
+            int x = e.x / cfg.cell_width;
+            int y = e.y / cfg.cell_height;
+            m_hovered_cell.col = x;
+            m_hovered_cell.row = y;
+        }
     }
 
     bool IsMouseOver(int x, int y) const
@@ -119,6 +126,11 @@ public:
     }
 
     bool Hovered() const { return m_mouse_over; }
+
+    Cell const& HoveredCell()
+    {
+        return m_hovered_cell;
+    }
 
     virtual void Update(Config const& cfg)
     {

@@ -47,7 +47,7 @@ void Layout::MouseMoved(QMouseEvent* e)
     for (auto& Item : m_layout_items) {
         Item->MouseEvent(d, m_cfg);
         if (Item->Hovered()) {
-            pos = Item->m_cell;
+            pos = Item->m_hovered_cell;
             anything_hovered = true;
         }
     }
@@ -168,12 +168,6 @@ void Layout::Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy)
         0.0f, target_cy);
     LayoutItem::DrawBox(target_cx, target_cy, 0xFFD0D0D0);
 
-    if (m_dragging) {
-        int tx, ty, cx, cy;
-        GetSelection(tx, ty, cx, cy);
-        LayoutItem::DrawBox(tx * m_cfg.cell_width, ty * m_cfg.cell_height, cx * m_cfg.cell_width, cy * m_cfg.cell_height, 0xFF009999);
-    }
-
     m_layout_mutex.lock();
     for (auto& Item : m_layout_items) {
         // Change region to item dimensions
@@ -181,8 +175,9 @@ void Layout::Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy)
         gs_matrix_translate3f(Item->m_rel_left, Item->m_rel_top, 0);
 
         SetRegion(Item->m_rel_left, Item->m_rel_top, Item->m_width, Item->m_height);
+
         if (Item->Hovered())
-            LayoutItem::DrawBox(0, 0, m_cfg.cell_width * Item->m_width, m_cfg.cell_height * Item->m_height, m_dragging ? 0xFF009999 : 0xFF004400);
+            LayoutItem::DrawBox(0, 0, m_cfg.cell_width * Item->m_width, m_cfg.cell_height * Item->m_height, 0xFF004400);
         endRegion();
         gs_matrix_pop();
 
@@ -192,6 +187,23 @@ void Layout::Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy)
         Item->Render(m_cfg);
         endRegion();
         gs_matrix_pop();
+    }
+    if (m_dragging) {
+        int tx, ty, cx, cy;
+        GetSelection(tx, ty, cx, cy);
+        // Draw Selection rectangle
+
+        // Top
+        LayoutItem::DrawBox(tx * m_cfg.cell_width, ty * m_cfg.cell_height - 1, cx * m_cfg.cell_width - 1, m_cfg.border + 1, 0xFF009999);
+
+        // Bottom
+        LayoutItem::DrawBox(tx * m_cfg.cell_width, (ty + cy) * m_cfg.cell_height - m_cfg.border - 2, cx * m_cfg.cell_width - 1, m_cfg.border + 2, 0xFF009999);
+
+        // Left
+        LayoutItem::DrawBox(tx * m_cfg.cell_width, ty * m_cfg.cell_height, m_cfg.border, cy * m_cfg.cell_height - 1, 0xFF009999);
+
+        // Right
+        LayoutItem::DrawBox((tx + cx) * m_cfg.cell_width - m_cfg.border - 2, ty * m_cfg.cell_height, m_cfg.border + 1, cy * m_cfg.cell_height - 1, 0xFF009999);
     }
     m_layout_mutex.unlock();
     endRegion();
