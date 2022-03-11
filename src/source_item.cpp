@@ -191,7 +191,7 @@ void SourceItem::Render(const Config& cfg)
         auto lw = obs_source_get_width(m_label);
         auto lh = obs_source_get_height(m_label);
         gs_matrix_push();
-        gs_matrix_translate3f((cfg.cx - lw) / 2, cfg.cy * 0.85, 0.0f);
+        gs_matrix_translate3f((cfg.cx - lw) / 2, h * 0.85, 0.0f);
         DrawBox(lw, lh, labelColor);
         gs_matrix_translate3f(0, -(lh * 0.08), 0.0f);
         obs_source_video_render(m_label);
