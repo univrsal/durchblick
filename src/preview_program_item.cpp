@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 
-#pragma once
 #include "preview_program_item.hpp"
 #include "layout.hpp"
 #include <QApplication>
