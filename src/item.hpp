@@ -67,8 +67,9 @@ public:
         m_width {}, m_height {}, m_inner_width {}, m_inner_height {};
 
     struct Config {
-        int x {}, y {};   // Origin of multiview
-        int cx {}, cy {}; // Base canvas size
+        int x {}, y {};                        // Origin of multiview
+        int cx {}, cy {};                      // Multiview base size
+        int canvas_width {}, canvas_height {}; // Base canvas size
         float scale {};
         float border = 4;
         float border2 = border * 2;

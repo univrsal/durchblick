@@ -18,13 +18,14 @@
 
 #include "layout.hpp"
 
-Layout::Layout(QWidget* parent, int size)
+Layout::Layout(QWidget* parent, int cols, int rows)
     : QObject(parent)
-    , m_size(size)
+    , m_rows(rows)
+    , m_cols(cols)
     , m_parent_widget(parent)
 {
-    for (int x = 0; x < size; x++) {
-        for (int y = 0; y < size; y++) {
+    for (int x = 0; x < cols; x++) {
+        for (int y = 0; y < rows; y++) {
             m_layout_items.emplace_back(new PlaceholderItem(this, x, y));
         }
     }
@@ -164,9 +165,9 @@ void Layout::SetRegion(float bx, float by, float cx, float cy)
 void Layout::Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy)
 {
     // Define the whole usable region for the multiview
-    startRegion(m_cfg.x, m_cfg.y, target_cx * m_cfg.scale, target_cy * m_cfg.scale, 0.0f, target_cx,
-        0.0f, target_cy);
-    LayoutItem::DrawBox(target_cx, target_cy, 0xFFD0D0D0);
+    startRegion(m_cfg.x, m_cfg.y, m_cfg.cx * m_cfg.scale, m_cfg.cy * m_cfg.scale, 0.0f, m_cfg.cx,
+        0.0f, m_cfg.cy);
+    LayoutItem::DrawBox(m_cfg.cx, m_cfg.cy, 0xFFD0D0D0);
 
     m_layout_mutex.lock();
     for (auto& Item : m_layout_items) {
@@ -212,11 +213,22 @@ void Layout::Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy)
 void Layout::Resize(int target_cx, int target_cy, int cx, int cy)
 {
     // We calculate most layout values only on resize here
-    GetScaleAndCenterPos(target_cx, target_cy, cx, cy, m_cfg.x, m_cfg.y, m_cfg.scale);
-    m_cfg.cell_width = float(target_cx) / m_size;
-    m_cfg.cell_height = float(target_cy) / m_size;
+    m_cfg.canvas_width = target_cx;
+    m_cfg.canvas_height = target_cy;
+
+    float ar = float(target_cx) / float(target_cy);
+
+    // TODO: do height first and then calculate target_cx based on that?
+    m_cfg.cell_width = float(target_cx) / m_cols;
+    m_cfg.cell_height = m_cfg.cell_width / ar;
+
+    target_cy = m_cfg.cell_height * m_rows;
+
     m_cfg.cx = target_cx;
     m_cfg.cy = target_cy;
+
+    GetScaleAndCenterPos(target_cx, target_cy, cx, cy, m_cfg.x, m_cfg.y, m_cfg.scale);
+
     for (auto& Item : m_layout_items)
         Item->Update(m_cfg);
 }

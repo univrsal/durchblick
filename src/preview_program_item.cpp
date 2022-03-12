@@ -55,8 +55,8 @@ void PreviewProgramItem::Render(const Config& cfg)
 
     if (!m_src)
         return;
-    auto w = cfg.cx;
-    auto h = cfg.cy;
+    auto w = cfg.canvas_width;
+    auto h = cfg.canvas_height;
     if (m_toggle_stretch->isChecked()) {
         gs_matrix_scale3f(m_inner_width / float(w), m_inner_height / float(h), 1);
     } else {
@@ -78,7 +78,7 @@ void PreviewProgramItem::Render(const Config& cfg)
         auto lw = obs_source_get_width(m_label);
         auto lh = obs_source_get_height(m_label);
         gs_matrix_push();
-        gs_matrix_translate3f((cfg.cx - lw) / 2, cfg.cy * 0.85, 0.0f);
+        gs_matrix_translate3f((cfg.canvas_width - lw) / 2, cfg.canvas_height * 0.85, 0.0f);
         DrawBox(lw, lh, labelColor);
         gs_matrix_translate3f(0, -(lh * 0.08), 0.0f);
         obs_source_video_render(m_label);

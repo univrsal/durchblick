@@ -69,7 +69,7 @@ inline void GetScaleAndCenterPos(int baseCX, int baseCY, int windowCX,
 }
 
 class Layout : public QObject {
-    int m_size;
+    int m_cols { 4 }, m_rows { 4 };
     std::vector<std::unique_ptr<LayoutItem>> m_layout_items;
     LayoutItem::Config m_cfg;
     QWidget* m_parent_widget {};
@@ -95,7 +95,7 @@ private slots:
     }
 
 public:
-    Layout(QWidget* parent, int size = 4);
+    Layout(QWidget* parent, int cols = 4, int rows = 4);
 
     void MouseMoved(QMouseEvent* e);
     void MousePressed(QMouseEvent* e);
