@@ -13,7 +13,7 @@
 
 #if !defined(_WIN32) && !defined(__APPLE__)
 #    include <obs-nix-platform.h>
-#    include <qpa/qplatformnativeinterface.h>
+//#    include <qpa/qplatformnativeinterface.h>
 #endif
 
 static inline QSize GetPixelSize(QWidget* widget)
