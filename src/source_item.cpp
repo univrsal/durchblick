@@ -3,7 +3,11 @@
 #include "layout.hpp"
 #include <QApplication>
 #include <QMainWindow>
+#if _WIN32
+#include <obs-frontend-api.h>
+#else
 #include <obs/obs-frontend-api.h>
+#endif
 
 /* yoinked from obs window-projector.cpp */
 OBSSource SourceItem::CreateLabel(const char* name, size_t h)

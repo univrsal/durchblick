@@ -26,7 +26,11 @@
 #include <QMainWindow>
 #include <QVBoxLayout>
 #include <obs-module.h>
+#if _WIN32
+#include <obs-frontend-api.h>
+#else
 #include <obs/obs-frontend-api.h>
+#endif
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("durchblick", "en-US")
