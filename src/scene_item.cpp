@@ -17,7 +17,11 @@
  *************************************************************************/
 
 #include "scene_item.hpp"
+#if _WIN32
+#include <obs-frontend-api.h>
+#else
 #include <obs/obs-frontend-api.h>
+#endif
 
 QWidget* SceneItem::GetConfigWidget()
 {
