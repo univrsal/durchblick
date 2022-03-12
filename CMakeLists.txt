@@ -60,7 +60,7 @@ if (UNIX)
     include_directories(${Qt5Gui_PRIVATE_INCLUDE_DIRS})
     set(durchblick_platform_deps
         Qt5::Gui
-        Qt5::GuiPrivate)
+        )
 endif()
 
 if (APPLE)
