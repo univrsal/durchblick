@@ -121,7 +121,7 @@ void Layout::HandleContextMenu(QContextMenuEvent*)
 void Layout::FreeSpace(const LayoutItem::Cell& c)
 {
     auto it = std::remove_if(m_layout_items.begin(), m_layout_items.end(), [c](std::unique_ptr<LayoutItem> const& item) {
-        auto result = !item || c.Overlaps(item->m_cell) || item->m_cell.Overlaps(c);
+        auto result = !item || c.Overlaps(item->m_cell);
         return result;
     });
     m_layout_items.erase(it, m_layout_items.end());
@@ -146,6 +146,32 @@ void Layout::AddWidget(const Registry::ItemRegistry::Entry& entry, QWidget* cust
     Item->LoadConfigFromWidget(custom_widget);
     Item->Update(m_cfg);
     m_layout_items.emplace_back(Item);
+
+    // Make sure that every cell has a placeholder
+    std::vector<LayoutItem::Cell> empty;
+    for (int x = 0; x < m_cols; x++) {
+        for (int y = 0; y < m_rows; y++) {
+            LayoutItem::Cell c;
+            c.col = x;
+            c.row = y;
+            bool isFree = true;
+            for (auto const& item : m_layout_items) {
+                if (c.Overlaps(item->m_cell)) {
+                    isFree = false;
+                    break;
+                }
+            }
+
+            if (isFree)
+                empty.emplace_back(c);
+        }
+    }
+
+    for (auto const& c : empty) {
+        auto* Item = new PlaceholderItem(this, c.col, c.row);
+        Item->Update(m_cfg);
+        m_layout_items.emplace_back(Item);
+    }
 }
 
 void Layout::SetRegion(float bx, float by, float cx, float cy)

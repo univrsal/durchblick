@@ -35,13 +35,8 @@ protected:
 
 public:
     struct Cell {
-        int col {}, row {}, w { 1 }, h { 1 };
-
-        int left() const { return col; }
-        int right() const { return col + w; }
-        int top() const { return row; }
-        int bottom() const { return row + h; }
-        bool Overlaps(Cell const& other) const
+    private:
+        bool Overlapcheck(Cell const& other) const
         {
             if (other.col >= col && other.col < right() && other.row >= row && other.row < bottom())
                 return true;
@@ -52,6 +47,19 @@ public:
             if (other.right() > col && other.right() <= right() && other.top() >= row && other.top() < bottom())
                 return true;
             return false;
+        }
+
+    public:
+        int col {}, row {}, w { 1 }, h { 1 };
+
+        int left() const { return col; }
+        int right() const { return col + w; }
+        int top() const { return row; }
+        int bottom() const { return row + h; }
+
+        bool Overlaps(Cell const& other) const
+        {
+            return Overlapcheck(other) || other.Overlapcheck(*this);
         }
 
         bool IsSame(Cell const& other) const
