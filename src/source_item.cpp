@@ -4,9 +4,9 @@
 #include <QApplication>
 #include <QMainWindow>
 #if _WIN32
-#include <obs-frontend-api.h>
+#    include <obs-frontend-api.h>
 #else
-#include <obs/obs-frontend-api.h>
+#    include <obs/obs-frontend-api.h>
 #endif
 
 /* yoinked from obs window-projector.cpp */
@@ -43,6 +43,41 @@ OBSSource SourceItem::CreateLabel(const char* name, size_t h)
     OBSSourceAutoRelease txtSource = obs_source_create_private(text_source_id, name, settings);
 
     return txtSource.Get();
+}
+
+static void VolumeCallback(
+    void* param, const float magnitude[MAX_AUDIO_CHANNELS],
+    const float peak[MAX_AUDIO_CHANNELS],
+    const float input_peak[MAX_AUDIO_CHANNELS])
+{
+    static_cast<SourceItem*>(param)->SetVolumePeak(input_peak);
+}
+
+void SourceItem::VolumeToggled(bool state)
+{
+    if (state) {
+        m_vol_meter = obs_volmeter_create(OBS_FADER_LOG);
+        obs_volmeter_add_callback(m_vol_meter, VolumeCallback, this);
+        if (!obs_volmeter_attach_source(m_vol_meter, m_src)) {
+            berr("Attaching volume meter to '%s' failed.", obs_source_get_name(m_src));
+        }
+        m_num_channels = obs_volmeter_get_nr_channels(m_vol_meter);
+        auto filename = obs_module_file("volume.effect");
+        obs_enter_graphics();
+        m_volume_shader = gs_effect_create_from_file(filename, nullptr);
+        obs_leave_graphics();
+        bfree(filename);
+
+        if (!m_volume_shader) {
+            berr("Failed to load volume shader");
+            m_toggle_volume->setChecked(false);
+        }
+    } else {
+        obs_volmeter_destroy(m_vol_meter);
+        gs_effect_destroy(m_volume_shader);
+        m_vol_meter = nullptr;
+        m_volume_shader = nullptr;
+    }
 }
 
 static obs_source_t* placeholder_source = nullptr;
@@ -109,14 +144,19 @@ SourceItem::SourceItem(Layout* parent, int x, int y, int w, int h)
     m_toggle_safe_borders->setCheckable(true);
     m_toggle_label = new QAction(T_SOURCE_ITEM_LABEL, this);
     m_toggle_label->setCheckable(true);
+    m_toggle_volume = new QAction(T_SOURCE_ITEM_VOLUME, this);
+    m_toggle_volume->setCheckable(true);
     SetSource(placeholder_source);
     m_toggle_label->setChecked(true);
+    connect(m_toggle_volume, SIGNAL(toggled(bool)), this, SLOT(VolumeToggled(bool)));
 }
 
 SourceItem::~SourceItem()
 {
     if (m_src)
         obs_source_dec_showing(m_src);
+    obs_volmeter_destroy(m_vol_meter);
+    gs_effect_destroy(m_volume_shader);
 }
 
 QWidget* SourceItem::GetConfigWidget()
@@ -150,6 +190,9 @@ void SourceItem::SetSource(obs_source_t* src)
         return;
     if (m_src)
         obs_source_dec_showing(m_src);
+
+    if (m_vol_meter)
+        obs_volmeter_attach_source(m_vol_meter, src);
 
     m_src = src;
     if (m_src) {
@@ -191,6 +234,26 @@ void SourceItem::Render(const Config& cfg)
     }
     obs_source_video_render(m_src);
 
+    if (m_toggle_volume->isChecked()) {
+        auto* vol = gs_effect_get_param_by_name(m_volume_shader, "volume");
+        gs_technique_t* tech = gs_effect_get_technique(m_volume_shader, "Solid");
+        m_volume_mutex.lock();
+        auto f = obs_db_to_mul(m_volume_peak[0]);
+        gs_effect_set_float(vol, f);
+        m_volume_mutex.unlock();
+
+        gs_matrix_push();
+        gs_technique_begin(tech);
+        gs_technique_begin_pass(tech, 0);
+
+        gs_matrix_translate3f(30, 30, 0);
+        gs_draw_sprite(0, 0, 10, 90);
+
+        gs_technique_end_pass(tech);
+        gs_technique_end(tech);
+        gs_matrix_pop();
+    }
+
     if (m_toggle_label->isChecked() && m_label) {
         auto lw = obs_source_get_width(m_label);
         auto lh = obs_source_get_height(m_label);
@@ -210,4 +273,5 @@ void SourceItem::ContextMenu(QMenu& m)
     LayoutItem::ContextMenu(m);
     m.addAction(m_toggle_safe_borders);
     m.addAction(m_toggle_label);
+    m.addAction(m_toggle_volume);
 }

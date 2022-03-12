@@ -22,9 +22,9 @@
 #include <QIcon>
 #include <obs-module.h>
 #if _WIN32
-#include <obs-frontend-api.h>
+#    include <obs-frontend-api.h>
 #else
-#include <obs/obs-frontend-api.h>
+#    include <obs/obs-frontend-api.h>
 #endif
 
 void Durchblick::EscapeTriggered()

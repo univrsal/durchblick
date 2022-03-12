@@ -1,0 +1,40 @@
+uniform float4x4 ViewProj;
+uniform float volume;
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv : TEXCOORD0;
+};
+
+VertData VSVolume(VertData vd)
+{
+	VertData vert_out;
+	vert_out.pos = mul(float4(vd.pos.xyz, 1.0), ViewProj);
+	vert_out.uv = vd.uv;
+	return vert_out;
+}
+
+float4 PSVolume(VertData vd) : TARGET
+{
+    const float green_area = 0.6659090909090909;
+    const float yellow_area = green_area + 0.18409090909090908;
+    const float red_area = 0.15;
+
+    bool active = vd.uv.y <= volume;
+
+    if (vd.uv.y <= green_area) {
+        return active ? float4(.298, 1.0, .298, 1.0) : float4(.149, .498, .149, 1.0);
+    } else if (vd.uv.y <= yellow_area) {
+        return active ? float4(1.0, 1.0, .298, 1.0) : float4(.498, .498, .149, 1.0);
+    }
+    return active ? float4(1.0, .298, .298, 1.0) : float4(.498, .149, .149, 1.0);
+}
+
+technique Solid
+{
+	pass
+	{
+		vertex_shader = VSVolume(vd);
+		pixel_shader  = PSVolume(vd);
+	}
+}

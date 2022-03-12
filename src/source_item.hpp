@@ -22,6 +22,7 @@
 #include <QComboBox>
 #include <QFormLayout>
 #include <QVBoxLayout>
+#include <mutex>
 #include <obs.hpp>
 
 class SourceItemWidget : public QWidget {
@@ -49,9 +50,19 @@ protected:
     OBSSignal removedSignal;
     QAction* m_toggle_safe_borders;
     QAction* m_toggle_label;
+    QAction* m_toggle_volume;
+    obs_volmeter_t* m_vol_meter {};
+
+    std::mutex m_volume_mutex;
+    float m_volume_peak[MAX_AUDIO_CHANNELS];
+    int m_num_channels {};
+    gs_effect_t* m_volume_shader {};
 
     void RenderSafeMargins(int w, int h);
     static OBSSource CreateLabel(const char* name, size_t h);
+public slots:
+
+    void VolumeToggled(bool);
 
 public:
     static void Init();
@@ -64,6 +75,12 @@ public:
     void LoadConfigFromWidget(QWidget*) override;
 
     void SetSource(obs_source_t* src);
+    void SetVolumePeak(float const peak[MAX_AUDIO_CHANNELS])
+    {
+        std::lock_guard<std::mutex> lock(m_volume_mutex);
+        memcpy(m_volume_peak, peak, sizeof(float) * MAX_AUDIO_CHANNELS);
+    }
+
     virtual void Render(const Config& cfg) override;
     virtual void ContextMenu(QMenu&) override;
 };
