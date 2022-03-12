@@ -35,13 +35,12 @@ Layout::Layout(QWidget* parent, int cols, int rows)
 
 void Layout::MouseMoved(QMouseEvent* e)
 {
-    LayoutItem::MouseData d {
-        .x = int((e->x() - m_cfg.x) / m_cfg.scale),
-        .y = int((e->y() - m_cfg.y) / m_cfg.scale),
-        .modifiers = e->modifiers(),
-        .buttons = e->buttons(),
-        .type = e->type()
-    };
+    LayoutItem::MouseData d(
+        int((e->x() - m_cfg.x) / m_cfg.scale),
+        int((e->y() - m_cfg.y) / m_cfg.scale),
+        e->modifiers(),
+        e->buttons(),
+        e->type());
 
     LayoutItem::Cell pos;
     bool anything_hovered = false;

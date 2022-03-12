@@ -89,6 +89,14 @@ public:
         Qt::KeyboardModifiers modifiers;
         Qt::MouseButtons buttons;
         QEvent::Type type;
+        MouseData(int _x, int _y, Qt::KeyboardModifiers const& m, Qt::MouseButtons const& mb, QEvent::Type const& t)
+            : x(_x)
+            , y(_y)
+            , modifiers(m)
+            , buttons(mb)
+            , type(t)
+        {
+        }
     };
 
     LayoutItem(Layout* parent, int x, int y, int w = 1, int h = 1)
