@@ -18,6 +18,19 @@
 
 #include "layout.hpp"
 #include "durchblick.hpp"
+#include "preview_program_item.hpp"
+#include "scene_item.hpp"
+#include "util.h"
+#include "util/util.hpp"
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#if _WIN32
+#    include <obs-frontend-api.h>
+#else
+#    include <obs/obs-frontend-api.h>
+#endif
 
 void Layout::FillEmptyCells()
 {
@@ -54,11 +67,7 @@ Layout::Layout(QWidget* parent, int cols, int rows)
     , m_cols(cols)
     , m_parent_widget(parent)
 {
-    for (int x = 0; x < cols; x++) {
-        for (int y = 0; y < rows; y++) {
-            m_layout_items.emplace_back(new PlaceholderItem(this, x, y));
-        }
-    }
+    Load();
     m_new_widget_action = new QAction(T_MENU_SET_WIDGET, this);
     m_layout_config = new QAction(T_MENU_LAYOUT_CONFIG, this);
     connect(m_new_widget_action, SIGNAL(triggered()), this, SLOT(ShowSetWidgetDialog()));
@@ -302,4 +311,45 @@ void Layout::RefreshGrid()
     for (auto& Item : m_layout_items)
         Item->Update(m_cfg);
     m_layout_mutex.unlock();
+}
+
+void Layout::Load()
+{
+    BPtr<char> path = obs_module_config_path("layout.json");
+    QFile f(utf8_to_qt(path));
+
+    if (f.exists()) {
+
+    } else {
+        binfo("'%s' does not exist, creating default layout", path.Get());
+        // Create a default layout that looks like the normal multiview
+        m_layout_mutex.lock();
+        auto* preview = new PreviewProgramItem(this, 0, 0, 2, 2);
+        auto* program = new PreviewProgramItem(this, 2, 0, 2, 2);
+        program->SetIsProgram(true);
+        program->SetLabel(true);
+        program->CreateLabel();
+        preview->SetSafeBorders(true);
+        preview->SetLabel(true);
+        preview->CreateLabel();
+        m_layout_items.emplace_back(preview);
+        m_layout_items.emplace_back(program);
+
+        struct obs_frontend_source_list scenes = {};
+
+        obs_frontend_get_scenes(&scenes);
+        for (int i = 0; i < 8; i++) {
+            if (i >= scenes.sources.num) {
+                m_layout_items.emplace_back(new PlaceholderItem(this, i % 4, i > 3 ? 3 : 2));
+            } else {
+                auto* item = new SceneItem(this, i % 4, i > 3 ? 3 : 2);
+                item->SetLabel(true);
+                item->SetSource(scenes.sources.array[i]);
+                m_layout_items.emplace_back(item);
+            }
+        }
+        obs_frontend_source_list_free(&scenes);
+
+        m_layout_mutex.unlock();
+    }
 }

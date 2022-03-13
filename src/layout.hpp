@@ -117,5 +117,8 @@ public:
     void Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy);
     void Resize(int target_cx, int target_cy, int cx, int cy);
     void RefreshGrid();
+
+    void Load();
+    void Save();
     LayoutItem::Config const& Config() const { return m_cfg; }
 };

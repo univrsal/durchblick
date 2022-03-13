@@ -19,6 +19,7 @@
 #pragma once
 #include <obs-module.h>
 
+#define UTIL_MIN(a, b) ((a) > (b) ? (b) : (a))
 #define write_log(log_level, format, ...) blog(log_level, "[durchblick] " format, ##__VA_ARGS__)
 
 #define bdebug(format, ...) write_log(LOG_DEBUG, format, ##__VA_ARGS__)

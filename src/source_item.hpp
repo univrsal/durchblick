@@ -81,6 +81,21 @@ public:
         memcpy(m_volume_peak, peak, sizeof(float) * MAX_AUDIO_CHANNELS);
     }
 
+    void SetLabel(bool b)
+    {
+        m_toggle_label->setChecked(b);
+    }
+
+    void SetVolume(bool b)
+    {
+        m_toggle_volume->setChecked(b);
+    }
+
+    void SetSafeBorders(bool b)
+    {
+        m_toggle_safe_borders->setChecked(b);
+    }
+
     virtual void Render(const Config& cfg) override;
     virtual void ContextMenu(QMenu&) override;
 };

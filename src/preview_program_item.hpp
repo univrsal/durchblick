@@ -55,9 +55,9 @@ public:
     }
 
     ~PreviewProgramItem() = default;
-
+    void SetIsProgram(bool b) { m_program = b; }
     QWidget* GetConfigWidget() override;
     void LoadConfigFromWidget(QWidget*) override;
-
+    void CreateLabel();
     void Render(const Config& cfg) override;
 };

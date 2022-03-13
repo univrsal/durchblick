@@ -35,18 +35,22 @@ void PreviewProgramItem::LoadConfigFromWidget(QWidget* w)
     auto* custom = dynamic_cast<PreviewProgramItemWidget*>(w);
     if (custom)
         m_program = !custom->m_preview->isChecked();
+
+    if (!m_program)
+        m_toggle_safe_borders->setChecked(true); // Preview shows safe borders by default
+    CreateLabel();
+}
+
+void PreviewProgramItem::CreateLabel()
+{
     struct obs_video_info ovi;
     obs_get_video_info(&ovi);
-
-    QString name = "";
-    if (m_program) {
-        name = QApplication::translate("", T_PROGRAM);
-    } else {
-        name = QApplication::translate("", T_PREVIEW);
-        m_toggle_safe_borders->setChecked(true); // Preview shows safe borders by default
-    }
-
     uint32_t h = ovi.base_height;
+    QString name = "";
+    if (m_program)
+        name = QApplication::translate("", T_PROGRAM);
+    else
+        name = QApplication::translate("", T_PREVIEW);
     m_label = SourceItem::CreateLabel(qt_to_utf8(name), h / 1.5);
 }
 
