@@ -56,12 +56,12 @@ public:
 
     static void RenderLayout(void* data, uint32_t cx, uint32_t cy);
 
-    int GetMonitor();
-    void RenameProjector(QString oldName, QString newName);
-    void SetHideCursor();
+    //    int GetMonitor();
+    //    void RenameProjector(QString oldName, QString newName);
+    //    void SetHideCursor();
 
-    bool IsAlwaysOnTop() const;
-    bool IsAlwaysOnTopOverridden() const;
-    void SetIsAlwaysOnTop(bool isAlwaysOnTop, bool isOverridden);
+    //    bool IsAlwaysOnTop() const;
+    //    bool IsAlwaysOnTopOverridden() const;
+    //    void SetIsAlwaysOnTop(bool isAlwaysOnTop, bool isOverridden);
     void Update();
 };

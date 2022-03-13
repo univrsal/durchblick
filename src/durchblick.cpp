@@ -33,11 +33,11 @@ void Durchblick::EscapeTriggered()
 
 void Durchblick::ScreenRemoved(QScreen* screen_)
 {
-    if (GetMonitor() < 0 || !m_screen)
-        return;
+    //    if (GetMonitor() < 0 || !m_screen)
+    //        return;
 
-    if (m_screen == screen_)
-        EscapeTriggered();
+    //    if (m_screen == screen_)
+    //        EscapeTriggered();
 }
 
 void Durchblick::Resize(int cx, int cy)
