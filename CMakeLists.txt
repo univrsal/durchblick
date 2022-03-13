@@ -91,6 +91,8 @@ set(durchblick_sources
     ./src/qt_display.cpp
     ./src/new_item_dialog.cpp
     ./src/new_item_dialog.hpp
+    ./src/layout_config_dialog.cpp
+    ./src/layout_config_dialog.hpp
     ./src/registry.cpp
     ./src/registry.hpp
     ./src/item.hpp

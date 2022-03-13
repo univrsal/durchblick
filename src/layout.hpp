@@ -19,6 +19,7 @@
 #pragma once
 
 #include "item.hpp"
+#include "layout_config_dialog.hpp"
 #include "new_item_dialog.hpp"
 #include "registry.hpp"
 #include "util.h"
@@ -69,11 +70,12 @@ inline void GetScaleAndCenterPos(int baseCX, int baseCY, int windowCX,
 }
 
 class Layout : public QObject {
+    friend class LayoutConfigDialog;
     int m_cols { 4 }, m_rows { 4 };
     std::vector<std::unique_ptr<LayoutItem>> m_layout_items;
     LayoutItem::Config m_cfg;
     QWidget* m_parent_widget {};
-    QAction* m_new_widget_action {};
+    QAction *m_new_widget_action {}, *m_layout_config;
     LayoutItem::Cell m_hovered_cell {}, m_selection_start {}, m_selection_end {};
     bool m_dragging {};
     std::mutex m_layout_mutex;
@@ -86,11 +88,19 @@ class Layout : public QObject {
         cx = qAbs(qMax(m_selection_start.right(), m_selection_end.right())) - tx;
         cy = qAbs(qMax(m_selection_start.bottom(), m_selection_end.bottom())) - ty;
     }
+
+    void FillEmptyCells();
 private slots:
 
     void ShowSetWidgetDialog()
     {
         NewItemDialog dlg(m_parent_widget, this);
+        dlg.exec();
+    }
+
+    void ShowLayoutConfigDialog()
+    {
+        LayoutConfigDialog dlg(m_parent_widget, this);
         dlg.exec();
     }
 
@@ -106,5 +116,6 @@ public:
     void SetRegion(float bx, float by, float cx, float cy);
     void Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy);
     void Resize(int target_cx, int target_cy, int cx, int cy);
+    void RefreshGrid();
     LayoutItem::Config const& Config() const { return m_cfg; }
 };

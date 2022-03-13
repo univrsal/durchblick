@@ -17,6 +17,36 @@
  *************************************************************************/
 
 #include "layout.hpp"
+#include "durchblick.hpp"
+
+void Layout::FillEmptyCells()
+{
+    // Make sure that every cell has a placeholder
+    std::vector<LayoutItem::Cell> empty;
+    for (int x = 0; x < m_cols; x++) {
+        for (int y = 0; y < m_rows; y++) {
+            LayoutItem::Cell c;
+            c.col = x;
+            c.row = y;
+            bool isFree = true;
+            for (auto const& item : m_layout_items) {
+                if (c.Overlaps(item->m_cell)) {
+                    isFree = false;
+                    break;
+                }
+            }
+
+            if (isFree)
+                empty.emplace_back(c);
+        }
+    }
+
+    for (auto const& c : empty) {
+        auto* Item = new PlaceholderItem(this, c.col, c.row);
+        Item->Update(m_cfg);
+        m_layout_items.emplace_back(Item);
+    }
+}
 
 Layout::Layout(QWidget* parent, int cols, int rows)
     : QObject(parent)
@@ -29,8 +59,10 @@ Layout::Layout(QWidget* parent, int cols, int rows)
             m_layout_items.emplace_back(new PlaceholderItem(this, x, y));
         }
     }
-    m_new_widget_action = new QAction("Set widget", this);
+    m_new_widget_action = new QAction(T_MENU_SET_WIDGET, this);
+    m_layout_config = new QAction(T_MENU_LAYOUT_CONFIG, this);
     connect(m_new_widget_action, SIGNAL(triggered()), this, SLOT(ShowSetWidgetDialog()));
+    connect(m_layout_config, SIGNAL(triggered()), this, SLOT(ShowLayoutConfigDialog()));
 }
 
 void Layout::MouseMoved(QMouseEvent* e)
@@ -103,16 +135,23 @@ void Layout::HandleContextMenu(QContextMenuEvent*)
     // Keep drawing the selection if it wasn't reset
     if (!m_selection_end.empty())
         m_dragging = true;
-    for (auto& Item : m_layout_items) {
-        if (Item->Hovered()) {
-            QMenu m(T_MENU_OPTION, m_parent_widget);
-            m.addAction(m_new_widget_action);
-            m.addSeparator();
-            Item->ContextMenu(m);
-            m.exec(QCursor::pos());
-            break;
+    QMenu m(T_MENU_OPTION, m_parent_widget);
+    bool flag = false;
+    {
+        std::lock_guard<std::mutex> lock(m_layout_mutex);
+        for (auto& Item : m_layout_items) {
+            if (Item->Hovered()) {
+                m.addAction(m_new_widget_action);
+                m.addAction(m_layout_config);
+                m.addSeparator();
+                Item->ContextMenu(m);
+                flag = true;
+                break;
+            }
         }
     }
+    if (flag)
+        m.exec(QCursor::pos());
 }
 
 void Layout::FreeSpace(const LayoutItem::Cell& c)
@@ -143,32 +182,7 @@ void Layout::AddWidget(const Registry::ItemRegistry::Entry& entry, QWidget* cust
     Item->LoadConfigFromWidget(custom_widget);
     Item->Update(m_cfg);
     m_layout_items.emplace_back(Item);
-
-    // Make sure that every cell has a placeholder
-    std::vector<LayoutItem::Cell> empty;
-    for (int x = 0; x < m_cols; x++) {
-        for (int y = 0; y < m_rows; y++) {
-            LayoutItem::Cell c;
-            c.col = x;
-            c.row = y;
-            bool isFree = true;
-            for (auto const& item : m_layout_items) {
-                if (c.Overlaps(item->m_cell)) {
-                    isFree = false;
-                    break;
-                }
-            }
-
-            if (isFree)
-                empty.emplace_back(c);
-        }
-    }
-
-    for (auto const& c : empty) {
-        auto* Item = new PlaceholderItem(this, c.col, c.row);
-        Item->Update(m_cfg);
-        m_layout_items.emplace_back(Item);
-    }
+    FillEmptyCells();
 }
 
 void Layout::SetRegion(float bx, float by, float cx, float cy)
@@ -212,6 +226,8 @@ void Layout::Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy)
         endRegion();
         gs_matrix_pop();
     }
+    m_layout_mutex.unlock();
+
     if (m_dragging) {
         int tx, ty, cx, cy;
         GetSelection(tx, ty, cx, cy);
@@ -229,7 +245,6 @@ void Layout::Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy)
         // Right
         LayoutItem::DrawBox((tx + cx) * m_cfg.cell_width - m_cfg.border - 2, ty * m_cfg.cell_height, m_cfg.border + 1, cy * m_cfg.cell_height - 1, 0xFF009999);
     }
-    m_layout_mutex.unlock();
     endRegion();
 }
 
@@ -252,6 +267,39 @@ void Layout::Resize(int target_cx, int target_cy, int cx, int cy)
 
     GetScaleAndCenterPos(target_cx, target_cy, cx, cy, m_cfg.x, m_cfg.y, m_cfg.scale);
 
+    m_layout_mutex.lock();
     for (auto& Item : m_layout_items)
         Item->Update(m_cfg);
+    m_layout_mutex.unlock();
+}
+
+void Layout::RefreshGrid()
+{
+    auto target_cx = m_cfg.canvas_width;
+    auto target_cy = m_cfg.canvas_height;
+
+    float ar = float(target_cx) / float(target_cy);
+    m_cfg.cell_width = float(m_cfg.canvas_width) / m_cols;
+    m_cfg.cell_height = m_cfg.cell_width / ar;
+
+    target_cy = m_cfg.cell_height * m_rows;
+
+    m_cfg.cx = target_cx;
+    m_cfg.cy = target_cy;
+
+    auto* db = static_cast<Durchblick*>(parent());
+    auto s = db->size() * db->devicePixelRatioF();
+    GetScaleAndCenterPos(target_cx, target_cy, s.width(), s.height(), m_cfg.x, m_cfg.y, m_cfg.scale);
+
+    // Delete any cells that don't fit on the screen anymore
+    m_layout_mutex.lock();
+    auto it = std::remove_if(m_layout_items.begin(), m_layout_items.end(), [this](std::unique_ptr<LayoutItem> const& item) {
+        return item->m_cell.right() >= m_cols + 1 || item->m_cell.bottom() >= m_rows + 1;
+    });
+    m_layout_items.erase(it, m_layout_items.end());
+    FillEmptyCells();
+
+    for (auto& Item : m_layout_items)
+        Item->Update(m_cfg);
+    m_layout_mutex.unlock();
 }
