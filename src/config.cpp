@@ -63,7 +63,6 @@ void Load()
 
 void Save()
 {
-    return;
     QJsonArray layouts;
     QJsonObject obj;
     BPtr<char> path = obs_module_config_path("layout.json");
