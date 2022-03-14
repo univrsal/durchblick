@@ -22,7 +22,6 @@
 #else
 #    include <obs/obs-frontend-api.h>
 #endif
-//#include <window-basic-main.hpp>
 
 QWidget* SceneItem::GetConfigWidget()
 {

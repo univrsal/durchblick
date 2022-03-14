@@ -37,6 +37,7 @@
 #define T_MENU_OPTION                   T_("Menu.Option")
 #define T_MENU_SET_WIDGET               T_("Menu.SetWidget")
 #define T_MENU_LAYOUT_CONFIG            T_("Menu.LayoutConfig")
+#define T_MENU_CLEAR_ACTION             T_("Menu.ClearAction")
 #define T_SELECT_TYPE_DIALOG            T_("Dialog.Select.ItemType")
 #define T_SELECT_TYPE                   T_("Label.Select.ItemType")
 #define T_WIDGET_SETTINGS               T_("Label.WidgetSettings")

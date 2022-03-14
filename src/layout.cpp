@@ -60,6 +60,31 @@ void Layout::FillEmptyCells()
     }
 }
 
+LayoutItem::Cell Layout::GetSelectedArea()
+{
+    LayoutItem::Cell target = m_hovered_cell;
+
+    if (m_dragging) {
+        int tx, ty, cx, cy;
+        GetSelection(tx, ty, cx, cy);
+        target.col = tx;
+        target.row = ty;
+        target.w = cx;
+        target.h = cy;
+    }
+    return target;
+}
+
+void Layout::ClearSelection()
+{
+    auto target = GetSelectedArea();
+    m_layout_mutex.lock();
+    FreeSpace(target);
+    FillEmptyCells();
+    m_layout_mutex.unlock();
+    Config::Save();
+}
+
 Layout::Layout(QWidget* parent, int cols, int rows)
     : QObject(parent)
     , m_rows(rows)
@@ -68,8 +93,10 @@ Layout::Layout(QWidget* parent, int cols, int rows)
 {
     m_new_widget_action = new QAction(T_MENU_SET_WIDGET, this);
     m_layout_config = new QAction(T_MENU_LAYOUT_CONFIG, this);
+    m_clear_action = new QAction(T_MENU_CLEAR_ACTION, this);
     connect(m_new_widget_action, SIGNAL(triggered()), this, SLOT(ShowSetWidgetDialog()));
     connect(m_layout_config, SIGNAL(triggered()), this, SLOT(ShowLayoutConfigDialog()));
+    connect(m_clear_action, SIGNAL(triggered()), this, SLOT(ClearSelection()));
 }
 
 Layout::~Layout()
@@ -166,6 +193,7 @@ void Layout::HandleContextMenu(QContextMenuEvent*)
         for (auto& Item : m_layout_items) {
             if (Item->Hovered()) {
                 m.addAction(m_new_widget_action);
+                m.addAction(m_clear_action);
                 m.addAction(m_layout_config);
                 m.addSeparator();
                 Item->ContextMenu(m);
@@ -190,17 +218,7 @@ void Layout::FreeSpace(const LayoutItem::Cell& c)
 void Layout::AddWidget(const Registry::ItemRegistry::Entry& entry, QWidget* custom_widget)
 {
     std::lock_guard<std::mutex> lock(m_layout_mutex);
-    LayoutItem::Cell target = m_hovered_cell;
-
-    if (m_dragging) {
-        int tx, ty, cx, cy;
-        GetSelection(tx, ty, cx, cy);
-        target.col = tx;
-        target.row = ty;
-        target.w = cx;
-        target.h = cy;
-    }
-
+    auto target = GetSelectedArea();
     FreeSpace(target);
     auto* Item = entry.construct(this, target.col, target.row, target.w, target.h, entry.priv);
     Item->LoadConfigFromWidget(custom_widget);

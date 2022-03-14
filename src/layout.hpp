@@ -75,7 +75,7 @@ class Layout : public QObject {
     std::vector<std::unique_ptr<LayoutItem>> m_layout_items;
     LayoutItem::Config m_cfg;
     QWidget* m_parent_widget {};
-    QAction *m_new_widget_action {}, *m_layout_config;
+    QAction *m_new_widget_action {}, *m_layout_config, *m_clear_action {};
     LayoutItem::Cell m_hovered_cell {}, m_selection_start {}, m_selection_end {};
     bool m_dragging {};
     std::mutex m_layout_mutex;
@@ -90,8 +90,11 @@ class Layout : public QObject {
     }
 
     void FillEmptyCells();
+
+    LayoutItem::Cell GetSelectedArea();
 private slots:
 
+    void ClearSelection();
     void ShowSetWidgetDialog()
     {
         NewItemDialog dlg(m_parent_widget, this);
