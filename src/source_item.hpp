@@ -46,7 +46,7 @@ class SourceItem : public LayoutItem {
     Q_OBJECT
 protected:
     OBSSource m_src;
-    OBSSource m_label;
+    OBSSourceAutoRelease m_label;
     OBSSignal removedSignal;
     QAction* m_toggle_safe_borders;
     QAction* m_toggle_label;
@@ -96,6 +96,8 @@ public:
         m_toggle_safe_borders->setChecked(b);
     }
 
+    virtual void ReadFromJson(const QJsonObject& Obj) override;
+    virtual void WriteToJson(QJsonObject& Obj) override;
     virtual void Render(const Config& cfg) override;
     virtual void ContextMenu(QMenu&) override;
 };

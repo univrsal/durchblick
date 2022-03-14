@@ -17,12 +17,11 @@
  *************************************************************************/
 
 #include "layout.hpp"
+#include "config.hpp"
 #include "durchblick.hpp"
 #include "preview_program_item.hpp"
 #include "scene_item.hpp"
 #include "util.h"
-#include "util/util.hpp"
-#include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -67,11 +66,14 @@ Layout::Layout(QWidget* parent, int cols, int rows)
     , m_cols(cols)
     , m_parent_widget(parent)
 {
-    Load();
     m_new_widget_action = new QAction(T_MENU_SET_WIDGET, this);
     m_layout_config = new QAction(T_MENU_LAYOUT_CONFIG, this);
     connect(m_new_widget_action, SIGNAL(triggered()), this, SLOT(ShowSetWidgetDialog()));
     connect(m_layout_config, SIGNAL(triggered()), this, SLOT(ShowLayoutConfigDialog()));
+}
+
+Layout::~Layout()
+{
 }
 
 void Layout::MouseMoved(QMouseEvent* e)
@@ -192,6 +194,7 @@ void Layout::AddWidget(const Registry::ItemRegistry::Entry& entry, QWidget* cust
     Item->Update(m_cfg);
     m_layout_items.emplace_back(Item);
     FillEmptyCells();
+    Config::Save();
 }
 
 void Layout::SetRegion(float bx, float by, float cx, float cy)
@@ -313,43 +316,76 @@ void Layout::RefreshGrid()
     m_layout_mutex.unlock();
 }
 
-void Layout::Load()
+void Layout::CreateDefaultLayout()
 {
-    BPtr<char> path = obs_module_config_path("layout.json");
-    QFile f(utf8_to_qt(path));
+    m_layout_mutex.lock();
+    auto* preview = new PreviewProgramItem(this, 0, 0, 2, 2);
+    auto* program = new PreviewProgramItem(this, 2, 0, 2, 2);
+    program->SetIsProgram(true);
+    program->SetLabel(true);
+    program->CreateLabel();
+    program->Update(m_cfg);
+    preview->SetSafeBorders(true);
+    preview->SetLabel(true);
+    preview->CreateLabel();
+    preview->Update(m_cfg);
+    m_layout_items.emplace_back(preview);
+    m_layout_items.emplace_back(program);
 
-    if (f.exists()) {
+    struct obs_frontend_source_list scenes = {};
 
-    } else {
-        binfo("'%s' does not exist, creating default layout", path.Get());
-        // Create a default layout that looks like the normal multiview
-        m_layout_mutex.lock();
-        auto* preview = new PreviewProgramItem(this, 0, 0, 2, 2);
-        auto* program = new PreviewProgramItem(this, 2, 0, 2, 2);
-        program->SetIsProgram(true);
-        program->SetLabel(true);
-        program->CreateLabel();
-        preview->SetSafeBorders(true);
-        preview->SetLabel(true);
-        preview->CreateLabel();
-        m_layout_items.emplace_back(preview);
-        m_layout_items.emplace_back(program);
-
-        struct obs_frontend_source_list scenes = {};
-
-        obs_frontend_get_scenes(&scenes);
-        for (int i = 0; i < 8; i++) {
-            if (i >= scenes.sources.num) {
-                m_layout_items.emplace_back(new PlaceholderItem(this, i % 4, i > 3 ? 3 : 2));
-            } else {
-                auto* item = new SceneItem(this, i % 4, i > 3 ? 3 : 2);
-                item->SetLabel(true);
-                item->SetSource(scenes.sources.array[i]);
-                m_layout_items.emplace_back(item);
-            }
+    obs_frontend_get_scenes(&scenes);
+    for (int i = 0; i < 8; i++) {
+        if (i >= scenes.sources.num) {
+            auto* Item = new PlaceholderItem(this, i % 4, i > 3 ? 3 : 2);
+            Item->Update(m_cfg);
+            m_layout_items.emplace_back(Item);
+        } else {
+            auto* item = new SceneItem(this, i % 4, i > 3 ? 3 : 2);
+            item->SetLabel(true);
+            item->SetSource(scenes.sources.array[i]);
+            item->Update(m_cfg);
+            m_layout_items.emplace_back(item);
         }
-        obs_frontend_source_list_free(&scenes);
-
-        m_layout_mutex.unlock();
     }
+    obs_frontend_source_list_free(&scenes);
+
+    m_layout_mutex.unlock();
+}
+
+void Layout::Load(QJsonObject const& obj)
+{
+    m_layout_mutex.lock();
+    m_cols = obj["cols"].toInt();
+    m_rows = obj["rows"].toInt();
+    auto items = obj["items"].toArray();
+
+    for (auto const& item : items) {
+        auto* new_item = Registry::MakeItem(this, item.toObject());
+        new_item->Update(m_cfg);
+        m_layout_items.emplace_back(new_item);
+    }
+    m_layout_mutex.unlock();
+    RefreshGrid();
+}
+
+void Layout::Save(QJsonObject& obj)
+{
+    QJsonArray items;
+    obj["cols"] = m_cols;
+    obj["rows"] = m_rows;
+
+    for (auto const& Item : m_layout_items) {
+        QJsonObject obj;
+        Item->WriteToJson(obj);
+        items.append(obj);
+    }
+    obj["items"] = items;
+}
+
+void Layout::DeleteLayout()
+{
+    m_layout_mutex.lock();
+    m_layout_items.clear();
+    m_layout_mutex.unlock();
 }

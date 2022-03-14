@@ -49,7 +49,10 @@ public:
         : SourceItem(parent, x, y, w, h)
     {
     }
-    ~SceneItem() = default;
+    ~SceneItem()
+    {
+        binfo("le");
+    }
 
     QWidget* GetConfigWidget() override;
     void LoadConfigFromWidget(QWidget*) override;

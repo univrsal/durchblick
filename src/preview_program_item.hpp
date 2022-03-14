@@ -60,4 +60,7 @@ public:
     void LoadConfigFromWidget(QWidget*) override;
     void CreateLabel();
     void Render(const Config& cfg) override;
+
+    void WriteToJson(QJsonObject& Obj) override;
+    void ReadFromJson(const QJsonObject& Obj) override;
 };

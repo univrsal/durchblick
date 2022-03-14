@@ -106,6 +106,7 @@ private slots:
 
 public:
     Layout(QWidget* parent, int cols = 4, int rows = 4);
+    ~Layout();
 
     void MouseMoved(QMouseEvent* e);
     void MousePressed(QMouseEvent* e);
@@ -118,7 +119,10 @@ public:
     void Resize(int target_cx, int target_cy, int cx, int cy);
     void RefreshGrid();
 
-    void Load();
-    void Save();
+    void CreateDefaultLayout();
+    void Load(QJsonObject const& obj);
+    void Save(QJsonObject& obj);
+    bool IsEmpty() const { return m_layout_items.empty(); }
+    void DeleteLayout();
     LayoutItem::Config const& Config() const { return m_cfg; }
 };

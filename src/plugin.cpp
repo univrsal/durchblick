@@ -16,16 +16,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 
+#include "config.hpp"
 #include "durchblick.hpp"
 #include "registry.hpp"
 #include "source_item.hpp"
 #include "util.h"
+#include "util/util.hpp"
 #include <QAction>
 #include <QDialog>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLayout>
 #include <QMainWindow>
 #include <QVBoxLayout>
 #include <obs-module.h>
+#include <thread>
 #if _WIN32
 #    include <obs-frontend-api.h>
 #else
@@ -35,19 +44,19 @@
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("durchblick", "en-US")
 
-Durchblick* dp = nullptr;
-
 bool obs_module_load()
 {
     binfo("Loading v%s build time %s", PLUGIN_VERSION, BUILD_TIME);
-    Registry::RegisterDefaults();
+
+    // Speeds up loading
+    std::thread reg([] { Registry::RegisterDefaults(); });
+    reg.detach();
 
     QAction::connect(static_cast<QAction*>(obs_frontend_add_tools_menu_qaction(T_MENU_OPTION)),
         &QAction::triggered, [] {
-            if (dp)
-                dp->deleteLater();
-            dp = new Durchblick();
-            dp->show();
+            if (!Config::db)
+                Config::Load();
+            Config::db->show();
         });
 
     return true;
@@ -55,9 +64,6 @@ bool obs_module_load()
 
 void obs_module_unload()
 {
-    if (dp) {
-        dp->deleteLater();
-        dp = nullptr;
-    }
     Registry::Free();
+    Config::db = nullptr;
 }

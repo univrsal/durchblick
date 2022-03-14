@@ -19,6 +19,7 @@
 #pragma once
 #include "util.h"
 #include <QContextMenuEvent>
+#include <QJsonObject>
 #include <QMenu>
 #include <QObject>
 #include <obs-module.h>
@@ -112,6 +113,25 @@ public:
     {
     }
 
+    virtual void WriteToJson(QJsonObject& Obj)
+    {
+        Obj["col"] = m_cell.col;
+        Obj["row"] = m_cell.row;
+        Obj["w"] = m_cell.w;
+        Obj["h"] = m_cell.h;
+        Obj["stretch"] = m_toggle_stretch->isChecked();
+        Obj["id"] = metaObject()->className();
+    }
+
+    virtual void ReadFromJson(QJsonObject const& Obj)
+    {
+        m_cell.col = Obj["col"].toInt();
+        m_cell.row = Obj["row"].toInt();
+        m_cell.w = Obj["w"].toInt();
+        m_cell.h = Obj["h"].toInt();
+        m_toggle_stretch->setChecked(Obj["stretch"].toBool());
+    }
+
     virtual QWidget* GetConfigWidget() { return nullptr; }
     virtual void LoadConfigFromWidget(QWidget*) { }
 
@@ -187,6 +207,8 @@ public:
 class PlaceholderItem : public LayoutItem {
     Q_OBJECT
 public:
+    static const char* Id() { return "placeholder"; }
+
     PlaceholderItem(Layout* parent, int x, int y, int w = 1, int h = 1)
         : LayoutItem(parent, x, y, w, h)
     {

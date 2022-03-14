@@ -20,9 +20,16 @@
 #include "qt_display.hpp"
 #include <QScreen>
 #include <QVBoxLayout>
+#if _WIN32
+#    include <obs-frontend-api.h>
+#else
+#    include <obs/obs-frontend-api.h>
+#endif
 
 class Durchblick : public OBSQTDisplay {
     Q_OBJECT
+    obs_frontend_event_cb m_frontend_cb {};
+
 public:
     bool m_ready { false };
     QScreen* m_screen { nullptr };
@@ -64,4 +71,9 @@ public:
     //    bool IsAlwaysOnTopOverridden() const;
     //    void SetIsAlwaysOnTop(bool isAlwaysOnTop, bool isOverridden);
     void Update();
+
+    void Save(QJsonObject& obj);
+    void Load(QJsonObject const& obj);
+
+    Layout* GetLayout() { return &m_layout; }
 };

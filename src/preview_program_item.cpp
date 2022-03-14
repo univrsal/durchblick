@@ -94,3 +94,17 @@ void PreviewProgramItem::Render(const Config& cfg)
     if (m_toggle_safe_borders->isChecked())
         RenderSafeMargins(w, h);
 }
+
+void PreviewProgramItem::WriteToJson(QJsonObject& Obj)
+{
+    SourceItem::WriteToJson(Obj);
+    Obj["is_program"] = m_program;
+}
+
+void PreviewProgramItem::ReadFromJson(const QJsonObject& Obj)
+{
+    SourceItem::ReadFromJson(Obj);
+    m_program = Obj["is_program"].toBool();
+    if (m_toggle_label->isChecked())
+        CreateLabel();
+}

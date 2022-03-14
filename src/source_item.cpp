@@ -3,6 +3,7 @@
 #include "layout.hpp"
 #include <QApplication>
 #include <QMainWindow>
+#include <util/util.hpp>
 #if _WIN32
 #    include <obs-frontend-api.h>
 #else
@@ -81,6 +82,7 @@ void SourceItem::VolumeToggled(bool state)
 }
 
 static obs_source_t* placeholder_source = nullptr;
+
 static struct {
     gs_vertbuffer_t* action {};
     gs_vertbuffer_t* graphics {};
@@ -102,12 +104,10 @@ void SourceItem::RenderSafeMargins(int w, int h)
 
 void SourceItem::Init()
 {
-    obs_data_t* settings = obs_data_create();
-    const char* placeholder_path = obs_module_file("placeholder.png");
+    OBSDataAutoRelease settings = obs_data_create();
+    BPtr<char> placeholder_path = obs_module_file("placeholder.png");
     obs_data_set_string(settings, "file", placeholder_path);
     placeholder_source = obs_source_create_private("image_source", "durchblick_placeholder", settings);
-    bfree((void*)placeholder_path);
-    obs_data_release(settings);
 
     if (!placeholder_source)
         berr("Failed to create placeholder source!");
@@ -178,20 +178,17 @@ void SourceItem::LoadConfigFromWidget(QWidget* w)
 {
     auto* custom = dynamic_cast<SourceItemWidget*>(w);
     if (custom) {
-        auto* src = obs_get_source_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
+        OBSSourceAutoRelease src = obs_get_source_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
         SetSource(src);
-        obs_source_release(src);
     }
 }
 
 void SourceItem::SetSource(obs_source_t* src)
 {
-    if (!src)
-        return;
     if (m_src)
         obs_source_dec_showing(m_src);
 
-    if (m_vol_meter)
+    if (m_vol_meter && src)
         obs_volmeter_attach_source(m_vol_meter, src);
 
     m_src = src;
@@ -207,6 +204,30 @@ void SourceItem::SetSource(obs_source_t* src)
             m_label = CreateLabel(obs_source_get_name(m_src), h / 1.5);
         }
     }
+}
+
+void SourceItem::ReadFromJson(const QJsonObject& Obj)
+{
+    LayoutItem::ReadFromJson(Obj);
+    m_toggle_safe_borders->setChecked(Obj["show_safe_borders"].toBool());
+    m_toggle_label->setChecked(Obj["show_label"].toBool());
+    m_toggle_volume->setChecked(Obj["show_volume"].toBool());
+
+    OBSSourceAutoRelease src = obs_get_source_by_name(qt_to_utf8(Obj["source"].toString()));
+    if (src)
+        SetSource(src);
+    else
+        SetSource(placeholder_source);
+}
+
+void SourceItem::WriteToJson(QJsonObject& Obj)
+{
+    LayoutItem::WriteToJson(Obj);
+    if (m_src)
+        Obj["source"] = utf8_to_qt(obs_source_get_name(m_src));
+    Obj["show_safe_borders"] = m_toggle_safe_borders->isChecked();
+    Obj["show_label"] = m_toggle_label->isChecked();
+    Obj["show_volume"] = m_toggle_volume->isChecked();
 }
 
 static const uint32_t outerColor = 0xFFD0D0D0;

@@ -21,11 +21,6 @@
 #include <QApplication>
 #include <QIcon>
 #include <obs-module.h>
-#if _WIN32
-#    include <obs-frontend-api.h>
-#else
-#    include <obs/obs-frontend-api.h>
-#endif
 
 void Durchblick::EscapeTriggered()
 {
@@ -98,6 +93,16 @@ Durchblick::Durchblick(QWidget* widget)
     m_ready = true;
     show();
 
+    m_frontend_cb = [](enum obs_frontend_event event, void* private_data) {
+        if (event == OBS_FRONTEND_EVENT_EXIT) {
+            auto* db = static_cast<Durchblick*>(private_data);
+            db->m_ready = false;
+            db->m_layout.DeleteLayout();
+            db->deleteLater();
+        }
+    };
+    obs_frontend_add_event_callback(m_frontend_cb, this);
+
     // We need it here to allow keyboard input in X11 to listen to Escape
     activateWindow();
     Update();
@@ -109,6 +114,7 @@ Durchblick::Durchblick(QWidget* widget)
 Durchblick::~Durchblick()
 {
     obs_display_remove_draw_callback(GetDisplay(), RenderLayout, this);
+    obs_frontend_remove_event_callback(m_frontend_cb, this);
     m_screen = nullptr;
     deleteLater();
 }
@@ -128,4 +134,14 @@ void Durchblick::Update()
     m_fw = ovi.base_width;
     m_fh = ovi.base_height;
     m_ratio = m_fw / m_fh;
+}
+
+void Durchblick::Save(QJsonObject& obj)
+{
+    m_layout.Save(obj);
+}
+
+void Durchblick::Load(const QJsonObject& obj)
+{
+    m_layout.Load(obj);
 }

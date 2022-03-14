@@ -27,9 +27,9 @@ namespace Registry {
 QList<ItemRegistry::Entry> ItemRegistry::Entries;
 QList<std::function<void()>> ItemRegistry::DeinitCallbacks;
 
-void ItemRegistry::Register(const Constructor& c, const char* n, void* p)
+void ItemRegistry::Register(const Constructor& c, const char* n, const char* id, void* p)
 {
-    Entries.append(Entry { c, p, n });
+    Entries.append(Entry { c, p, utf8_to_qt(n), id });
 }
 
 void Free()
@@ -40,9 +40,25 @@ void Free()
 
 void RegisterDefaults()
 {
+    Registry::Register<PlaceholderItem>("Placeholder");
     Registry::Register<SourceItem>(T_WIDGET_SOURCE);
     Registry::Register<SceneItem>(T_WIDGET_SCENE);
     Registry::Register<PreviewProgramItem>(T_WIDGET_PREVIEW_PROGRAM);
+
+    Registry::AddCallbacks<SourceItem>();
+}
+
+LayoutItem* MakeItem(Layout* l, const QJsonObject& obj)
+{
+    QString id = obj["id"].toString();
+    for (auto const& Entry : qAsConst(ItemRegistry::Entries)) {
+        if (Entry.id == id) {
+            auto* item = Entry.construct(l, 0, 0, 0, 0, nullptr);
+            item->ReadFromJson(obj);
+            return item;
+        }
+    }
+    return nullptr;
 }
 
 }

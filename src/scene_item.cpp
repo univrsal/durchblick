@@ -39,9 +39,8 @@ void SceneItem::LoadConfigFromWidget(QWidget* w)
 {
     auto* custom = dynamic_cast<SceneItemWidget*>(w);
     if (custom) {
-        auto* src = obs_get_scene_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
-        SetSource(obs_scene_get_source(src));
-        obs_scene_release(src);
+        OBSSceneAutoRelease s = obs_get_scene_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
+        SetSource(obs_scene_get_source(s));
     }
 }
 
@@ -52,8 +51,8 @@ void SceneItem::Render(const Config& cfg)
 {
     SourceItem::Render(cfg);
 
-    OBSSource previewSrc = obs_frontend_get_current_preview_scene();
-    OBSSource programSrc = obs_frontend_get_current_scene();
+    OBSSourceAutoRelease previewSrc = obs_frontend_get_current_preview_scene();
+    OBSSourceAutoRelease programSrc = obs_frontend_get_current_scene();
     bool studioMode = obs_frontend_preview_program_mode_active();
 
     auto color = 0;

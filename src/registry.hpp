@@ -17,6 +17,8 @@
  *************************************************************************/
 
 #pragma once
+#include "item.hpp"
+#include <QJsonObject>
 #include <QList>
 #include <QString>
 #include <functional>
@@ -31,25 +33,32 @@ public:
     struct Entry {
         Constructor construct;
         void* priv {};
-        QString name;
+        QString name, id;
     };
     static QList<Entry> Entries;
     static QList<std::function<void()>> DeinitCallbacks;
 
-    static void Register(Constructor const&, char const*, void* = nullptr);
+    static void Register(Constructor const&, char const*, char const*, void* = nullptr);
 };
 
 extern void RegisterDefaults();
+extern LayoutItem* MakeItem(Layout* l, QJsonObject const& obj);
 extern void Free();
 
 template<class T>
-void Register(char const* name, void* = nullptr)
+void Register(char const* name)
 {
     ItemRegistry::Register([](Layout* p, int x, int y, int w, int h, void*) {
         return new T(p, x, y, w, h);
     },
-        name, nullptr);
+        name, T::staticMetaObject.className(), nullptr);
+}
+
+template<class T>
+void AddCallbacks()
+{
     T::Init();
     ItemRegistry::DeinitCallbacks.append(T::Deinit);
 }
+
 }
