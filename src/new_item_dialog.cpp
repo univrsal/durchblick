@@ -69,8 +69,10 @@ NewItemDialog::NewItemDialog(QWidget* parent, Layout* layout)
     m_config_panel->setLayout(m_config_layout);
     //    m_config_layout->setContentsMargins(0, 0, 0, 0);
 
-    for (auto const& E : qAsConst(Registry::ItemRegistry::Entries))
-        m_select_type->addItem(E.name);
+    for (auto const& E : qAsConst(Registry::ItemRegistry::Entries)) {
+        if (E.id != PlaceholderItem::staticMetaObject.className())
+            m_select_type->addItem(E.name);
+    }
     entry_selected(0);
     m_vboxlayout->addWidget(m_select_type);
     m_vboxlayout->addWidget(m_config_panel);

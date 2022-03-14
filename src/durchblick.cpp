@@ -60,6 +60,12 @@ void Durchblick::mouseReleaseEvent(QMouseEvent* e)
         m_layout.HandleContextMenu(nullptr);
 }
 
+void Durchblick::mouseDoubleClickEvent(QMouseEvent* e)
+{
+    QWidget::mouseDoubleClickEvent(e);
+    m_layout.MouseDoubleClicked(e);
+}
+
 void Durchblick::contextMenuEvent(QContextMenuEvent* e)
 {
 }

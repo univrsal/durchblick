@@ -141,6 +141,19 @@ void Layout::MouseReleased(QMouseEvent* e)
     m_dragging = false;
 }
 
+void Layout::MouseDoubleClicked(QMouseEvent* e)
+{
+    LayoutItem::MouseData d(
+        int((e->x() - m_cfg.x) / m_cfg.scale),
+        int((e->y() - m_cfg.y) / m_cfg.scale),
+        e->modifiers(),
+        e->buttons(),
+        e->type());
+    d.double_click = true;
+    for (auto& Item : m_layout_items)
+        Item->MouseEvent(d, m_cfg);
+}
+
 void Layout::HandleContextMenu(QContextMenuEvent*)
 {
     // Keep drawing the selection if it wasn't reset

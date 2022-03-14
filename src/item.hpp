@@ -90,6 +90,7 @@ public:
         Qt::KeyboardModifiers modifiers;
         Qt::MouseButtons buttons;
         QEvent::Type type;
+        bool double_click {};
         MouseData(int _x, int _y, Qt::KeyboardModifiers const& m, Qt::MouseButtons const& mb, QEvent::Type const& t)
             : x(_x)
             , y(_y)

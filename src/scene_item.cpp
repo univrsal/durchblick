@@ -22,6 +22,7 @@
 #else
 #    include <obs/obs-frontend-api.h>
 #endif
+//#include <window-basic-main.hpp>
 
 QWidget* SceneItem::GetConfigWidget()
 {
@@ -41,6 +42,29 @@ void SceneItem::LoadConfigFromWidget(QWidget* w)
     if (custom) {
         OBSSceneAutoRelease s = obs_get_scene_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
         SetSource(obs_scene_get_source(s));
+    }
+}
+
+void SceneItem::MouseEvent(const MouseData& e, const Config& cfg)
+{
+    SourceItem::MouseEvent(e, cfg);
+    if (e.buttons & Qt::LeftButton && Hovered()) {
+
+        QWindow* main = (QWindow*)obs_frontend_get_main_window();
+        if (e.double_click) {
+            if (!obs_frontend_preview_program_mode_active())
+                return;
+            if (obs_frontend_get_current_scene() != m_src)
+                obs_frontend_set_current_scene(m_src);
+        } else {
+            if (obs_frontend_preview_program_mode_active()) {
+                if (obs_frontend_get_current_preview_scene() != m_src.Get())
+                    obs_frontend_set_current_preview_scene(m_src);
+            } else {
+                if (obs_frontend_get_current_scene() != m_src)
+                    obs_frontend_set_current_scene(m_src);
+            }
+        }
     }
 }
 

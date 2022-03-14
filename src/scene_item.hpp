@@ -49,6 +49,7 @@ public:
         : SourceItem(parent, x, y, w, h)
     {
     }
+
     ~SceneItem()
     {
         binfo("le");
@@ -56,6 +57,6 @@ public:
 
     QWidget* GetConfigWidget() override;
     void LoadConfigFromWidget(QWidget*) override;
-
+    void MouseEvent(const MouseData& e, const Config& cfg) override;
     void Render(const Config& cfg) override;
 };

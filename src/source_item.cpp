@@ -296,3 +296,8 @@ void SourceItem::ContextMenu(QMenu& m)
     m.addAction(m_toggle_label);
     m.addAction(m_toggle_volume);
 }
+
+void SourceItem::MouseEvent(const MouseData& e, const Config& cfg)
+{
+    LayoutItem::MouseEvent(e, cfg);
+}

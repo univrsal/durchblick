@@ -40,11 +40,12 @@ void Free()
 
 void RegisterDefaults()
 {
-    Registry::Register<PlaceholderItem>("Placeholder");
     Registry::Register<SourceItem>(T_WIDGET_SOURCE);
     Registry::Register<SceneItem>(T_WIDGET_SCENE);
     Registry::Register<PreviewProgramItem>(T_WIDGET_PREVIEW_PROGRAM);
 
+    // Keep this one last otherwise it'll mess up the dialog combobox
+    Registry::Register<PlaceholderItem>("Placeholder");
     Registry::AddCallbacks<SourceItem>();
 }
 
