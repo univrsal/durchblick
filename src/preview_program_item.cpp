@@ -77,7 +77,7 @@ void PreviewProgramItem::Render(const Config& cfg)
     if (m_program || !obs_frontend_preview_program_mode_active()) {
         obs_render_main_texture();
     } else {
-        OBSSource src = obs_frontend_get_current_preview_scene();
+        OBSSourceAutoRelease src = obs_frontend_get_current_preview_scene();
         obs_source_video_render(src);
     }
 

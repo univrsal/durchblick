@@ -48,19 +48,20 @@ void SceneItem::MouseEvent(const MouseData& e, const Config& cfg)
 {
     SourceItem::MouseEvent(e, cfg);
     if (e.buttons & Qt::LeftButton && Hovered()) {
-
-        QWindow* main = (QWindow*)obs_frontend_get_main_window();
         if (e.double_click) {
             if (!obs_frontend_preview_program_mode_active())
                 return;
-            if (obs_frontend_get_current_scene() != m_src)
+            OBSSourceAutoRelease src = obs_frontend_get_current_scene();
+            if (src != m_src)
                 obs_frontend_set_current_scene(m_src);
         } else {
             if (obs_frontend_preview_program_mode_active()) {
-                if (obs_frontend_get_current_preview_scene() != m_src.Get())
+                OBSSourceAutoRelease src = obs_frontend_get_current_preview_scene();
+                if (src != m_src)
                     obs_frontend_set_current_preview_scene(m_src);
             } else {
-                if (obs_frontend_get_current_scene() != m_src)
+                OBSSourceAutoRelease src = obs_frontend_get_current_scene();
+                if (src != m_src)
                     obs_frontend_set_current_scene(m_src);
             }
         }
