@@ -70,6 +70,12 @@ void Durchblick::contextMenuEvent(QContextMenuEvent* e)
 {
 }
 
+void Durchblick::closeEvent(QCloseEvent* e)
+{
+    e->ignore();
+    hide();
+}
+
 Durchblick::Durchblick(QWidget* widget)
     : OBSQTDisplay(widget, Qt::Window)
     , m_layout(this)
@@ -81,7 +87,7 @@ Durchblick::Durchblick(QWidget* widget)
 #else
     setWindowIcon(QIcon::fromTheme("obs", QIcon(":/res/images/obs.png")));
 #endif
-    setAttribute(Qt::WA_DeleteOnClose, true);
+    setAttribute(Qt::WA_DeleteOnClose, false);
     // disable application quit when last window closed
     setAttribute(Qt::WA_QuitOnClose, false);
     setMouseTracking(true);

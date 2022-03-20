@@ -52,6 +52,8 @@ protected:
     virtual void mouseDoubleClickEvent(QMouseEvent*) override;
     virtual void contextMenuEvent(QContextMenuEvent*) override;
 
+    virtual void closeEvent(QCloseEvent*) override;
+
 protected:
     //    void dragEnterEvent(QDragEnterEvent *event) override;
     //    void dragMoveEvent(QDragMoveEvent *event) override;
