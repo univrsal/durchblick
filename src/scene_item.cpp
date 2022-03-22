@@ -27,12 +27,19 @@
 QWidget* SceneItem::GetConfigWidget()
 {
     auto* w = new SceneItemWidget();
+    QStringList scenes;
     obs_enum_scenes([](void* d, obs_source_t* src) -> bool {
-        auto* cb = static_cast<QComboBox*>(d);
-        cb->addItem(utf8_to_qt(obs_source_get_name(src)));
+        auto* cb = static_cast<QStringList*>(d);
+        cb->append(utf8_to_qt(obs_source_get_name(src)));
         return true;
     },
-        w->m_combo_box);
+        &scenes);
+
+    scenes.sort();
+
+    for (auto const& scene : scenes)
+        w->m_combo_box->addItem(scene);
+
     return w;
 }
 

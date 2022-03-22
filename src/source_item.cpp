@@ -162,15 +162,21 @@ SourceItem::~SourceItem()
 QWidget* SourceItem::GetConfigWidget()
 {
     auto* w = new SourceItemWidget();
+    QStringList names;
+
     obs_enum_sources([](void* d, obs_source_t* src) -> bool {
         auto flags = obs_source_get_output_flags(src);
         if (flags & OBS_OUTPUT_VIDEO) {
-            auto* cb = static_cast<QComboBox*>(d);
-            cb->addItem(utf8_to_qt(obs_source_get_name(src)));
+            auto* cb = static_cast<QStringList*>(d);
+            cb->append(utf8_to_qt(obs_source_get_name(src)));
         }
         return true;
     },
-        w->m_combo_box);
+        &names);
+    names.sort();
+    for (auto const& name : names)
+        w->m_combo_box->addItem(name);
+
     return w;
 }
 
