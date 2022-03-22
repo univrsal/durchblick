@@ -52,7 +52,6 @@ public:
 
     ~SceneItem()
     {
-        binfo("le");
     }
 
     QWidget* GetConfigWidget() override;
