@@ -133,6 +133,9 @@ public:
         m_toggle_stretch->setChecked(Obj["stretch"].toBool());
     }
 
+    /// Determines the border of the cell when it is not hovered
+    virtual uint32_t GetFillColor() { return 0xFFD0D0D0; }
+
     virtual QWidget* GetConfigWidget() { return nullptr; }
     virtual void LoadConfigFromWidget(QWidget*) { }
 
@@ -208,7 +211,6 @@ public:
 class PlaceholderItem : public LayoutItem {
     Q_OBJECT
 public:
-
     PlaceholderItem(Layout* parent, int x, int y, int w = 1, int h = 1)
         : LayoutItem(parent, x, y, w, h)
     {

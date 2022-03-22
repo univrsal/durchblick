@@ -259,6 +259,9 @@ void Layout::Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy)
 
         if (Item->Hovered())
             LayoutItem::DrawBox(0, 0, m_cfg.cell_width * Item->m_width, m_cfg.cell_height * Item->m_height, 0xFF004400);
+        else
+            LayoutItem::DrawBox(0, 0, m_cfg.cell_width * Item->m_width, m_cfg.cell_height * Item->m_height, Item->GetFillColor());
+
         endRegion();
         gs_matrix_pop();
 
