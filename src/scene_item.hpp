@@ -22,13 +22,20 @@
 #include "util.h"
 #include <QComboBox>
 #include <QFormLayout>
+#include <QRadioButton>
 #include <QVBoxLayout>
 #include <obs.hpp>
+#if _WIN32
+#    include <obs-frontend-api.h>
+#else
+#    include <obs/obs-frontend-api.h>
+#endif
 
 class SceneItemWidget : public QWidget {
     Q_OBJECT
 public:
     QComboBox* m_combo_box;
+    QRadioButton *m_icon, *m_border;
     SceneItemWidget(QWidget* parent = nullptr)
         : QWidget(parent)
     {
@@ -38,12 +45,37 @@ public:
         m_combo_box = new QComboBox();
         m_combo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
         l->addRow(T_SCENE_NAME, m_combo_box);
+
+        auto* radio_buttons = new QVBoxLayout(this);
+        m_border = new QRadioButton(T_BORDER_INDICATOR, this);
+        m_icon = new QRadioButton(T_ICON_INDICATOR, this);
+        radio_buttons->addWidget(m_border);
+        radio_buttons->addWidget(m_icon);
+        m_border->setChecked(true);
+        radio_buttons->setContentsMargins(0, 0, 0, 0);
+        l->addRow("", radio_buttons);
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     }
 };
 
 class SceneItem : public SourceItem {
     Q_OBJECT
+
+    bool m_use_border_for_indicator = true;
+
+    uint32_t GetIndicatorColor()
+    {
+        OBSSourceAutoRelease previewSrc = obs_frontend_get_current_preview_scene();
+        OBSSourceAutoRelease programSrc = obs_frontend_get_current_scene();
+        bool studioMode = obs_frontend_preview_program_mode_active();
+
+        if (m_src == programSrc)
+            return COLOR_PROGRAM_INDICATOR;
+        else if (m_src == previewSrc)
+            return studioMode ? COLOR_PREVIEW_INDICATOR : COLOR_PROGRAM_INDICATOR;
+        return 0;
+    }
+
 public:
     SceneItem(Layout* parent, int x, int y, int w = 1, int h = 1)
         : SourceItem(parent, x, y, w, h)
@@ -58,4 +90,7 @@ public:
     void LoadConfigFromWidget(QWidget*) override;
     void MouseEvent(const MouseData& e, const Config& cfg) override;
     void Render(const Config& cfg) override;
+    uint32_t GetFillColor() override;
+    void ReadFromJson(const QJsonObject& Obj) override;
+    void WriteToJson(QJsonObject& Obj) override;
 };

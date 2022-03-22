@@ -43,6 +43,8 @@
 #define T_WIDGET_SETTINGS               T_("Label.WidgetSettings")
 #define T_SOURCE_NAME                   T_("Label.SourceName")
 #define T_SCENE_NAME                    T_("Label.SceneName")
+#define T_BORDER_INDICATOR              T_("Label.BorderForIndicator")
+#define T_ICON_INDICATOR                T_("Label.IconForIndicator")
 #define T_LABEL_GRID_SIZE               T_("Label.GridSize")
 #define T_LAYOUT_CONFIG                 T_("LayoutConfig.Title")
 #define T_WIDGET_STRETCH                T_("Widget.Stretch")

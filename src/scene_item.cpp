@@ -17,11 +17,6 @@
  *************************************************************************/
 
 #include "scene_item.hpp"
-#if _WIN32
-#    include <obs-frontend-api.h>
-#else
-#    include <obs/obs-frontend-api.h>
-#endif
 #include <util/config-file.h>
 
 QWidget* SceneItem::GetConfigWidget()
@@ -49,6 +44,7 @@ void SceneItem::LoadConfigFromWidget(QWidget* w)
     if (custom) {
         OBSSceneAutoRelease s = obs_get_scene_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
         SetSource(obs_scene_get_source(s));
+        m_use_border_for_indicator = custom->m_border->isChecked();
     }
 }
 
@@ -82,28 +78,37 @@ void SceneItem::MouseEvent(const MouseData& e, const Config& cfg)
     }
 }
 
-static const uint32_t previewColor = 0x7700D000;
-static const uint32_t programColor = 0x77D00000;
-
 void SceneItem::Render(const Config& cfg)
 {
     SourceItem::Render(cfg);
 
-    OBSSourceAutoRelease previewSrc = obs_frontend_get_current_preview_scene();
-    OBSSourceAutoRelease programSrc = obs_frontend_get_current_scene();
-    bool studioMode = obs_frontend_preview_program_mode_active();
-
-    auto color = 0;
-    if (m_src == programSrc)
-        color = programColor;
-    else if (m_src == previewSrc)
-        color = studioMode ? previewColor : programColor;
-
-    // Draw indicator, that this scene is on preview/program
-    if (color != 0) {
-        gs_matrix_push();
-        gs_matrix_translate3f(cfg.cx / 16, cfg.cy / 16, 0);
-        DrawBox(cfg.cx / 32, cfg.cx / 32, color);
-        gs_matrix_pop();
+    if (!m_use_border_for_indicator) {
+        auto color = GetIndicatorColor();
+        // Draw indicator, to show that this scene is on preview/program
+        if (color != 0) {
+            gs_matrix_push();
+            gs_matrix_translate3f(cfg.cx / 16, cfg.cy / 16, 0);
+            DrawBox(cfg.cx / 32, cfg.cx / 32, color);
+            gs_matrix_pop();
+        }
     }
+}
+
+uint32_t SceneItem::GetFillColor()
+{
+    if (m_use_border_for_indicator)
+        return GetIndicatorColor();
+    return LayoutItem::GetFillColor();
+}
+
+void SceneItem::ReadFromJson(const QJsonObject& Obj)
+{
+    SourceItem::ReadFromJson(Obj);
+    m_use_border_for_indicator = Obj["border_for_indicator"].toBool(true);
+}
+
+void SceneItem::WriteToJson(QJsonObject& Obj)
+{
+    SourceItem::WriteToJson(Obj);
+    Obj["border_for_indicator"] = m_use_border_for_indicator;
 }
