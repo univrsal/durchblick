@@ -54,4 +54,10 @@
 
 #define T_PREVIEW                       "StudioMode.Preview"
 #define T_PROGRAM                       "StudioMode.Program"
+
+#define COLOR_BORDER_GRAY               0xFFD0D0D0
+#define COLOR_HOVER_GREEEN              0xFF004400
+#define COLOR_SELECTION_CYAN            0xFF009999
+#define COLOR_PREVIEW_INDICATOR         0x7700D000
+#define COLOR_PROGRAM_INDICATOR         0x77D00000
 /* clang-format on */
