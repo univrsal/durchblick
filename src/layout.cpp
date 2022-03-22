@@ -394,7 +394,7 @@ void Layout::Load(QJsonObject const& obj)
     m_rows = obj["rows"].toInt();
     auto items = obj["items"].toArray();
 
-    for (auto const& item : items) {
+    for (auto const item : qAsConst(items)) {
         auto* new_item = Registry::MakeItem(this, item.toObject());
         new_item->Update(m_cfg);
         m_layout_items.emplace_back(new_item);
