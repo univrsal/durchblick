@@ -22,6 +22,7 @@
 #else
 #    include <obs/obs-frontend-api.h>
 #endif
+#include <util/config-file.h>
 
 QWidget* SceneItem::GetConfigWidget()
 {
@@ -47,19 +48,25 @@ void SceneItem::LoadConfigFromWidget(QWidget* w)
 void SceneItem::MouseEvent(const MouseData& e, const Config& cfg)
 {
     SourceItem::MouseEvent(e, cfg);
+    auto transitionOnDoubleClick = config_get_bool(
+        obs_frontend_get_global_config(), "BasicWindow", "TransitionOnDoubleClick");
+    auto switchOnClick = config_get_bool(obs_frontend_get_global_config(), "BasicWindow",
+        "MultiviewMouseSwitch");
     if (e.buttons & Qt::LeftButton && Hovered()) {
         if (e.double_click) {
-            if (!obs_frontend_preview_program_mode_active())
+            if (!(obs_frontend_preview_program_mode_active() && transitionOnDoubleClick && switchOnClick))
                 return;
             OBSSourceAutoRelease src = obs_frontend_get_current_scene();
             if (src != m_src)
                 obs_frontend_set_current_scene(m_src);
         } else {
             if (obs_frontend_preview_program_mode_active()) {
+                if (!switchOnClick)
+                    return;
                 OBSSourceAutoRelease src = obs_frontend_get_current_preview_scene();
                 if (src != m_src)
                     obs_frontend_set_current_preview_scene(m_src);
-            } else {
+            } else if (switchOnClick) {
                 OBSSourceAutoRelease src = obs_frontend_get_current_scene();
                 if (src != m_src)
                     obs_frontend_set_current_scene(m_src);
