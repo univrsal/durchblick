@@ -208,7 +208,6 @@ public:
 class PlaceholderItem : public LayoutItem {
     Q_OBJECT
 public:
-    static const char* Id() { return "placeholder"; }
 
     PlaceholderItem(Layout* parent, int x, int y, int w = 1, int h = 1)
         : LayoutItem(parent, x, y, w, h)
