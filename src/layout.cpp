@@ -394,10 +394,17 @@ void Layout::Load(QJsonObject const& obj)
     m_rows = obj["rows"].toInt();
     auto items = obj["items"].toArray();
 
-    for (auto const item : qAsConst(items)) {
+    for (auto const& item : items) {
         auto* new_item = Registry::MakeItem(this, item.toObject());
-        new_item->Update(m_cfg);
-        m_layout_items.emplace_back(new_item);
+        if (new_item) {
+            new_item->Update(m_cfg);
+            m_layout_items.emplace_back(new_item);
+        } else {
+            QJsonDocument doc;
+            doc.setObject(item.toObject());
+            berr("Failed to instanciate widget '%s'", qt_to_utf8(item.toObject()["id"].toString()));
+            berr("Widget JSON: %s", qt_to_utf8(QString(doc.toJson())));
+        }
     }
     m_layout_mutex.unlock();
     RefreshGrid();
