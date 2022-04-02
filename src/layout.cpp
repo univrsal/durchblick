@@ -91,12 +91,6 @@ Layout::Layout(QWidget* parent, int cols, int rows)
     , m_cols(cols)
     , m_parent_widget(parent)
 {
-    m_new_widget_action = new QAction(T_MENU_SET_WIDGET, this);
-    m_layout_config = new QAction(T_MENU_LAYOUT_CONFIG, this);
-    m_clear_action = new QAction(T_MENU_CLEAR_ACTION, this);
-    connect(m_new_widget_action, SIGNAL(triggered()), this, SLOT(ShowSetWidgetDialog()));
-    connect(m_layout_config, SIGNAL(triggered()), this, SLOT(ShowLayoutConfigDialog()));
-    connect(m_clear_action, SIGNAL(triggered()), this, SLOT(ClearSelection()));
 }
 
 Layout::~Layout()
@@ -186,16 +180,28 @@ void Layout::HandleContextMenu(QMouseEvent*)
     // Keep drawing the selection if it wasn't reset
     if (!m_selection_end.empty())
         m_dragging = true;
+
     QMenu m(T_MENU_OPTION, m_parent_widget);
+
+    auto AddDefaultActions = [&] {
+        // Add fullscreen menu
+        auto* projectorMenu = new QMenu(QApplication::translate("", "Fullscreen"));
+        AddProjectorMenuMonitors(projectorMenu, m_parent_widget, SLOT(OpenFullScreenProjector()));
+        m.addMenu(projectorMenu);
+
+        // TODO: Resize to content, close, always ontop
+        m.addAction(T_MENU_SET_WIDGET, this, SLOT(ShowWidgetDialog()));
+        m.addAction(T_MENU_LAYOUT_CONFIG, this, SLOT(ShowConfigDialog()));
+        m.addAction(T_MENU_CLEAR_ACTION, this, SLOT(ClearSelection()));
+        m.addSeparator();
+    };
+
     bool flag = false;
     {
         std::lock_guard<std::mutex> lock(m_layout_mutex);
         for (auto& Item : m_layout_items) {
             if (Item->Hovered()) {
-                m.addAction(m_new_widget_action);
-                m.addAction(m_clear_action);
-                m.addAction(m_layout_config);
-                m.addSeparator();
+                AddDefaultActions();
                 Item->ContextMenu(m);
                 flag = true;
                 break;
