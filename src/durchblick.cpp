@@ -18,6 +18,7 @@
 
 #include "durchblick.hpp"
 #include "obs.hpp"
+#include <QWindow>
 #include <QApplication>
 #include <QIcon>
 #include <obs-module.h>
@@ -81,6 +82,11 @@ Durchblick::Durchblick(QWidget* widget)
     , m_layout(this)
 {
     setWindowTitle("Durchblick");
+
+    // Mark the window as a projector so SetDisplayAffinity
+    // can skip it
+    windowHandle()->setProperty("isOBSProjectorWindow", true);
+
 #ifdef __APPLE__
     setWindowIcon(
         QIcon::fromTheme("obs", QIcon(":/res/images/obs_256x256.png")));
