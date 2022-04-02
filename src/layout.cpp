@@ -194,7 +194,7 @@ void Layout::HandleContextMenu(QMouseEvent*, QMenu& m)
     }
 }
 
-void Layout::FreeSpace(const LayoutItem::Cell& c)
+void Layout::FreeSpace(LayoutItem::Cell const& c)
 {
     auto it = std::remove_if(m_layout_items.begin(), m_layout_items.end(), [c](std::unique_ptr<LayoutItem> const& item) {
         auto result = !item || c.Overlaps(item->m_cell);
@@ -203,7 +203,7 @@ void Layout::FreeSpace(const LayoutItem::Cell& c)
     m_layout_items.erase(it, m_layout_items.end());
 }
 
-void Layout::AddWidget(const Registry::ItemRegistry::Entry& entry, QWidget* custom_widget)
+void Layout::AddWidget(Registry::ItemRegistry::Entry const& entry, QWidget* custom_widget)
 {
     std::lock_guard<std::mutex> lock(m_layout_mutex);
     auto target = GetSelectedArea();

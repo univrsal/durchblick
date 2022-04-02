@@ -96,9 +96,9 @@ public:
         m_toggle_safe_borders->setChecked(b);
     }
 
-    virtual void ReadFromJson(const QJsonObject& Obj) override;
+    virtual void ReadFromJson(QJsonObject const& Obj) override;
     virtual void WriteToJson(QJsonObject& Obj) override;
-    virtual void Render(const Config& cfg) override;
+    virtual void Render(DurchblickItemConfig const& cfg) override;
     virtual void ContextMenu(QMenu&) override;
-    virtual void MouseEvent(MouseData const& e, Config const& cfg) override;
+    virtual void MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg) override;
 };

@@ -56,7 +56,7 @@ void PreviewProgramItem::CreateLabel()
 
 static const uint32_t labelColor = 0xD91F1F1F;
 
-void PreviewProgramItem::Render(const Config& cfg)
+void PreviewProgramItem::Render(DurchblickItemConfig const& cfg)
 {
     LayoutItem::Render(cfg); // Skip SourceItem
 
@@ -101,7 +101,7 @@ void PreviewProgramItem::WriteToJson(QJsonObject& Obj)
     Obj["is_program"] = m_program;
 }
 
-void PreviewProgramItem::ReadFromJson(const QJsonObject& Obj)
+void PreviewProgramItem::ReadFromJson(QJsonObject const& Obj)
 {
     SourceItem::ReadFromJson(Obj);
     m_program = Obj["is_program"].toBool();

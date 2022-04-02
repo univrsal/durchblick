@@ -17,6 +17,7 @@
  *************************************************************************/
 
 #pragma once
+#include "callbacks.h"
 #include "util.h"
 #include <QContextMenuEvent>
 #include <QJsonObject>
@@ -74,16 +75,6 @@ public:
     int m_left {}, m_top {}, m_right {}, m_bottom {},                 // position inside the entire display
         m_rel_left {}, m_rel_top {}, m_rel_right {}, m_rel_bottom {}, // position relative to multiview origin
         m_width {}, m_height {}, m_inner_width {}, m_inner_height {};
-
-    struct Config {
-        int x {}, y {};                        // Origin of multiview
-        int cx {}, cy {};                      // Multiview base size
-        int canvas_width {}, canvas_height {}; // Base canvas size
-        float scale {};
-        float border = 4;
-        float border2 = border * 2;
-        float cell_width, cell_height;
-    };
 
     struct MouseData {
         int x, y;
@@ -144,12 +135,12 @@ public:
         m.addAction(m_toggle_stretch);
     }
 
-    virtual void Render(Config const& cfg)
+    virtual void Render(DurchblickItemConfig const& cfg)
     {
         DrawBox(0, 0, m_inner_width, m_inner_height, 0xFF000000);
     }
 
-    virtual void MouseEvent(MouseData const& e, Config const& cfg)
+    virtual void MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
     {
         if (e.type == QEvent::MouseMove)
             m_mouse_over = IsMouseOver(e.x, e.y);
@@ -173,7 +164,7 @@ public:
         return m_hovered_cell;
     }
 
-    virtual void Update(Config const& cfg)
+    virtual void Update(DurchblickItemConfig const& cfg)
     {
         m_rel_left = cfg.cell_width * m_cell.col;
         m_left = cfg.x + m_rel_left;

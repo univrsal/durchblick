@@ -88,9 +88,9 @@ public:
 
     QWidget* GetConfigWidget() override;
     void LoadConfigFromWidget(QWidget*) override;
-    void MouseEvent(const MouseData& e, const Config& cfg) override;
-    void Render(const Config& cfg) override;
+    void MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg) override;
+    void Render(DurchblickItemConfig const& cfg) override;
     uint32_t GetFillColor() override;
-    void ReadFromJson(const QJsonObject& Obj) override;
+    void ReadFromJson(QJsonObject const& Obj) override;
     void WriteToJson(QJsonObject& Obj) override;
 };

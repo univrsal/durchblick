@@ -76,7 +76,7 @@ private:
 
 #endif
 
-static inline long long color_to_int(const QColor& color)
+static inline long long color_to_int(QColor const& color)
 {
     auto shift = [&](unsigned val, int shift) {
         return ((val & 0xff) << shift);
@@ -140,7 +140,7 @@ QColor OBSQTDisplay::GetDisplayBackgroundColor() const
     return rgba_to_color(backgroundColor);
 }
 
-void OBSQTDisplay::SetDisplayBackgroundColor(const QColor& color)
+void OBSQTDisplay::SetDisplayBackgroundColor(QColor const& color)
 {
     uint32_t newBackgroundColor = (uint32_t)color_to_int(color);
 

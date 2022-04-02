@@ -11,7 +11,7 @@
 #endif
 
 /* yoinked from obs window-projector.cpp */
-OBSSource SourceItem::CreateLabel(const char* name, size_t h)
+OBSSource SourceItem::CreateLabel(char const* name, size_t h)
 {
     OBSDataAutoRelease settings = obs_data_create();
     OBSDataAutoRelease font = obs_data_create();
@@ -212,7 +212,7 @@ void SourceItem::SetSource(obs_source_t* src)
     }
 }
 
-void SourceItem::ReadFromJson(const QJsonObject& Obj)
+void SourceItem::ReadFromJson(QJsonObject const& Obj)
 {
     LayoutItem::ReadFromJson(Obj);
     m_toggle_safe_borders->setChecked(Obj["show_safe_borders"].toBool());
@@ -242,7 +242,7 @@ static const uint32_t backgroundColor = 0xFF000000;
 static const uint32_t previewColor = 0xFF00D000;
 static const uint32_t programColor = 0xFFD00000;
 
-void SourceItem::Render(const Config& cfg)
+void SourceItem::Render(DurchblickItemConfig const& cfg)
 {
     LayoutItem::Render(cfg);
 
@@ -303,7 +303,7 @@ void SourceItem::ContextMenu(QMenu& m)
     m.addAction(m_toggle_volume);
 }
 
-void SourceItem::MouseEvent(const MouseData& e, const Config& cfg)
+void SourceItem::MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
 {
     LayoutItem::MouseEvent(e, cfg);
 }

@@ -59,8 +59,8 @@ public:
     QWidget* GetConfigWidget() override;
     void LoadConfigFromWidget(QWidget*) override;
     void CreateLabel();
-    void Render(const Config& cfg) override;
+    void Render(DurchblickItemConfig const& cfg) override;
 
     void WriteToJson(QJsonObject& Obj) override;
-    void ReadFromJson(const QJsonObject& Obj) override;
+    void ReadFromJson(QJsonObject const& Obj) override;
 };

@@ -35,7 +35,7 @@ public:
     uint32_t backgroundColor = GREY_COLOR_BACKGROUND;
 
     QColor GetDisplayBackgroundColor() const;
-    void SetDisplayBackgroundColor(const QColor& color);
+    void SetDisplayBackgroundColor(QColor const& color);
     void UpdateDisplayBackgroundColor();
     void CreateDisplay(bool force = false);
 };

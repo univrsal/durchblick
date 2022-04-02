@@ -27,7 +27,7 @@ namespace Registry {
 QList<ItemRegistry::Entry> ItemRegistry::Entries;
 QList<std::function<void()>> ItemRegistry::DeinitCallbacks;
 
-void ItemRegistry::Register(const Constructor& c, const char* n, const char* id, void* p)
+void ItemRegistry::Register(Constructor const& c, char const* n, char const* id, void* p)
 {
     Entries.append(Entry { c, p, utf8_to_qt(n), id });
 }
@@ -49,7 +49,7 @@ void RegisterDefaults()
     Registry::AddCallbacks<SourceItem>();
 }
 
-LayoutItem* MakeItem(Layout* l, const QJsonObject& obj)
+LayoutItem* MakeItem(Layout* l, QJsonObject const& obj)
 {
     QString id = obj["id"].toString();
     for (auto const& Entry : qAsConst(ItemRegistry::Entries)) {

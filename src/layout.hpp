@@ -73,7 +73,7 @@ class Layout : public QObject {
     friend class LayoutConfigDialog;
     int m_cols { 4 }, m_rows { 4 };
     std::vector<std::unique_ptr<LayoutItem>> m_layout_items;
-    LayoutItem::Config m_cfg;
+    DurchblickItemConfig m_cfg;
     QWidget* m_parent_widget {};
     LayoutItem::Cell m_hovered_cell {}, m_selection_start {}, m_selection_end {};
     bool m_dragging {};
@@ -130,5 +130,5 @@ public:
 
     int Columns() const { return m_cols; }
     int Rows() const { return m_rows; }
-    LayoutItem::Config const& Config() const { return m_cfg; }
+    DurchblickItemConfig const& Config() const { return m_cfg; }
 };

@@ -17,32 +17,112 @@
  *************************************************************************/
 
 #pragma once
+#include <jansson.h>
+
+// Provide this when registering your widgets. This makes sure that
+// no widgets get registered if the version does not match.
+#define DURCHBLICK_CUSTOM_WIDGET_API_VERSION 1
+
+extern "C" {
+
+struct DurchblickItemConfig {
+    int x {}, y {};                        // Origin of multiview
+    int cx {}, cy {};                      // Multiview base size
+    int canvas_width {}, canvas_height {}; // Base canvas size
+    float scale {};
+    float border = 4;
+    float border2 = border * 2;
+    float cell_width, cell_height;
+};
+
+/**
+ * Callback for when your custom item gets created.
+ * This callback is required.
+ * @param item      The layout item object
+ * @param x         Column in the grid
+ * @param y         Row in the grid
+ * @param w         Width (in cells)
+ * @param h         Height (in cells)
+ * @return          Your private data associated with this widget instance
+ */
+typedef void* (*DurchblickItemInitCb)(void* item, int x, int y, int w, int h);
+
+/**
+ * Callback for when your custom item gets destroyed.
+ * This callback is required.
+ * @param item      The layout item object
+ * @param data      Private user data
+ */
+typedef void (*DurchblickItemDestroyCb)(void* item, void* data);
+
+/**
+ * Callback when the widget needs to be updated. Usually happens on window resize
+ * @param item      The layout item object
+ * @param data      Private user data
+ * @param cfg       New widget config data
+ */
+typedef void (*DurchblickItemUpdateCb)(void* item, void* data, struct DurchblickItemConfig const* cfg);
+
+/**
+ * Callback to save custom data associated with this widget instance.
+ * @param  item     The layout item object
+ * @param  data     Private user data
+ * @return          Jansson json struct populated with your data
+ *                  reference will be decreased with json_decref() by Durchblick
+ */
+typedef json_t* (*DurchblickItemSaveCb)(void* item, void* data);
+
+/**
+ * Callback to load custom data associated with this widget instance.
+ * @param item      The layout item object
+ * @param data      Private user data
+ * @param result    Jansson json struct populated with your data
+ *                  reference will be decreased with json_decref() by Durchblick
+ *                  afterwards.
+ * @param size      The size of the info struct
+ */
+typedef void (*DurchblickItemLoadCb)(void* item, void* data, json_t* result);
 
 /**
  * Callback to render custom item content. View region is already adjusted
  * to the cell size. Use 'item' to access additional information about the
- * item.
+ * item. This callback is required.
  * @param item      The layout item object
  * @param data      Private user data
+ * @param cfg       The widget config
  */
-typedef void (*DurchblickItemRenderCb)(void* item, void* data);
+typedef void (*DurchblickItemRenderCb)(void* item, void* data, struct DurchblickItemConfig const* cfg);
 
 /**
- * Mouse move event callback
+ * Mouse event callback
+ * @param item      The layout item object
+ * @param data      Private user data
+ * @param cfg       The widget config
+ * @param x         Mouse x position within Durchblick window
+ * @param y         Mouse y position within Durchblick window
+ * @param buttons   See Qt::MouseButton
+ * @param modifiers See Qt::Modifiers
+ */
+typedef void (*DurchblickItemMouseCb)(void* item, void* data, struct DurchblickItemConfig const* cfg, int x, int y, int buttons, int modifiers);
+
+/**
+ * Called to add additional context menu items
  * @param item      The layout item object
  * @param data      Private user data
  * @param x         Mouse x position within Durchblick window
  * @param y         Mouse y position within Durchblick window
  * @param buttons   See Qt::MouseButton
  * @param modifiers See Qt::Modifiers
- */
-typedef void (*DurchblickItemMouseCb)(void* item, void* data, int x, int y, int buttons, int modifiers);
-
-/**
- * Called to add additional context menu items
- * @param item      The layout item object
- * @param data      Private user data
- * @param event     QContextMenuEvent
  * @param menu      QMenu
  */
-typedef void (*DurchBlickItemConextMenuCb)(void* item, void* data, void* event, void* menu);
+typedef void (*DurchblickItemContextMenuCb)(void* item, void* data, void* menu);
+
+/**
+ * The fill color of this cell when it is not hovered. Basically means the
+ * border color.
+ * @param item      The layout item object
+ * @param data      Private user data
+ * @return          ARGB 32-bit integer with the fill color
+ */
+typedef unsigned int (*DurchblickItemFillColorCb)(void* item, void* data);
+}

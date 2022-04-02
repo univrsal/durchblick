@@ -48,7 +48,7 @@ void SceneItem::LoadConfigFromWidget(QWidget* w)
     }
 }
 
-void SceneItem::MouseEvent(const MouseData& e, const Config& cfg)
+void SceneItem::MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
 {
     SourceItem::MouseEvent(e, cfg);
     auto transitionOnDoubleClick = config_get_bool(
@@ -78,7 +78,7 @@ void SceneItem::MouseEvent(const MouseData& e, const Config& cfg)
     }
 }
 
-void SceneItem::Render(const Config& cfg)
+void SceneItem::Render(DurchblickItemConfig const& cfg)
 {
     SourceItem::Render(cfg);
 
@@ -101,7 +101,7 @@ uint32_t SceneItem::GetFillColor()
     return LayoutItem::GetFillColor();
 }
 
-void SceneItem::ReadFromJson(const QJsonObject& Obj)
+void SceneItem::ReadFromJson(QJsonObject const& Obj)
 {
     SourceItem::ReadFromJson(Obj);
     m_use_border_for_indicator = Obj["border_for_indicator"].toBool(true);

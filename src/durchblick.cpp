@@ -280,7 +280,7 @@ void Durchblick::Save(QJsonObject& obj)
     m_layout.Save(obj);
 }
 
-void Durchblick::Load(const QJsonObject& obj)
+void Durchblick::Load(QJsonObject const& obj)
 {
     setVisible(obj["visible"].toBool(false));
 
