@@ -403,7 +403,6 @@ void Layout::Save(QJsonObject& obj)
     QJsonArray items;
     obj["cols"] = m_cols;
     obj["rows"] = m_rows;
-
     for (auto const& Item : m_layout_items) {
         QJsonObject obj;
         Item->WriteToJson(obj);

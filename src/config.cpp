@@ -63,6 +63,8 @@ void Load()
 
 void Save()
 {
+    if (!db)
+        return;
     QJsonArray layouts;
     QJsonObject obj;
     BPtr<char> path = obs_module_config_path("layout.json");
@@ -88,4 +90,11 @@ void Save()
         berr("Couldn't write config to %s", path.Get());
     }
 }
+
+void Cleanup()
+{
+    db->deleteLater();
+    db = nullptr;
+}
+
 }

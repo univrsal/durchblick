@@ -54,10 +54,26 @@ bool obs_module_load()
 
     QAction::connect(static_cast<QAction*>(obs_frontend_add_tools_menu_qaction(T_MENU_OPTION)),
         &QAction::triggered, [] {
-            if (!Config::db)
-                Config::Load();
             Config::db->show();
         });
+
+    auto FinishedLoadingCallback = [](enum obs_frontend_event event, void*) {
+        if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING)
+            Config::Load();
+    };
+
+    auto ExitCallback = [](enum obs_frontend_event event, void*) {
+        // I couldn't find another event that was on exit and
+        // before source/scene data was cleared
+        if (event == OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN) {
+            // Final save and cleanup
+            Config::Save();
+            Config::Cleanup();
+        }
+    };
+
+    obs_frontend_add_event_callback(ExitCallback, nullptr);
+    obs_frontend_add_event_callback(FinishedLoadingCallback, nullptr);
 
     return true;
 }
@@ -65,5 +81,4 @@ bool obs_module_load()
 void obs_module_unload()
 {
     Registry::Free();
-    Config::db = nullptr;
 }

@@ -182,6 +182,7 @@ Durchblick::Durchblick(QWidget* widget)
     , m_layout(this)
 {
     setWindowTitle("Durchblick");
+    setVisible(false);
 
     // Mark the window as a projector so SetDisplayAffinity
     // can skip it
@@ -211,16 +212,6 @@ Durchblick::Durchblick(QWidget* widget)
     m_ready = true;
     show();
 
-    m_frontend_cb = [](enum obs_frontend_event event, void* private_data) {
-        if (event == OBS_FRONTEND_EVENT_EXIT) {
-            auto* db = static_cast<Durchblick*>(private_data);
-            db->m_ready = false;
-            db->m_layout.DeleteLayout();
-            db->deleteLater();
-        }
-    };
-    obs_frontend_add_event_callback(m_frontend_cb, this);
-
     // We need it here to allow keyboard input in X11 to listen to Escape
     activateWindow();
     Update();
@@ -232,8 +223,9 @@ Durchblick::Durchblick(QWidget* widget)
 Durchblick::~Durchblick()
 {
     obs_display_remove_draw_callback(GetDisplay(), RenderLayout, this);
-    obs_frontend_remove_event_callback(m_frontend_cb, this);
     m_screen = nullptr;
+    m_ready = false;
+    m_layout.DeleteLayout();
     deleteLater();
 }
 
@@ -247,6 +239,8 @@ void Durchblick::RenderLayout(void* data, uint32_t cx, uint32_t cy)
 
 void Durchblick::SetMonitor(int monitor)
 {
+    if (monitor < 0)
+        return;
     m_current_monitor = monitor;
     m_screen = QGuiApplication::screens().at(monitor);
     setWindowState(Qt::WindowActive);
@@ -266,10 +260,33 @@ void Durchblick::Update()
 
 void Durchblick::Save(QJsonObject& obj)
 {
+    obj["monitor"] = m_current_monitor;
+
+    QJsonObject geo;
+    geo["x"] = geometry().x();
+    geo["y"] = geometry().y();
+    geo["w"] = geometry().width();
+    geo["h"] = geometry().height();
+    obj["geometry"] = geo;
+    obj["visible"] = isVisible();
+
     m_layout.Save(obj);
 }
 
 void Durchblick::Load(const QJsonObject& obj)
 {
+    setVisible(obj["visible"].toBool(false));
+
+    if (obj.contains("monitor"))
+        SetMonitor(obj["monitor"].toInt(-1));
+
+    // Restore geometry if this view wasn't in fullscreen
+    if (m_current_monitor < 0 && obj.contains("geometry") && obj["geometry"].isObject()) {
+        auto geo = obj["geometry"].toObject();
+        if (geo.contains("x") && geo.contains("y") && geo.contains("w") && geo.contains("h")) {
+            QRect geometry(geo["x"].toInt(), geo["y"].toInt(), geo["w"].toInt(480), geo["h"].toInt(270));
+            setGeometry(geometry);
+        }
+    }
     m_layout.Load(obj);
 }

@@ -26,4 +26,6 @@ extern Durchblick* db;
 extern void Load();
 
 extern void Save();
+
+extern void Cleanup();
 }

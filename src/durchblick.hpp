@@ -30,8 +30,6 @@
 
 class Durchblick : public OBSQTDisplay {
     Q_OBJECT
-    obs_frontend_event_cb m_frontend_cb {};
-
 public:
     QRect m_previous_geometry;
     bool m_ready { false };
