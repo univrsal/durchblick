@@ -76,6 +76,9 @@ else()
 endif()
 
 if (MSVC)
+    set(durchblick_platform_source
+	./src/windows-helper.hpp
+	./src/windows-helper.cpp)
     set(durchblick_platform_deps
         ${W32_PTHREADS_LIB})
 endif()
@@ -107,6 +110,7 @@ set(durchblick_sources
     ./src/custom_item.cpp
     ./src/custom_item.hpp
     ./src/callbacks.h
+    ${durchblick_platform_source}
     ${durchblick_ui_headers}
 )
 
@@ -114,6 +118,10 @@ add_library(durchblick MODULE
     ${durchblick_sources}
     ${durchblick_ui}
     ${durchblick_platform_sources})
+
+if (MSVC)
+    target_compile_definitions(durchblick PRIVATE UNICODE _UNICODE)
+endif()
 
 include_directories(
     "${LIBOBS_INCLUDE_DIR}/../UI/obs-frontend-api"

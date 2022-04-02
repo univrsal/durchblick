@@ -23,6 +23,10 @@
 #include <QWindow>
 #include <obs-module.h>
 
+#ifdef _WIN32
+#    include "windows-helper.hpp"
+#endif
+
 // Snagged from window-basic-main.cpp from obs-studio
 static void AddProjectorMenuMonitors(QMenu* parent, QObject* target, const char* slot)
 {
@@ -88,10 +92,13 @@ void Durchblick::OpenWindowedProjector()
     showFullScreen();
     showNormal();
     setCursor(Qt::ArrowCursor);
-    if (!m_previous_geometry.isNull())
-        setGeometry(m_previous_geometry);
-    else
+    if (m_previous_geometry.isNull()) {
         resize(480, 270);
+        move(30, 30);
+    } else {
+        setGeometry(m_previous_geometry);
+    }
+
     m_current_monitor = -1;
     setWindowTitle("Durchblick");
     m_screen = nullptr;
