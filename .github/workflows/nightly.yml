@@ -8,8 +8,6 @@ on:
     paths-ignore:
       - '**.md'
       - '**.ini'
-    branches:
-    - master
     tags:
     - "v*"
 jobs:
@@ -66,19 +64,14 @@ jobs:
       shell: bash
       run: |
         cmake -S ${{github.workspace}} -B ${{github.workspace}}/build/ \-G "Unix Makefiles" \
-          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DOBS_FRONTEND_INCLUDE=/usr/include/obs \
-          -DCREDS="${{ secrets.SPOTIFY_TOKEN }}" \
-          -DLASTFM_CREDS="${{ secrets.LASTFM_KEY }}"
+          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/dist -DOBS_FRONTEND_INCLUDE=/usr/include/obs
         cmake --build ${{github.workspace}}/build/ --parallel 4 --target install
     - name: Compile deb installer
       shell: bash
       run: | # Now only build deb installer
           cmake ${{github.workspace}} -B ${{github.workspace}}/build \
             -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_VERBOSE_MAKEFILE=true \
-            -DOBS_FRONTEND_INCLUDE=/usr/include/obs -DGLOBAL_INSTALLATION=ON \
-            -DCREDS="${{ secrets.SPOTIFY_TOKEN }}" \
-            -DLASTFM_CREDS="${{ secrets.LASTFM_KEY }}" \
-            -DVLC_INCLUDE_DIR=${{github.workspace}}/vlc/
+            -DOBS_FRONTEND_INCLUDE=/usr/include/obs -DGLOBAL_INSTALLATION=ON
           sudo cmake --build ${{github.workspace}}/build \
             --parallel 4 \
             --target install
@@ -231,8 +224,6 @@ jobs:
             -DLibObs_DIR="${{ github.workspace }}\obs-studio\build64\libobs" `
             -DLIBOBS_INCLUDE_DIR="${{ github.workspace }}\obs-studio\libobs" `
             -DLIBOBS_LIB="${{ github.workspace }}\obs-studio\build64\libobs\RelWithDebInfo\obs.lib" `
-            -DCREDS="${{ secrets.SPOTIFY_TOKEN }}" `
-            -DLASTFM_CREDS="${{ secrets.LASTFM_KEY }}" `
             -DOBS_FRONTEND_LIB="${{ github.workspace }}\obs-studio\build64\UI\obs-frontend-api\RelWithDebInfo\obs-frontend-api.lib" `
             -DW32_PTHREADS_LIB="${{ github.workspace }}\obs-studio\build64\deps\w32-pthreads\RelWithDebInfo\w32-pthreads.lib" ..
       - name: 'Configure ${{ env.project-git }} 32-bit'
@@ -245,8 +236,6 @@ jobs:
           -DDepsPath="${{ github.workspace }}\cmbuild\deps\win32" `
           -DLibObs_DIR="${{ github.workspace }}\obs-studio\build32\libobs" `
           -DLIBOBS_INCLUDE_DIR="${{ github.workspace }}\obs-studio\libobs" `
-          -DCREDS="${{ secrets.SPOTIFY_TOKEN }}" `
-          -DLASTFM_CREDS="${{ secrets.LASTFM_KEY }}" `
           -DLIBOBS_LIB="${{ github.workspace }}\obs-studio\build32\libobs\RelWithDebInfo\obs.lib" `
           -DOBS_FRONTEND_LIB="${{ github.workspace }}\obs-studio\build32\UI\obs-frontend-api\RelWithDebInfo\obs-frontend-api.lib" `
           -DW32_PTHREADS_LIB="${{ github.workspace }}\obs-studio\build32\deps\w32-pthreads\RelWithDebInfo\w32-pthreads.lib" ..
