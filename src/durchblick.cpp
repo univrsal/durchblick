@@ -58,7 +58,7 @@ void Durchblick::mouseReleaseEvent(QMouseEvent* e)
     QWidget::mousePressEvent(e);
     m_layout.MouseReleased(e);
     if (e->button() == Qt::RightButton)
-        m_layout.HandleContextMenu(nullptr);
+        m_layout.HandleContextMenu(e);
 }
 
 void Durchblick::mouseDoubleClickEvent(QMouseEvent* e)

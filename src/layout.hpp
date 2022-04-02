@@ -115,7 +115,7 @@ public:
     void MousePressed(QMouseEvent* e);
     void MouseReleased(QMouseEvent* e);
     void MouseDoubleClicked(QMouseEvent* e);
-    void HandleContextMenu(QContextMenuEvent* e);
+    void HandleContextMenu(QMouseEvent* e);
     void FreeSpace(LayoutItem::Cell const& c);
     void AddWidget(Registry::ItemRegistry::Entry const& entry, QWidget* custom_widget);
     void SetRegion(float bx, float by, float cx, float cy);

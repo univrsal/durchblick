@@ -181,7 +181,7 @@ void Layout::MouseDoubleClicked(QMouseEvent* e)
         Item->MouseEvent(d, m_cfg);
 }
 
-void Layout::HandleContextMenu(QContextMenuEvent*)
+void Layout::HandleContextMenu(QMouseEvent*)
 {
     // Keep drawing the selection if it wasn't reset
     if (!m_selection_end.empty())
