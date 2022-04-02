@@ -67,4 +67,8 @@ LayoutConfigDialog::LayoutConfigDialog(QWidget* parent, Layout* layout)
     connect(m_button_box->button(QDialogButtonBox::Ok), SIGNAL(pressed()), this, SLOT(ok_clicked()));
     connect(m_button_box->button(QDialogButtonBox::Cancel), SIGNAL(pressed()), this, SLOT(cancel_clicked()));
     setWindowTitle(T_LAYOUT_CONFIG);
+
+    // Center dialog at mouse position
+    auto p = QCursor::pos();
+    move(p.x() - width() / 2, p.y() - height() / 2);
 }
