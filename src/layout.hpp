@@ -114,7 +114,7 @@ public:
     void MousePressed(QMouseEvent* e);
     void MouseReleased(QMouseEvent* e);
     void MouseDoubleClicked(QMouseEvent* e);
-    void HandleContextMenu(QMouseEvent* e);
+    void HandleContextMenu(QMouseEvent* e, QMenu& m);
     void FreeSpace(LayoutItem::Cell const& c);
     void AddWidget(Registry::ItemRegistry::Entry const& entry, QWidget* custom_widget);
     void SetRegion(float bx, float by, float cx, float cy);
@@ -127,5 +127,8 @@ public:
     void Save(QJsonObject& obj);
     bool IsEmpty() const { return m_layout_items.empty(); }
     void DeleteLayout();
+
+    int Columns() const { return m_cols; }
+    int Rows() const { return m_rows; }
     LayoutItem::Config const& Config() const { return m_cfg; }
 };

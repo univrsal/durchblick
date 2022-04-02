@@ -18,22 +18,108 @@
 
 #include "durchblick.hpp"
 #include "obs.hpp"
-#include <QWindow>
 #include <QApplication>
 #include <QIcon>
+#include <QWindow>
 #include <obs-module.h>
+
+// Snagged from window-basic-main.cpp from obs-studio
+static void AddProjectorMenuMonitors(QMenu* parent, QObject* target, const char* slot)
+{
+    QAction* action;
+    QList<QScreen*> screens = QGuiApplication::screens();
+    for (int i = 0; i < screens.size(); i++) {
+        QScreen* screen = screens[i];
+        QRect screenGeometry = screen->geometry();
+        qreal ratio = screen->devicePixelRatio();
+        QString name = "";
+#ifdef _WIN32
+        QTextStream fullname(&name);
+        fullname << GetMonitorName(screen->name());
+        fullname << " (";
+        fullname << (i + 1);
+        fullname << ")";
+#elif defined(__APPLE__)
+        name = screen->name();
+#else
+        name = screen->model().simplified();
+
+        if (name.length() > 1 && name.endsWith("-"))
+            name.chop(1);
+#endif
+        name = name.simplified();
+
+        if (name.length() == 0) {
+            name = QString("%1 %2").arg(QApplication::translate("", "Display"), QString::number(i + 1));
+        }
+
+        QString str = QString("%1: %2x%3 @ %4,%5")
+                          .arg(name,
+                              QString::number(screenGeometry.width() * ratio),
+                              QString::number(screenGeometry.height() * ratio),
+                              QString::number(screenGeometry.x()),
+                              QString::number(screenGeometry.y()));
+
+        action = parent->addAction(str, target, slot);
+        action->setProperty("monitor", i);
+    }
+}
 
 void Durchblick::EscapeTriggered()
 {
 }
 
+void Durchblick::OpenFullScreenProjector()
+{
+    if (!isFullScreen())
+        m_previous_geometry = geometry();
+
+    int monitor = sender()->property("monitor").toInt();
+    SetMonitor(monitor);
+
+    if (monitor < 0) // Windowed
+        setWindowTitle("Durchblick");
+    else
+        setWindowTitle("Durchblick (" + QApplication::translate("", "Fullscreen") + ")");
+}
+
+void Durchblick::OpenWindowedProjector()
+{
+    showFullScreen();
+    showNormal();
+    setCursor(Qt::ArrowCursor);
+    if (!m_previous_geometry.isNull())
+        setGeometry(m_previous_geometry);
+    else
+        resize(480, 270);
+    m_current_monitor = -1;
+    setWindowTitle("Durchblick");
+    m_screen = nullptr;
+}
+
+void Durchblick::ResizeToContent()
+{
+    auto const& cfg = m_layout.Config();
+    uint32_t targetCX = cfg.cell_width * m_layout.Columns();
+    uint32_t targetCY = cfg.cell_height * m_layout.Rows();
+    int x, y, newX, newY;
+    float scale;
+
+    QSize size = this->size();
+    GetScaleAndCenterPos(targetCX, targetCY, size.width(), size.height(), x, y, scale);
+
+    newX = size.width() - (x * 2);
+    newY = size.height() - (y * 2);
+    resize(newX, newY);
+}
+
 void Durchblick::ScreenRemoved(QScreen* screen_)
 {
-    //    if (GetMonitor() < 0 || !m_screen)
-    //        return;
+    if (m_current_monitor < 0 || !m_screen)
+        return;
 
-    //    if (m_screen == screen_)
-    //        EscapeTriggered();
+    if (m_screen == screen_)
+        EscapeTriggered();
 }
 
 void Durchblick::Resize(int cx, int cy)
@@ -57,8 +143,22 @@ void Durchblick::mouseReleaseEvent(QMouseEvent* e)
 {
     QWidget::mousePressEvent(e);
     m_layout.MouseReleased(e);
-    if (e->button() == Qt::RightButton)
-        m_layout.HandleContextMenu(e);
+    if (e->button() == Qt::RightButton) {
+        QMenu m(T_MENU_OPTION, this);
+        auto* projectorMenu = new QMenu(QApplication::translate("", "Fullscreen"));
+        AddProjectorMenuMonitors(projectorMenu, this, SLOT(OpenFullScreenProjector()));
+        m.addMenu(projectorMenu);
+
+        if (m_current_monitor > -1) {
+            m.addAction(QApplication::translate("", "Windowed"), this, SLOT(OpenWindowedProjector()));
+        } else if (!this->isMaximized()) {
+            m.addAction(QApplication::translate("", "ResizeProjectorWindowToContent"),
+                this, SLOT(ResizeToContent()));
+        }
+
+        m_layout.HandleContextMenu(e, m);
+        m.exec(QCursor::pos());
+    }
 }
 
 void Durchblick::mouseDoubleClickEvent(QMouseEvent* e)
@@ -143,6 +243,16 @@ void Durchblick::RenderLayout(void* data, uint32_t cx, uint32_t cy)
     if (!w->m_ready)
         return;
     w->m_layout.Render(w->m_fw, w->m_fh, cx, cy);
+}
+
+void Durchblick::SetMonitor(int monitor)
+{
+    m_current_monitor = monitor;
+    m_screen = QGuiApplication::screens().at(monitor);
+    setWindowState(Qt::WindowActive);
+    setGeometry(m_screen->geometry());
+    showFullScreen();
+    // TODO: Option for hiding cursor?
 }
 
 void Durchblick::Update()

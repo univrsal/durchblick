@@ -18,8 +18,10 @@
 #pragma once
 #include "layout.hpp"
 #include "qt_display.hpp"
+#include <QRect>
 #include <QScreen>
 #include <QVBoxLayout>
+
 #if _WIN32
 #    include <obs-frontend-api.h>
 #else
@@ -31,16 +33,18 @@ class Durchblick : public OBSQTDisplay {
     obs_frontend_event_cb m_frontend_cb {};
 
 public:
+    QRect m_previous_geometry;
     bool m_ready { false };
     QScreen* m_screen { nullptr };
+    int m_current_monitor { -1 };
     Layout m_layout;
-    uint32_t m_fw {}, m_fh {};
+    uint32_t m_fw {}, m_fh {}; // Base canvas width and height
     float m_ratio { 16 / 9. };
 private slots:
     void EscapeTriggered();
-    // void OpenFullScreenProjector();
-    // void ResizeToContent();
-    // void OpenWindowedProjector();
+    void OpenFullScreenProjector();
+    void OpenWindowedProjector();
+    void ResizeToContent();
     // void AlwaysOnTopToggled(bool alwaysOnTop);
     void ScreenRemoved(QScreen* screen_);
     void Resize(int cx, int cy);
@@ -65,6 +69,8 @@ public:
     ~Durchblick();
 
     static void RenderLayout(void* data, uint32_t cx, uint32_t cy);
+
+    void SetMonitor(int monitor);
 
     //    int GetMonitor();
     //    void RenameProjector(QString oldName, QString newName);
