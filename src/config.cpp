@@ -44,7 +44,21 @@ void Load()
     BPtr<char> sc = obs_frontend_get_current_scene_collection();
 
     QFile f(utf8_to_qt(path));
+    QDir dir(utf8_to_qt(path));
+
     db = new Durchblick;
+
+    // Make sure that the plugin config folder exists
+    if (!dir.cd("../..")) { // cd into plugin_config
+        berr("Failed to change directory from '%s'. Cannot save/load layouts.", path.Get());
+        return;
+    }
+
+    if (!dir.cd("durchblick") && !dir.mkdir("durchblick")) {
+        berr("Failed to create config folder '%s'. Cannot save/load layouts.", path.Get());
+        return;
+    }
+
     if (f.exists()) {
         if (f.open(QIODevice::ReadOnly)) {
             QJsonDocument doc;
