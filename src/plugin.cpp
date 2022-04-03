@@ -52,6 +52,8 @@ bool obs_module_load()
     std::thread reg([] { Registry::RegisterDefaults(); });
     reg.detach();
 
+    Registry::RegisterCustomWidgetProcedure();
+
     QAction::connect(static_cast<QAction*>(obs_frontend_add_tools_menu_qaction(T_MENU_OPTION)),
         &QAction::triggered, [] {
             Config::db->show();
@@ -74,7 +76,6 @@ bool obs_module_load()
 
     obs_frontend_add_event_callback(ExitCallback, nullptr);
     obs_frontend_add_event_callback(FinishedLoadingCallback, nullptr);
-
     return true;
 }
 

@@ -27,10 +27,9 @@
 
 void NewItemDialog::ok_clicked()
 {
-    auto index = m_select_type->currentIndex();
-    if (index >= 0 && index < Registry::ItemRegistry::Entries.size()) {
+    auto index = m_select_type->currentData().toInt();
+    if (index >= 0 && index < Registry::ItemRegistry::Entries.size())
         m_layout->AddWidget(Registry::ItemRegistry::Entries[index], m_last_config_widget);
-    }
     hide();
 }
 
@@ -41,7 +40,8 @@ void NewItemDialog::cancel_clicked()
 
 void NewItemDialog::entry_selected(int index)
 {
-    auto* Item = Registry::ItemRegistry::Entries[index].construct(nullptr, 0, 0, 0, 0, nullptr);
+    auto i = m_select_type->currentData().toInt();
+    auto* Item = Registry::ItemRegistry::Entries[i].construct(nullptr, 0, 0, 0, 0);
     auto* Widget = Item->GetConfigWidget();
     if (Widget) {
         Widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -52,6 +52,9 @@ void NewItemDialog::entry_selected(int index)
         }
         m_config_layout->addWidget(Widget);
         m_last_config_widget = Widget;
+        m_config_panel->show();
+    } else {
+        m_config_panel->hide();
     }
     delete Item;
 }
@@ -69,10 +72,11 @@ NewItemDialog::NewItemDialog(QWidget* parent, Layout* layout)
     m_config_panel->setLayout(m_config_layout);
     //    m_config_layout->setContentsMargins(0, 0, 0, 0);
 
-    for (auto const& E : qAsConst(Registry::ItemRegistry::Entries)) {
-        if (E.id != PlaceholderItem::staticMetaObject.className())
-            m_select_type->addItem(E.name);
+    // Skip placeholder
+    for (int i = 1; i < Registry::ItemRegistry::Entries.size(); i++) {
+        m_select_type->addItem(Registry::ItemRegistry::Entries[i].name, i);
     }
+
     entry_selected(0);
     m_vboxlayout->addWidget(m_select_type);
     m_vboxlayout->addWidget(m_config_panel);

@@ -72,7 +72,6 @@ void Load()
 
     if (db->GetLayout()->IsEmpty())
         db->GetLayout()->CreateDefaultLayout();
-    Save();
 }
 
 void Save()

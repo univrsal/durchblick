@@ -20,48 +20,52 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 
-CustomItem::CustomItem(Layout* parent, CallbackData const& cb, int x, int y, int w, int h)
+CustomItem::CustomItem(Layout* parent, DurchblickCallbacks const& cb, int x, int y, int w, int h)
     : LayoutItem(parent, x, y, w, h)
     , m_cb_data(cb)
 {
-    m_cb_data.PrivateData = m_cb_data.Init(this, x, y, w, h);
+    PrivateData = m_cb_data.Init(this);
 }
 
 CustomItem::~CustomItem()
 {
-    m_cb_data.Destroy(this, m_cb_data.PrivateData);
+    m_cb_data.Destroy(this, PrivateData);
 }
 
 void CustomItem::Update(DurchblickItemConfig const& cfg)
 {
+    LayoutItem::Update(cfg);
     if (m_cb_data.Update)
-        m_cb_data.Update(this, m_cb_data.PrivateData, &cfg);
+        m_cb_data.Update(this, PrivateData, &cfg, m_cell.col, m_cell.row, m_cell.w, m_cell.h);
 }
 
 void CustomItem::ContextMenu(QMenu& m)
 {
     LayoutItem::ContextMenu(m);
     if (m_cb_data.ContextMenu)
-        m_cb_data.ContextMenu(this, m_cb_data.PrivateData, &m);
+        m_cb_data.ContextMenu(this, PrivateData, &m);
 }
 
 void CustomItem::MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
 {
     LayoutItem::MouseEvent(e, cfg);
     if (m_cb_data.MouseEvent)
-        m_cb_data.MouseEvent(this, m_cb_data.PrivateData, &cfg, e.x, e.y, e.buttons, e.modifiers);
+        m_cb_data.MouseEvent(this, PrivateData, &cfg, e.x, e.y, e.buttons, e.modifiers);
 }
 
 void CustomItem::Render(DurchblickItemConfig const& cfg)
 {
     LayoutItem::Render(cfg);
-    m_cb_data.Render(this, m_cb_data.PrivateData, &cfg);
+    m_cb_data.Render(this, PrivateData, &cfg);
 }
 
 void CustomItem::WriteToJson(QJsonObject& Obj)
 {
+    LayoutItem::WriteToJson(Obj);
+    Obj["custom_id"] = m_cb_data.GetId();
+
     if (m_cb_data.Save) {
-        auto* json = m_cb_data.Save(this, m_cb_data.PrivateData);
+        auto* json = m_cb_data.Save(this, PrivateData);
         // I assume iterating the objects would be faster than encoding and then decoding again
         // but I'm lazy.
         auto* c = json_dumps(json, JSON_COMPACT);
@@ -75,7 +79,7 @@ void CustomItem::WriteToJson(QJsonObject& Obj)
                 Obj["custom_data"] = tmp.array();
         } else {
             berr("Failed to write custom widget data for '%s' error: %s",
-                m_cb_data.Name.c_str(), qt_to_utf8(err.errorString()));
+                m_cb_data.GetId(), qt_to_utf8(err.errorString()));
         }
 
         free(c);
@@ -85,6 +89,7 @@ void CustomItem::WriteToJson(QJsonObject& Obj)
 
 void CustomItem::ReadFromJson(const QJsonObject& Obj)
 {
+    LayoutItem::ReadFromJson(Obj);
     if (m_cb_data.Load && Obj.contains("custom_data")) {
         auto data = Obj["custom_data"];
         QJsonDocument tmp;
@@ -99,11 +104,11 @@ void CustomItem::ReadFromJson(const QJsonObject& Obj)
             auto* json = json_loads(string, 0, &err);
 
             if (json) {
-                m_cb_data.Load(this, m_cb_data.PrivateData, json);
+                m_cb_data.Load(this, PrivateData, json);
                 json_decref(json);
             } else {
                 berr("Failed to load custom widget data for '%s' error (line %i, col %i): %s",
-                    m_cb_data.Name.c_str(), err.line, err.column, err.text);
+                    m_cb_data.GetId(), err.line, err.column, err.text);
             }
         }
     }
@@ -112,6 +117,6 @@ void CustomItem::ReadFromJson(const QJsonObject& Obj)
 uint32_t CustomItem::GetFillColor()
 {
     if (m_cb_data.GetFillColor)
-        return m_cb_data.GetFillColor(this, m_cb_data.PrivateData);
+        return m_cb_data.GetFillColor(this, PrivateData);
     return LayoutItem::GetFillColor();
 }

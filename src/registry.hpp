@@ -17,6 +17,7 @@
  *************************************************************************/
 
 #pragma once
+#include "callbacks.h"
 #include "item.hpp"
 #include <QJsonObject>
 #include <QList>
@@ -29,29 +30,46 @@ class Layout;
 namespace Registry {
 class ItemRegistry {
 public:
-    using Constructor = std::function<LayoutItem*(Layout*, int, int, int, int, void*)>;
+    using Constructor = std::function<LayoutItem*(Layout*, int, int, int, int)>;
+
     struct Entry {
-        Constructor construct;
-        void* priv {};
+        Constructor construct {};
         QString name, id;
+        DurchblickCallbacks cbs;
+
+        Entry(Constructor const& c, const char* _id, const char* _name)
+            : construct(c)
+            , id(utf8_to_qt(_id))
+            , name(utf8_to_qt(_name))
+        {
+        }
+        Entry(const char* _id, const char* _name)
+            : id(utf8_to_qt(_id))
+            , name(utf8_to_qt(_name))
+        {
+        }
     };
+
     static QList<Entry> Entries;
+
     static QList<std::function<void()>> DeinitCallbacks;
 
-    static void Register(Constructor const&, char const*, char const*, void* = nullptr);
+    static void Register(Constructor const&, char const*, char const*);
+    static void RegisterCustom(DurchblickCallbacks const* Callbacks);
 };
 
 extern void RegisterDefaults();
 extern LayoutItem* MakeItem(Layout* l, QJsonObject const& obj);
 extern void Free();
+extern void RegisterCustomWidgetProcedure();
 
 template<class T>
 void Register(char const* name)
 {
-    ItemRegistry::Register([](Layout* p, int x, int y, int w, int h, void*) {
+    ItemRegistry::Register([](Layout* p, int x, int y, int w, int h) {
         return new T(p, x, y, w, h);
     },
-        name, T::staticMetaObject.className(), nullptr);
+        name, T::staticMetaObject.className());
 }
 
 template<class T>

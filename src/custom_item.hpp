@@ -23,26 +23,12 @@
 
 class CustomItem : public LayoutItem {
     Q_OBJECT
-public:
-    struct CallbackData {
-        void* PrivateData { nullptr };
-        DurchblickItemInitCb Init { nullptr };
-        DurchblickItemDestroyCb Destroy { nullptr };
-        DurchblickItemSaveCb Save { nullptr };
-        DurchblickItemLoadCb Load { nullptr };
-        DurchblickItemContextMenuCb ContextMenu { nullptr };
-        DurchblickItemMouseCb MouseEvent { nullptr };
-        DurchblickItemRenderCb Render { nullptr };
-        DurchblickItemFillColorCb GetFillColor { nullptr };
-        DurchblickItemUpdateCb Update { nullptr };
-        std::string Name;
-    };
-
 private:
-    CallbackData m_cb_data;
+    DurchblickCallbacks m_cb_data {};
+    void* PrivateData { nullptr };
 
 public:
-    CustomItem(Layout* parent, CallbackData const& cbs, int x, int y, int w = 1, int h = 1);
+    CustomItem(Layout* parent, DurchblickCallbacks const& cbs, int x, int y, int w = 1, int h = 1);
     ~CustomItem();
 
     void Update(DurchblickItemConfig const& cfg) override;

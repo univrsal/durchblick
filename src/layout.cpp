@@ -208,7 +208,7 @@ void Layout::AddWidget(Registry::ItemRegistry::Entry const& entry, QWidget* cust
     std::lock_guard<std::mutex> lock(m_layout_mutex);
     auto target = GetSelectedArea();
     FreeSpace(target);
-    auto* Item = entry.construct(this, target.col, target.row, target.w, target.h, entry.priv);
+    auto* Item = entry.construct(this, target.col, target.row, target.w, target.h);
     Item->LoadConfigFromWidget(custom_widget);
     Item->Update(m_cfg);
     m_layout_items.emplace_back(Item);
@@ -382,7 +382,7 @@ void Layout::Load(QJsonObject const& obj)
     m_rows = obj["rows"].toInt();
     auto items = obj["items"].toArray();
 
-    for (auto const& item : items) {
+    for (auto const& item : qAsConst(items)) {
         auto* new_item = Registry::MakeItem(this, item.toObject());
         if (new_item) {
             new_item->Update(m_cfg);

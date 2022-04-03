@@ -24,7 +24,6 @@
 #define DURCHBLICK_CUSTOM_WIDGET_API_VERSION 1
 
 extern "C" {
-
 struct DurchblickItemConfig {
     int x {}, y {};                        // Origin of multiview
     int cx {}, cy {};                      // Multiview base size
@@ -36,16 +35,27 @@ struct DurchblickItemConfig {
 };
 
 /**
- * Callback for when your custom item gets created.
+ * Callback for when your custom item gets created. Additional layout
+ * information is provided in the update call
  * This callback is required.
  * @param item      The layout item object
- * @param x         Column in the grid
- * @param y         Row in the grid
- * @param w         Width (in cells)
- * @param h         Height (in cells)
  * @return          Your private data associated with this widget instance
  */
-typedef void* (*DurchblickItemInitCb)(void* item, int x, int y, int w, int h);
+typedef void* (*DurchblickItemInitCb)(void* item);
+
+/**
+ * Simply returns an internal identifying id for this custom widget type
+ * This callback is required.
+ * @return          The identifier of this widget
+ */
+typedef const char* (*DurchblickItemId)();
+
+/**
+ * Returns the translated display name for this custom widget type
+ * This callback is required.
+ * @return          The name of this widget
+ */
+typedef const char* (*DurchblickItemNameCb)();
 
 /**
  * Callback for when your custom item gets destroyed.
@@ -60,8 +70,12 @@ typedef void (*DurchblickItemDestroyCb)(void* item, void* data);
  * @param item      The layout item object
  * @param data      Private user data
  * @param cfg       New widget config data
+ * @param col       The column at which this widget starts
+ * @param row       The row at which this widget starts
+ * @param w         The width in cells of this widget
+ * @param h         The height in cells of this widget
  */
-typedef void (*DurchblickItemUpdateCb)(void* item, void* data, struct DurchblickItemConfig const* cfg);
+typedef void (*DurchblickItemUpdateCb)(void* item, void* data, struct DurchblickItemConfig const* cfg, int col, int row, int w, int h);
 
 /**
  * Callback to save custom data associated with this widget instance.
@@ -125,4 +139,18 @@ typedef void (*DurchblickItemContextMenuCb)(void* item, void* data, void* menu);
  * @return          ARGB 32-bit integer with the fill color
  */
 typedef unsigned int (*DurchblickItemFillColorCb)(void* item, void* data);
+
+struct DurchblickCallbacks {
+    DurchblickItemInitCb Init;
+    DurchblickItemDestroyCb Destroy;
+    DurchblickItemSaveCb Save;
+    DurchblickItemLoadCb Load;
+    DurchblickItemContextMenuCb ContextMenu;
+    DurchblickItemMouseCb MouseEvent;
+    DurchblickItemRenderCb Render;
+    DurchblickItemFillColorCb GetFillColor;
+    DurchblickItemUpdateCb Update;
+    DurchblickItemId GetId;
+    DurchblickItemNameCb GetName;
+};
 }
