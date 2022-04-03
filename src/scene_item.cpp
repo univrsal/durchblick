@@ -44,7 +44,12 @@ void SceneItem::LoadConfigFromWidget(QWidget* w)
     if (custom) {
         OBSSceneAutoRelease s = obs_get_scene_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
         SetSource(obs_scene_get_source(s));
-        m_use_border_for_indicator = custom->m_border->isChecked();
+        if (custom->m_border->isChecked())
+            m_indicator_type = Indicator::BORDER;
+        else if (custom->m_icon->isChecked())
+            m_indicator_type = Indicator::ICON;
+        else
+            m_indicator_type = Indicator::NONE;
     }
 }
 
@@ -82,7 +87,7 @@ void SceneItem::Render(DurchblickItemConfig const& cfg)
 {
     SourceItem::Render(cfg);
 
-    if (!m_use_border_for_indicator) {
+    if (m_indicator_type == Indicator::ICON) {
         auto color = GetIndicatorColor();
         // Draw indicator, to show that this scene is on preview/program
         if (color != 0) {
@@ -96,7 +101,7 @@ void SceneItem::Render(DurchblickItemConfig const& cfg)
 
 uint32_t SceneItem::GetFillColor()
 {
-    if (m_use_border_for_indicator)
+    if (m_indicator_type == Indicator::BORDER)
         return GetIndicatorColor();
     return LayoutItem::GetFillColor();
 }
@@ -104,11 +109,11 @@ uint32_t SceneItem::GetFillColor()
 void SceneItem::ReadFromJson(QJsonObject const& Obj)
 {
     SourceItem::ReadFromJson(Obj);
-    m_use_border_for_indicator = Obj["border_for_indicator"].toBool(true);
+    m_indicator_type = static_cast<Indicator>(Obj["border_for_indicator"].toInt(Indicator::BORDER));
 }
 
 void SceneItem::WriteToJson(QJsonObject& Obj)
 {
     SourceItem::WriteToJson(Obj);
-    Obj["border_for_indicator"] = m_use_border_for_indicator;
+    Obj["border_for_indicator"] = m_indicator_type;
 }

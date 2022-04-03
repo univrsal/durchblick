@@ -35,7 +35,7 @@ class SceneItemWidget : public QWidget {
     Q_OBJECT
 public:
     QComboBox* m_combo_box;
-    QRadioButton *m_icon, *m_border;
+    QRadioButton *m_icon, *m_border, *m_none;
     SceneItemWidget(QWidget* parent = nullptr)
         : QWidget(parent)
     {
@@ -49,8 +49,10 @@ public:
         auto* radio_buttons = new QVBoxLayout(this);
         m_border = new QRadioButton(T_BORDER_INDICATOR, this);
         m_icon = new QRadioButton(T_ICON_INDICATOR, this);
+        m_none = new QRadioButton(T_NO_INDICATOR, this);
         radio_buttons->addWidget(m_border);
         radio_buttons->addWidget(m_icon);
+        radio_buttons->addWidget(m_none);
         m_border->setChecked(true);
         radio_buttons->setContentsMargins(0, 0, 0, 0);
         l->addRow("", radio_buttons);
@@ -61,7 +63,12 @@ public:
 class SceneItem : public SourceItem {
     Q_OBJECT
 
-    bool m_use_border_for_indicator = true;
+    enum Indicator {
+        NONE,
+        BORDER,
+        ICON,
+    } m_indicator_type
+        = Indicator::BORDER;
 
     uint32_t GetIndicatorColor()
     {
