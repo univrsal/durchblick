@@ -80,6 +80,7 @@ if (MSVC)
 	./src/windows-helper.hpp
 	./src/windows-helper.cpp)
     set(durchblick_platform_deps
+        "${LibObs_DIR}/../deps/jansson/lib/RelWithDebInfo/jansson.lib"
         ${W32_PTHREADS_LIB})
 endif()
 
@@ -121,6 +122,7 @@ add_library(durchblick MODULE
 
 if (MSVC)
     target_compile_definitions(durchblick PRIVATE UNICODE _UNICODE)
+    set(platform_includes "${LibObs_DIR}/../deps/jansson/include")
 endif()
 
 include_directories(
@@ -128,6 +130,7 @@ include_directories(
     ${LIBOBS_INCLUDE_DIR}
     ${Qt5Core_INCLUDES}
     ${Qt5Widgets_INCLUDES}
+    ${platform_includes}
 )
 
 target_link_libraries(durchblick
