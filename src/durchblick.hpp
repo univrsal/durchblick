@@ -20,6 +20,7 @@
 #include "qt_display.hpp"
 #include <QRect>
 #include <QScreen>
+#include <QTimer>
 #include <QVBoxLayout>
 
 #if _WIN32
@@ -30,6 +31,8 @@
 
 class Durchblick : public OBSQTDisplay {
     Q_OBJECT
+    QTimer m_hover_refresh {};
+
 public:
     QRect m_previous_geometry;
     bool m_ready { false };
@@ -46,6 +49,7 @@ private slots:
     // void AlwaysOnTopToggled(bool alwaysOnTop);
     void ScreenRemoved(QScreen* screen_);
     void Resize(int cx, int cy);
+    void UpdateHover();
 
 protected:
     virtual void mouseMoveEvent(QMouseEvent*) override;

@@ -152,9 +152,10 @@ public:
         }
     }
 
-    bool IsMouseOver(int x, int y) const
+    bool IsMouseOver(int x, int y)
     {
-        return x >= m_rel_left && x < m_rel_right && y >= m_rel_top && y < m_rel_bottom;
+        m_mouse_over = x >= m_rel_left && x < m_rel_right && y >= m_rel_top && y < m_rel_bottom;
+        return m_mouse_over;
     }
 
     bool Hovered() const { return m_mouse_over; }

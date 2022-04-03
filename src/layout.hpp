@@ -127,6 +127,17 @@ public:
     void Save(QJsonObject& obj);
     bool IsEmpty() const { return m_layout_items.empty(); }
     void DeleteLayout();
+    void ResetHover()
+    {
+        if (m_hovered_cell.col > -1) {
+            m_hovered_cell.col = -1;
+            m_hovered_cell.row = -1;
+            auto pos = m_parent_widget->mapFromGlobal(QCursor::pos());
+            for (auto const& i : m_layout_items) {
+                i->IsMouseOver(pos.x(), pos.y());
+            }
+        }
+    }
 
     int Columns() const { return m_cols; }
     int Rows() const { return m_rows; }

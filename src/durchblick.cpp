@@ -178,6 +178,12 @@ void Durchblick::contextMenuEvent(QContextMenuEvent* e)
 {
 }
 
+void Durchblick::UpdateHover()
+{
+    if (!geometry().contains(QCursor::pos()))
+        m_layout.ResetHover();
+}
+
 void Durchblick::closeEvent(QCloseEvent* e)
 {
     e->ignore();
@@ -187,6 +193,7 @@ void Durchblick::closeEvent(QCloseEvent* e)
 Durchblick::Durchblick(QWidget* widget)
     : OBSQTDisplay(widget, Qt::Window)
     , m_layout(this)
+    , m_hover_refresh(this)
 {
     setWindowTitle("Durchblick");
     setVisible(false);
@@ -216,6 +223,9 @@ Durchblick::Durchblick(QWidget* widget)
     connect(qApp, &QGuiApplication::screenRemoved, this,
         &Durchblick::ScreenRemoved);
     connect(this, &OBSQTDisplay::DisplayResized, this, &Durchblick::Resize);
+
+    connect(&m_hover_refresh, SIGNAL(timeout()), SLOT(UpdateHover()));
+    m_hover_refresh.start(100);
     m_ready = true;
     show();
 
