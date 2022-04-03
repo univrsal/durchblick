@@ -258,8 +258,8 @@ void Durchblick::SetMonitor(int monitor)
 {
     if (monitor < 0)
         return;
-    m_current_monitor = monitor;
-    m_screen = QGuiApplication::screens().at(monitor);
+    m_current_monitor = qMin(monitor, QGuiApplication::screens().length() - 1);
+    m_screen = QGuiApplication::screens().at(m_current_monitor);
     setWindowState(Qt::WindowActive);
     setGeometry(m_screen->geometry());
     showFullScreen();
