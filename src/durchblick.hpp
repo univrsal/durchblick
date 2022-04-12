@@ -22,6 +22,7 @@
 #include <QScreen>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QWindow>
 
 #if _WIN32
 #    include <obs-frontend-api.h>
@@ -85,6 +86,13 @@ public:
 
     void Save(QJsonObject& obj);
     void Load(QJsonObject const& obj);
+
+    void SetHideFromDisplayCapture(bool hide_from_display_capture);
+
+    bool GetHideFromDisplayCapture()
+    {
+        return !windowHandle()->property("isOBSProjectorWindow").toBool();
+    }
 
     Layout* GetLayout() { return &m_layout; }
 };

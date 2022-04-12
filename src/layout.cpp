@@ -85,11 +85,11 @@ void Layout::ClearSelection()
     Config::Save();
 }
 
-Layout::Layout(QWidget* parent, int cols, int rows)
+Layout::Layout(Durchblick* parent, int cols, int rows)
     : QObject(parent)
     , m_rows(rows)
     , m_cols(cols)
-    , m_parent_widget(parent)
+    , m_durchblick(parent)
 {
 }
 
@@ -181,7 +181,7 @@ void Layout::HandleContextMenu(QMouseEvent*, QMenu& m)
     if (!m_selection_end.empty())
         m_dragging = true;
 
-    m.addAction(T_MENU_LAYOUT_CONFIG, this, SLOT(ShowLayoutConfigDialog()));
+    m.addAction(T_MENU_CONFIGURATION, this, SLOT(ShowLayoutConfigDialog()));
     std::lock_guard<std::mutex> lock(m_layout_mutex);
     for (auto& Item : m_layout_items) {
         if (Item->Hovered()) {
@@ -416,4 +416,16 @@ void Layout::DeleteLayout()
     m_layout_mutex.lock();
     m_layout_items.clear();
     m_layout_mutex.unlock();
+}
+
+void Layout::ResetHover()
+{
+    if (m_hovered_cell.col > -1) {
+        m_hovered_cell.col = -1;
+        m_hovered_cell.row = -1;
+        auto pos = m_durchblick->mapFromGlobal(QCursor::pos());
+        for (auto const& i : m_layout_items) {
+            i->IsMouseOver(pos.x(), pos.y());
+        }
+    }
 }

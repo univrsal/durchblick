@@ -17,6 +17,7 @@
  *************************************************************************/
 
 #include "new_item_dialog.hpp"
+#include "durchblick.hpp"
 #include "layout.hpp"
 #include "registry.hpp"
 #include "util.h"
@@ -59,7 +60,7 @@ void NewItemDialog::entry_selected(int index)
     delete Item;
 }
 
-NewItemDialog::NewItemDialog(QWidget* parent, Layout* layout)
+NewItemDialog::NewItemDialog(Durchblick* parent, Layout* layout)
     : QDialog(parent)
     , m_layout(layout)
 {

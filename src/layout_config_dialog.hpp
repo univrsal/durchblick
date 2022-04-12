@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -26,17 +27,20 @@
 #include <QVBoxLayout>
 
 class Layout;
+class Durchblick;
 
 class LayoutConfigDialog : public QDialog {
     Q_OBJECT
     QVBoxLayout* m_vboxlayout {};
     QDialogButtonBox* m_button_box {};
     QSpinBox *m_cols {}, *m_rows {};
+    QCheckBox* m_hide_from_display_capture {};
     Layout* m_layout {};
+    Durchblick* m_durchblick {};
 private slots:
     void ok_clicked();
     void cancel_clicked();
 
 public:
-    LayoutConfigDialog(QWidget* parent, Layout* layout);
+    LayoutConfigDialog(Durchblick* parent, Layout* layout);
 };

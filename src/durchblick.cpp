@@ -25,6 +25,7 @@
 
 #ifdef _WIN32
 #    include "windows-helper.hpp"
+#    include <Windows.h>
 #endif
 
 // Snagged from window-basic-main.cpp from obs-studio
@@ -198,10 +199,6 @@ Durchblick::Durchblick(QWidget* widget)
     setWindowTitle("Durchblick");
     setVisible(false);
 
-    // Mark the window as a projector so SetDisplayAffinity
-    // can skip it
-    windowHandle()->setProperty("isOBSProjectorWindow", true);
-
 #ifdef __APPLE__
     setWindowIcon(
         QIcon::fromTheme("obs", QIcon(":/res/images/obs_256x256.png")));
@@ -286,13 +283,14 @@ void Durchblick::Save(QJsonObject& obj)
     geo["h"] = geometry().height();
     obj["geometry"] = geo;
     obj["visible"] = isVisible();
-
+    obj["hide_from_display_capture"] = GetHideFromDisplayCapture();
     m_layout.Save(obj);
 }
 
 void Durchblick::Load(QJsonObject const& obj)
 {
     setVisible(obj["visible"].toBool(false));
+    SetHideFromDisplayCapture(obj["hide_from_display_capture"].toBool(false));
 
     if (obj.contains("monitor"))
         SetMonitor(obj["monitor"].toInt(-1));
@@ -306,4 +304,31 @@ void Durchblick::Load(QJsonObject const& obj)
         }
     }
     m_layout.Load(obj);
+}
+
+void Durchblick::SetHideFromDisplayCapture(bool hide_from_display_capture)
+{
+    // Yoinked from window-basic-main.cpp from obs-studio
+    // technically (un)setting the window property should be enough but
+    // that won't update the flags immediately
+#ifdef _WIN32
+    HWND hwnd = (HWND)winId();
+
+    DWORD curAffinity;
+    if (GetWindowDisplayAffinity(hwnd, &curAffinity)) {
+        if (hide_from_display_capture && curAffinity != WDA_EXCLUDEFROMCAPTURE)
+            SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE);
+        else if (!hide_from_display_capture && curAffinity != WDA_NONE)
+            SetWindowDisplayAffinity(hwnd, WDA_NONE);
+    }
+    windowHandle()->setProperty("isOBSProjectorWindow", !hide_from_display_capture);
+
+    // Changing the display affinity causes some weird visual glitch which
+    // fixes itself upon resizing the window so we do this right after changing the
+    // flag
+    resize(size().grownBy(QMargins(0, 0, 0, 1)));
+    m_layout.RefreshGrid();
+    resize(size().shrunkBy(QMargins(0, 0, 0, 1)));
+
+#endif
 }

@@ -17,6 +17,7 @@
  *************************************************************************/
 
 #include "layout_config_dialog.hpp"
+#include "durchblick.hpp"
 #include "layout.hpp"
 #include "util.h"
 #include <QHBoxLayout>
@@ -26,8 +27,9 @@ void LayoutConfigDialog::ok_clicked()
 {
     m_layout->m_cols = m_cols->value();
     m_layout->m_rows = m_rows->value();
-
     m_layout->RefreshGrid();
+
+    m_durchblick->SetHideFromDisplayCapture(m_hide_from_display_capture->isChecked());
     hide();
 }
 
@@ -36,9 +38,10 @@ void LayoutConfigDialog::cancel_clicked()
     hide();
 }
 
-LayoutConfigDialog::LayoutConfigDialog(QWidget* parent, Layout* layout)
+LayoutConfigDialog::LayoutConfigDialog(Durchblick* parent, Layout* layout)
     : QDialog(parent)
     , m_layout(layout)
+    , m_durchblick(parent)
 {
     m_vboxlayout = new QVBoxLayout(this);
 
@@ -61,12 +64,18 @@ LayoutConfigDialog::LayoutConfigDialog(QWidget* parent, Layout* layout)
     hlayout->setContentsMargins(0, 0, 0, 0);
     m_vboxlayout->addLayout(hlayout);
 
+    m_hide_from_display_capture = new QCheckBox(T_LABEL_DISPLAY_CAPTURE, this);
+    m_hide_from_display_capture->setChecked(m_durchblick->GetHideFromDisplayCapture());
+    m_vboxlayout->addWidget(m_hide_from_display_capture);
+
     m_button_box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     m_vboxlayout->addWidget(m_button_box);
     setLayout(m_vboxlayout);
+
     connect(m_button_box->button(QDialogButtonBox::Ok), SIGNAL(pressed()), this, SLOT(ok_clicked()));
     connect(m_button_box->button(QDialogButtonBox::Cancel), SIGNAL(pressed()), this, SLOT(cancel_clicked()));
-    setWindowTitle(T_LAYOUT_CONFIG);
+
+    setWindowTitle(T_CONFIGURATION_TITLE);
 
     // Center dialog at mouse position
     auto p = QCursor::pos();

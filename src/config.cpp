@@ -70,8 +70,14 @@ void Load()
         }
     }
 
-    if (db->GetLayout()->IsEmpty())
+    if (db->GetLayout()->IsEmpty()) {
         db->GetLayout()->CreateDefaultLayout();
+        auto cfg = obs_frontend_get_global_config();
+
+        // Automatically set it to the user default upon creation of a new multiview
+        if (config_get_bool(cfg, "BasicWindow", "HideOBSWindowsFromCapture"))
+            db->SetHideFromDisplayCapture(true);
+    }
 }
 
 void Save()

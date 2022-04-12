@@ -23,16 +23,6 @@
 #include "util.h"
 #include "util/util.hpp"
 #include <QAction>
-#include <QDialog>
-#include <QDir>
-#include <QFile>
-#include <QFileInfo>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QLayout>
-#include <QMainWindow>
-#include <QVBoxLayout>
 #include <obs-module.h>
 #include <thread>
 #if _WIN32
@@ -59,23 +49,28 @@ bool obs_module_load()
             Config::db->show();
         });
 
-    auto FinishedLoadingCallback = [](enum obs_frontend_event event, void*) {
-        if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING)
-            Config::Load();
-    };
-
-    auto ExitCallback = [](enum obs_frontend_event event, void*) {
-        // I couldn't find another event that was on exit and
-        // before source/scene data was cleared
-        if (event == OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN) {
+    auto FrontendCallbacks = [](enum obs_frontend_event event, void*) {
+        if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING) {
             // Final save and cleanup
+            Config::Load();
+        } else if (event == OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN) {
+            // I couldn't find another event that was on exit and
+            // before source/scene data was cleared
+
             Config::Save();
             Config::Cleanup();
         }
     };
 
-    obs_frontend_add_event_callback(ExitCallback, nullptr);
-    obs_frontend_add_event_callback(FinishedLoadingCallback, nullptr);
+    obs_frontend_add_save_callback([](obs_data_t* save_data, bool saving, void* private_data) {
+        // Refresh this flag because if the user changed the "Hide OBS window from display capture setting"
+        // durchblick would otherwise suddenly show up again
+        if (Config::db)
+            Config::db->SetHideFromDisplayCapture(Config::db->GetHideFromDisplayCapture());
+    },
+        nullptr);
+
+    obs_frontend_add_event_callback(FrontendCallbacks, nullptr);
     return true;
 }
 

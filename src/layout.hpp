@@ -74,7 +74,7 @@ class Layout : public QObject {
     int m_cols { 4 }, m_rows { 4 };
     std::vector<std::unique_ptr<LayoutItem>> m_layout_items;
     DurchblickItemConfig m_cfg;
-    QWidget* m_parent_widget {};
+    Durchblick* m_durchblick {};
     LayoutItem::Cell m_hovered_cell {}, m_selection_start {}, m_selection_end {};
     bool m_dragging {};
     std::mutex m_layout_mutex;
@@ -96,18 +96,18 @@ private slots:
     void ClearSelection();
     void ShowSetWidgetDialog()
     {
-        NewItemDialog dlg(m_parent_widget, this);
+        NewItemDialog dlg(m_durchblick, this);
         dlg.exec();
     }
 
     void ShowLayoutConfigDialog()
     {
-        LayoutConfigDialog dlg(m_parent_widget, this);
+        LayoutConfigDialog dlg(m_durchblick, this);
         dlg.exec();
     }
 
 public:
-    Layout(QWidget* parent, int cols = 4, int rows = 4);
+    Layout(Durchblick* parent, int cols = 4, int rows = 4);
     ~Layout();
 
     void MouseMoved(QMouseEvent* e);
@@ -127,17 +127,7 @@ public:
     void Save(QJsonObject& obj);
     bool IsEmpty() const { return m_layout_items.empty(); }
     void DeleteLayout();
-    void ResetHover()
-    {
-        if (m_hovered_cell.col > -1) {
-            m_hovered_cell.col = -1;
-            m_hovered_cell.row = -1;
-            auto pos = m_parent_widget->mapFromGlobal(QCursor::pos());
-            for (auto const& i : m_layout_items) {
-                i->IsMouseOver(pos.x(), pos.y());
-            }
-        }
-    }
+    void ResetHover();
 
     int Columns() const { return m_cols; }
     int Rows() const { return m_rows; }
