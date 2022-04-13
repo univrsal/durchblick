@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(durchblick VERSION 0.1.2)
+project(durchblick VERSION 0.2.0)
 
 
 set(PLUGIN_AUTHOR "univrsal")
