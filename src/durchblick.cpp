@@ -189,7 +189,17 @@ void Durchblick::UpdateHover()
 void Durchblick::closeEvent(QCloseEvent* e)
 {
     e->ignore();
+    m_saved_state = GetWindowState();
     hide();
+}
+
+void Durchblick::showEvent(QShowEvent* e)
+{
+    QWidget::showEvent(e);
+    if (m_saved_state == WindowState::Maximized)
+        setWindowState(windowState() | Qt::WindowMaximized);
+    else if (m_current_monitor >= 0)
+        SetMonitor(m_current_monitor);
 }
 
 Durchblick::Durchblick(QWidget* widget)
@@ -281,7 +291,6 @@ void Durchblick::Update()
 void Durchblick::Save(QJsonObject& obj)
 {
     obj["monitor"] = m_current_monitor;
-
     QJsonObject geo;
     geo["x"] = geometry().x();
     geo["y"] = geometry().y();
@@ -289,17 +298,14 @@ void Durchblick::Save(QJsonObject& obj)
     geo["h"] = geometry().height();
     obj["geometry"] = geo;
     obj["visible"] = isVisible();
+    obj["state"] = GetWindowState();
     obj["hide_from_display_capture"] = GetHideFromDisplayCapture();
     m_layout.Save(obj);
 }
 
 void Durchblick::Load(QJsonObject const& obj)
 {
-    setVisible(obj["visible"].toBool(false));
-    SetHideFromDisplayCapture(obj["hide_from_display_capture"].toBool(false));
-
-    if (obj.contains("monitor"))
-        SetMonitor(obj["monitor"].toInt(-1));
+    m_saved_state = (WindowState)obj["state"].toInt(WindowState::None);
 
     // Restore geometry if this view wasn't in fullscreen
     if (m_current_monitor < 0 && obj.contains("geometry") && obj["geometry"].isObject()) {
@@ -309,6 +315,16 @@ void Durchblick::Load(QJsonObject const& obj)
             setGeometry(geometry);
         }
     }
+
+    if (m_saved_state == WindowState::Maximized)
+        setWindowState(windowState() | Qt::WindowMaximized);
+
+    if (obj.contains("monitor"))
+        SetMonitor(obj["monitor"].toInt(-1));
+
+    setVisible(obj["visible"].toBool(false));
+
+    SetHideFromDisplayCapture(obj["hide_from_display_capture"].toBool(false));
     m_layout.Load(obj);
 }
 

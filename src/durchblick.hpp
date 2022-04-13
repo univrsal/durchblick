@@ -34,6 +34,18 @@ class Durchblick : public OBSQTDisplay {
     Q_OBJECT
     QTimer m_hover_refresh {};
 
+    enum WindowState {
+        None,
+        Maximized,
+    } m_saved_state {};
+
+    WindowState GetWindowState() const
+    {
+        if (isMaximized())
+            return WindowState::Maximized;
+        return WindowState::None;
+    }
+
 public:
     QRect m_previous_geometry;
     bool m_ready { false };
@@ -60,6 +72,7 @@ protected:
     virtual void contextMenuEvent(QContextMenuEvent*) override;
 
     virtual void closeEvent(QCloseEvent*) override;
+    virtual void showEvent(QShowEvent*) override;
 
 protected:
     //    void dragEnterEvent(QDragEnterEvent *event) override;
