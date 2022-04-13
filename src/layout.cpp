@@ -235,7 +235,7 @@ void Layout::Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy)
     // Define the whole usable region for the multiview
     startRegion(m_cfg.x, m_cfg.y, m_cfg.cx * m_cfg.scale, m_cfg.cy * m_cfg.scale, 0.0f, m_cfg.cx,
         0.0f, m_cfg.cy);
-    LayoutItem::DrawBox(m_cfg.cx, m_cfg.cy, 0xFFD0D0D0);
+    LayoutItem::DrawBox(m_cfg.cx, m_cfg.cy, COLOR_BORDER_GRAY);
 
     m_layout_mutex.lock();
     for (auto& Item : m_layout_items) {
@@ -265,16 +265,16 @@ void Layout::Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy)
         // Draw Selection rectangle
 
         // Top
-        LayoutItem::DrawBox(tx * m_cfg.cell_width, ty * m_cfg.cell_height - 1, cx * m_cfg.cell_width - 1, m_cfg.border + 1, 0xFF009999);
+        LayoutItem::DrawBox(tx * m_cfg.cell_width, ty * m_cfg.cell_height - 1, cx * m_cfg.cell_width - 1, m_cfg.border + 1, COLOR_SELECTION_CYAN);
 
         // Bottom
-        LayoutItem::DrawBox(tx * m_cfg.cell_width, (ty + cy) * m_cfg.cell_height - m_cfg.border - 2, cx * m_cfg.cell_width - 1, m_cfg.border + 2, 0xFF009999);
+        LayoutItem::DrawBox(tx * m_cfg.cell_width, (ty + cy) * m_cfg.cell_height - m_cfg.border - 2, cx * m_cfg.cell_width - 1, m_cfg.border + 2, COLOR_SELECTION_CYAN);
 
         // Left
-        LayoutItem::DrawBox(tx * m_cfg.cell_width, ty * m_cfg.cell_height, m_cfg.border, cy * m_cfg.cell_height - 1, 0xFF009999);
+        LayoutItem::DrawBox(tx * m_cfg.cell_width, ty * m_cfg.cell_height, m_cfg.border, cy * m_cfg.cell_height - 1, COLOR_SELECTION_CYAN);
 
         // Right
-        LayoutItem::DrawBox((tx + cx) * m_cfg.cell_width - m_cfg.border - 2, ty * m_cfg.cell_height, m_cfg.border + 1, cy * m_cfg.cell_height - 1, 0xFF009999);
+        LayoutItem::DrawBox((tx + cx) * m_cfg.cell_width - m_cfg.border - 2, ty * m_cfg.cell_height, m_cfg.border + 1, cy * m_cfg.cell_height - 1, COLOR_SELECTION_CYAN);
     }
     endRegion();
 }

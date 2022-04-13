@@ -64,4 +64,6 @@
 #define COLOR_SELECTION_CYAN            0xFF009999
 #define COLOR_PREVIEW_INDICATOR         0xFF00D000
 #define COLOR_PROGRAM_INDICATOR         0xFFD00000
+#define COLOR_BLACK                     0xFF000000
+
 /* clang-format on */

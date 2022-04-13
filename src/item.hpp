@@ -125,7 +125,7 @@ public:
     }
 
     /// Determines the border of the cell when it is not hovered
-    virtual uint32_t GetFillColor() { return 0xFFD0D0D0; }
+    virtual uint32_t GetFillColor() { return COLOR_BORDER_GRAY; }
 
     virtual QWidget* GetConfigWidget() { return nullptr; }
     virtual void LoadConfigFromWidget(QWidget*) { }
@@ -137,7 +137,7 @@ public:
 
     virtual void Render(DurchblickItemConfig const& cfg)
     {
-        DrawBox(0, 0, m_inner_width, m_inner_height, 0xFF000000);
+        DrawBox(0, 0, m_inner_width, m_inner_height, COLOR_BLACK);
     }
 
     virtual void MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
