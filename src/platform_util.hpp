@@ -19,7 +19,9 @@
 #pragma once
 #include <QTimer>
 #include <QWidget>
-
+#if defined(_WIN32)
+#    include <Windows.h>
+#endif
 namespace PlatformUtil {
 inline bool IsAlwaysOnTop(QWidget* window)
 {
