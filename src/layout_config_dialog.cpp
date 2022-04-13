@@ -64,9 +64,11 @@ LayoutConfigDialog::LayoutConfigDialog(Durchblick* parent, Layout* layout)
     hlayout->setContentsMargins(0, 0, 0, 0);
     m_vboxlayout->addLayout(hlayout);
 
+#if defined(_WIN32)
     m_hide_from_display_capture = new QCheckBox(T_LABEL_DISPLAY_CAPTURE, this);
     m_hide_from_display_capture->setChecked(m_durchblick->GetHideFromDisplayCapture());
     m_vboxlayout->addWidget(m_hide_from_display_capture);
+#endif
 
     m_button_box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     m_vboxlayout->addWidget(m_button_box);
