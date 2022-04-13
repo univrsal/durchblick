@@ -140,7 +140,7 @@ SourceItem::SourceItem(Layout* parent, int x, int y, int w, int h)
     : LayoutItem(parent, x, y, w, h)
 {
 
-    m_toggle_safe_borders = new QAction(QCoreApplication::translate("", "Basic.Settings.General.Multiview.DrawSafeAreas"), this);
+    m_toggle_safe_borders = new QAction(T_DRAW_SAFE_BORDERS, this);
     m_toggle_safe_borders->setCheckable(true);
     m_toggle_label = new QAction(T_SOURCE_ITEM_LABEL, this);
     m_toggle_label->setCheckable(true);

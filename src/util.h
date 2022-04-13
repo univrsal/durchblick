@@ -33,6 +33,7 @@
 /* clang-format off */
 
 /* Misc */
+#define U_(s)                           QApplication::translate("", s)
 #define T_(v)                           obs_module_text(v)
 #define T_MENU_OPTION                   T_("Menu.Option")
 #define T_MENU_SET_WIDGET               T_("Menu.SetWidget")
@@ -57,8 +58,14 @@
 #define T_WIDGET_SCENE                  T_("Widget.SceneDisplay")
 #define T_WIDGET_PREVIEW_PROGRAM        T_("Widget.PreviewProgramDisplay")
 
-#define T_PREVIEW                       "StudioMode.Preview"
-#define T_PROGRAM                       "StudioMode.Program"
+#define T_DRAW_SAFE_BORDERS             U_("Basic.Settings.General.Multiview.DrawSafeAreas")
+#define T_RESIZE_WINDOW_CONTENT         U_("ResizeProjectorWindowToContent")
+#define T_ALWAYS_ON_TOP                 U_("Basic.MainMenu.AlwaysOnTop")
+#define T_PREVIEW                       U_("StudioMode.Preview")
+#define T_PROGRAM                       U_("StudioMode.Program")
+#define T_FULLSCREEN                    U_("Fullscreen")
+#define T_WINDOWED                      U_("Windowed")
+#define T_DISPLAY                       U_("Display")
 
 #define COLOR_BORDER_GRAY               0xFFD0D0D0
 #define COLOR_HOVER_GREEEN              0xFF004400

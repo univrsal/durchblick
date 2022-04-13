@@ -48,9 +48,9 @@ void PreviewProgramItem::CreateLabel()
     uint32_t h = ovi.base_height;
     QString name = "";
     if (m_program)
-        name = QApplication::translate("", T_PROGRAM);
+        name = T_PROGRAM;
     else
-        name = QApplication::translate("", T_PREVIEW);
+        name = T_PREVIEW;
     m_label = SourceItem::CreateLabel(qt_to_utf8(name), h / 1.5);
 }
 

@@ -35,8 +35,8 @@ public:
         auto* l = new QHBoxLayout();
         setLayout(l);
         l->setContentsMargins(0, 0, 0, 0);
-        m_preview = new QRadioButton(QApplication::translate("", T_PREVIEW));
-        m_program = new QRadioButton(QApplication::translate("", T_PROGRAM));
+        m_preview = new QRadioButton(T_PREVIEW);
+        m_program = new QRadioButton(T_PROGRAM);
         m_preview->setChecked(true);
         l->addWidget(m_preview);
         l->addWidget(m_program);

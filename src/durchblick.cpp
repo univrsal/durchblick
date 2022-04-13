@@ -55,7 +55,7 @@ static void AddProjectorMenuMonitors(QMenu* parent, QObject* target, const char*
         name = name.simplified();
 
         if (name.length() == 0) {
-            name = QString("%1 %2").arg(QApplication::translate("", "Display"), QString::number(i + 1));
+            name = QString("%1 %2").arg(T_DISPLAY, QString::number(i + 1));
         }
 
         QString str = QString("%1: %2x%3 @ %4,%5")
@@ -86,7 +86,7 @@ void Durchblick::OpenFullScreenProjector()
     if (monitor < 0) // Windowed
         setWindowTitle("Durchblick");
     else
-        setWindowTitle("Durchblick (" + QApplication::translate("", "Fullscreen") + ")");
+        setWindowTitle("Durchblick (" + T_FULLSCREEN + ")");
 }
 
 void Durchblick::OpenWindowedProjector()
