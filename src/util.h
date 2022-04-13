@@ -48,6 +48,7 @@
 #define T_NO_INDICATOR                  T_("Label.NoIndicator")
 #define T_LABEL_GRID_SIZE               T_("Label.GridSize")
 #define T_LABEL_DISPLAY_CAPTURE         T_("Label.HideFromDisplayCapture")
+#define T_LABEL_HIDE_CURSOR             T_("Label.HideCursor")
 #define T_CONFIGURATION_TITLE           T_("Config.Title")
 #define T_WIDGET_STRETCH                T_("Widget.Stretch")
 #define T_SOURCE_ITEM_LABEL             T_("SourceItem.Label")

@@ -34,7 +34,7 @@ class LayoutConfigDialog : public QDialog {
     QVBoxLayout* m_vboxlayout {};
     QDialogButtonBox* m_button_box {};
     QSpinBox *m_cols {}, *m_rows {};
-    QCheckBox* m_hide_from_display_capture {};
+    QCheckBox *m_hide_from_display_capture {}, *m_hide_cursor {};
     Layout* m_layout {};
     Durchblick* m_durchblick {};
 private slots:

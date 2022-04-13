@@ -45,6 +45,8 @@ class Durchblick : public OBSQTDisplay {
         return WindowState::None;
     }
 
+    bool m_hide_cursor { false };
+
 public:
     QRect m_previous_geometry;
     bool m_ready { false };
@@ -104,6 +106,17 @@ public:
     {
         return !windowHandle()->property("isOBSProjectorWindow").toBool();
     }
+
+    void SetHideCursor(bool hide)
+    {
+        m_hide_cursor = hide;
+        if (hide)
+            setCursor(Qt::BlankCursor);
+        else
+            setCursor(Qt::ArrowCursor);
+    }
+
+    bool GetIsCursorHidden() const { return m_hide_cursor; }
 
     Layout* GetLayout() { return &m_layout; }
 };

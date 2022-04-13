@@ -30,6 +30,8 @@ void LayoutConfigDialog::ok_clicked()
     m_layout->RefreshGrid();
 
     m_durchblick->SetHideFromDisplayCapture(m_hide_from_display_capture->isChecked());
+
+    m_durchblick->SetHideCursor(m_hide_cursor->isChecked());
     hide();
 }
 
@@ -69,6 +71,10 @@ LayoutConfigDialog::LayoutConfigDialog(Durchblick* parent, Layout* layout)
     m_hide_from_display_capture->setChecked(m_durchblick->GetHideFromDisplayCapture());
     m_vboxlayout->addWidget(m_hide_from_display_capture);
 #endif
+
+    m_hide_cursor = new QCheckBox(T_LABEL_HIDE_CURSOR, this);
+    m_hide_cursor->setChecked(m_durchblick->GetIsCursorHidden());
+    m_vboxlayout->addWidget(m_hide_cursor);
 
     m_button_box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     m_vboxlayout->addWidget(m_button_box);

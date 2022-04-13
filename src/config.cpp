@@ -74,9 +74,11 @@ void Load()
         db->GetLayout()->CreateDefaultLayout();
         auto cfg = obs_frontend_get_global_config();
 
-        // Automatically set it to the user default upon creation of a new multiview
+        // Automatically set settings to user default
         if (config_get_bool(cfg, "BasicWindow", "HideOBSWindowsFromCapture"))
             db->SetHideFromDisplayCapture(true);
+
+        db->SetHideCursor(config_get_bool(cfg, "BasicWindow", "HideProjectorCursor"));
     }
 }
 

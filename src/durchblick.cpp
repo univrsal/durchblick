@@ -291,6 +291,7 @@ void Durchblick::Save(QJsonObject& obj)
     obj["visible"] = isVisible();
     obj["state"] = GetWindowState();
     obj["hide_from_display_capture"] = GetHideFromDisplayCapture();
+    obj["hide_cursor"] = m_hide_cursor;
     m_layout.Save(obj);
 }
 
@@ -312,6 +313,8 @@ void Durchblick::Load(QJsonObject const& obj)
 
     if (obj.contains("monitor"))
         SetMonitor(obj["monitor"].toInt(-1));
+
+    SetHideCursor(obj["hide_cursor"].toBool(false));
 
     setVisible(obj["visible"].toBool(false));
 
