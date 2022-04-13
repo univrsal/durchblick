@@ -29,7 +29,9 @@ void LayoutConfigDialog::ok_clicked()
     m_layout->m_rows = m_rows->value();
     m_layout->RefreshGrid();
 
+#if defined(_WIN32)
     m_durchblick->SetHideFromDisplayCapture(m_hide_from_display_capture->isChecked());
+#endif
 
     m_durchblick->SetHideCursor(m_hide_cursor->isChecked());
     hide();
