@@ -72,6 +72,7 @@ static void AddProjectorMenuMonitors(QMenu* parent, QObject* target, const char*
 
 void Durchblick::EscapeTriggered()
 {
+    hide();
 }
 
 void Durchblick::OpenFullScreenProjector()
@@ -175,7 +176,7 @@ void Durchblick::mouseDoubleClickEvent(QMouseEvent* e)
     m_layout.MouseDoubleClicked(e);
 }
 
-void Durchblick::contextMenuEvent(QContextMenuEvent* e)
+void Durchblick::contextMenuEvent(QContextMenuEvent*)
 {
 }
 
@@ -193,8 +194,8 @@ void Durchblick::closeEvent(QCloseEvent* e)
 
 Durchblick::Durchblick(QWidget* widget)
     : OBSQTDisplay(widget, Qt::Window)
-    , m_layout(this)
     , m_hover_refresh(this)
+    , m_layout(this)
 {
     setWindowTitle("Durchblick");
     setVisible(false);
@@ -210,6 +211,11 @@ Durchblick::Durchblick(QWidget* widget)
     setAttribute(Qt::WA_QuitOnClose, false);
     setMouseTracking(true);
     // qApp->IncrementSleephibition();
+
+    auto* close_action = new QAction(this);
+    close_action->setShortcut(Qt::Key_Escape);
+    connect(close_action, SIGNAL(triggered()), this, SLOT(EscapeTriggered()));
+    addAction(close_action);
 
     auto addDrawCallback = [this]() {
         obs_display_add_draw_callback(GetDisplay(), RenderLayout, this);
@@ -329,6 +335,7 @@ void Durchblick::SetHideFromDisplayCapture(bool hide_from_display_capture)
     resize(size().grownBy(QMargins(0, 0, 0, 1)));
     m_layout.RefreshGrid();
     resize(size().shrunkBy(QMargins(0, 0, 0, 1)));
-
+#else
+    UNUSED_PARAMETER(hide_from_display_capture);
 #endif
 }
