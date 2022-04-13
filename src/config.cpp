@@ -79,6 +79,7 @@ void Load()
             db->SetHideFromDisplayCapture(true);
 
         db->SetHideCursor(config_get_bool(cfg, "BasicWindow", "HideProjectorCursor"));
+        db->SetIsAlwaysOnTop(config_get_bool(cfg, "BasicWindow", "ProjectorAlwaysOnTop"));
     }
 }
 

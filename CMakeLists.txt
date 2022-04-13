@@ -87,6 +87,7 @@ endif()
 
 set(durchblick_sources
     ./src/plugin.cpp
+    ./src/platform_util.hpp
     ./src/durchblick.hpp
     ./src/durchblick.cpp
     ./src/layout.hpp

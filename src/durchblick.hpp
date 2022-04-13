@@ -46,6 +46,7 @@ class Durchblick : public OBSQTDisplay {
     }
 
     bool m_hide_cursor { false };
+    bool m_always_on_top { false };
 
 public:
     QRect m_previous_geometry;
@@ -60,7 +61,7 @@ private slots:
     void OpenFullScreenProjector();
     void OpenWindowedProjector();
     void ResizeToContent();
-    // void AlwaysOnTopToggled(bool alwaysOnTop);
+    void AlwaysOnTopToggled(bool alwaysOnTop);
     void ScreenRemoved(QScreen* screen_);
     void Resize(int cx, int cy);
 
@@ -88,13 +89,8 @@ public:
 
     void SetMonitor(int monitor);
 
-    //    int GetMonitor();
-    //    void RenameProjector(QString oldName, QString newName);
-    //    void SetHideCursor();
-
-    //    bool IsAlwaysOnTop() const;
-    //    bool IsAlwaysOnTopOverridden() const;
-    //    void SetIsAlwaysOnTop(bool isAlwaysOnTop, bool isOverridden);
+    bool IsAlwaysOnTop() const;
+    void SetIsAlwaysOnTop(bool isAlwaysOnTop, bool reshow = true);
     void Update();
 
     void Save(QJsonObject& obj);

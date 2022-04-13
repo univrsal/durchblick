@@ -18,6 +18,7 @@
 
 #include "durchblick.hpp"
 #include "obs.hpp"
+#include "platform_util.hpp"
 #include <QApplication>
 #include <QIcon>
 #include <QWindow>
@@ -122,6 +123,11 @@ void Durchblick::ResizeToContent()
     resize(newX, newY);
 }
 
+void Durchblick::AlwaysOnTopToggled(bool alwaysOnTop)
+{
+    SetIsAlwaysOnTop(alwaysOnTop);
+}
+
 void Durchblick::ScreenRemoved(QScreen* screen_)
 {
     if (m_current_monitor < 0 || !m_screen)
@@ -154,16 +160,22 @@ void Durchblick::mouseReleaseEvent(QMouseEvent* e)
     m_layout.MouseReleased(e);
     if (e->button() == Qt::RightButton) {
         QMenu m(T_MENU_OPTION, this);
-        auto* projectorMenu = new QMenu(QApplication::translate("", "Fullscreen"));
+        auto* projectorMenu = new QMenu(T_FULLSCREEN);
         AddProjectorMenuMonitors(projectorMenu, this, SLOT(OpenFullScreenProjector()));
         m.addMenu(projectorMenu);
 
         if (m_current_monitor > -1) {
-            m.addAction(QApplication::translate("", "Windowed"), this, SLOT(OpenWindowedProjector()));
+            m.addAction(T_WINDOWED, this, SLOT(OpenWindowedProjector()));
         } else if (!this->isMaximized()) {
-            m.addAction(QApplication::translate("", "ResizeProjectorWindowToContent"),
+            m.addAction(T_RESIZE_WINDOW_CONTENT,
                 this, SLOT(ResizeToContent()));
         }
+
+        auto* always_on_top = new QAction(T_ALWAYS_ON_TOP, this);
+        always_on_top->setCheckable(true);
+        always_on_top->setChecked(m_always_on_top);
+        connect(always_on_top, &QAction::toggled, this, &Durchblick::AlwaysOnTopToggled);
+        m.addAction(always_on_top);
 
         m_layout.HandleContextMenu(e, m);
         m.exec(QCursor::pos());
@@ -270,6 +282,17 @@ void Durchblick::SetMonitor(int monitor)
     // TODO: Option for hiding cursor?
 }
 
+bool Durchblick::IsAlwaysOnTop() const
+{
+    return m_always_on_top;
+}
+
+void Durchblick::SetIsAlwaysOnTop(bool isAlwaysOnTop, bool reshow)
+{
+    m_always_on_top = isAlwaysOnTop;
+    PlatformUtil::SetAlwaysOnTop(this, isAlwaysOnTop, reshow);
+}
+
 void Durchblick::Update()
 {
     struct obs_video_info ovi;
@@ -292,6 +315,7 @@ void Durchblick::Save(QJsonObject& obj)
     obj["state"] = GetWindowState();
     obj["hide_from_display_capture"] = GetHideFromDisplayCapture();
     obj["hide_cursor"] = m_hide_cursor;
+    obj["always_on_top"] = m_always_on_top;
     m_layout.Save(obj);
 }
 
@@ -317,6 +341,7 @@ void Durchblick::Load(QJsonObject const& obj)
     SetHideCursor(obj["hide_cursor"].toBool(false));
 
     setVisible(obj["visible"].toBool(false));
+    SetIsAlwaysOnTop(obj["always_on_top"].toBool(false), false);
 
     SetHideFromDisplayCapture(obj["hide_from_display_capture"].toBool(false));
     m_layout.Load(obj);
