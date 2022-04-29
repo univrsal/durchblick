@@ -66,7 +66,11 @@ void Load()
             f.close();
             Cfg = doc.object();
             auto layouts = Cfg[utf8_to_qt(sc)].toArray();
-            db->Load(layouts[0].toObject());
+            if (layouts.isEmpty()) {
+                berr("No layouts found");
+            } else {
+                db->Load(layouts[0].toObject());
+            }
         }
     }
 
