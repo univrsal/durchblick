@@ -38,6 +38,31 @@ namespace Config {
 Durchblick* db = nullptr;
 QJsonObject Cfg;
 
+void RegisterCallbacks()
+{
+    obs_frontend_add_save_callback([](obs_data_t* save_data, bool saving, void* private_data) {
+        // Refresh this flag because if the user changed the "Hide OBS window from display capture setting"
+        // durchblick would otherwise suddenly show up again
+        if (Config::db)
+            Config::db->SetHideFromDisplayCapture(Config::db->GetHideFromDisplayCapture());
+    },
+        nullptr);
+
+    obs_frontend_add_event_callback([](enum obs_frontend_event event, void*) {
+        if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING) {
+            // Final save and cleanup
+            Config::Load();
+        } else if (event == OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN) {
+            // I couldn't find another event that was on exit and
+            // before source/scene data was cleared
+
+            Config::Save();
+            Config::Cleanup();
+        }
+    },
+        nullptr);
+}
+
 void Load()
 {
     BPtr<char> path = obs_module_config_path("layout.json");

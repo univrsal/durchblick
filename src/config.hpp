@@ -23,6 +23,8 @@ namespace Config {
 
 extern Durchblick* db;
 
+extern void RegisterCallbacks();
+
 extern void Load();
 
 extern void Save();
