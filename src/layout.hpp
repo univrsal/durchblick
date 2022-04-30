@@ -128,6 +128,11 @@ public:
     bool IsEmpty() const { return m_layout_items.empty(); }
     void DeleteLayout();
     void ResetHover();
+    void Clear()
+    {
+        std::lock_guard<std::mutex> lock(m_layout_mutex);
+        m_layout_items.clear();
+    }
 
     int Columns() const { return m_cols; }
     int Rows() const { return m_rows; }

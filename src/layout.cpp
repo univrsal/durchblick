@@ -25,6 +25,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <util/config-file.h>
 #if _WIN32
 #    include <obs-frontend-api.h>
 #else
@@ -367,13 +368,23 @@ void Layout::CreateDefaultLayout()
             m_layout_items.emplace_back(item);
         }
     }
+    m_layout_mutex.unlock();
     obs_frontend_source_list_free(&scenes);
 
-    m_layout_mutex.unlock();
+    auto cfg = obs_frontend_get_global_config();
+
+    // Automatically set settings to user default
+    if (config_get_bool(cfg, "BasicWindow", "HideOBSWindowsFromCapture"))
+        m_durchblick->SetHideFromDisplayCapture(true);
+
+    m_durchblick->SetHideCursor(config_get_bool(cfg, "BasicWindow", "HideProjectorCursor"));
+    m_durchblick->SetIsAlwaysOnTop(config_get_bool(cfg, "BasicWindow", "ProjectorAlwaysOnTop"));
 }
 
 void Layout::Load(QJsonObject const& obj)
 {
+    Clear();
+
     m_layout_mutex.lock();
     m_cols = obj["cols"].toInt();
     m_rows = obj["rows"].toInt();
@@ -391,12 +402,16 @@ void Layout::Load(QJsonObject const& obj)
             berr("Widget JSON: %s", qt_to_utf8(QString(doc.toJson())));
         }
     }
+
+    if (IsEmpty())
+        CreateDefaultLayout();
     m_layout_mutex.unlock();
     RefreshGrid();
 }
 
 void Layout::Save(QJsonObject& obj)
 {
+    std::lock_guard<std::mutex> lock(m_layout_mutex);
     QJsonArray items;
     obj["cols"] = m_cols;
     obj["rows"] = m_rows;

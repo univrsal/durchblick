@@ -37,51 +37,22 @@ namespace Config {
 
 Durchblick* db = nullptr;
 QJsonObject Cfg;
-
-void RegisterCallbacks()
-{
-    obs_frontend_add_save_callback([](obs_data_t* save_data, bool saving, void* private_data) {
-        // Refresh this flag because if the user changed the "Hide OBS window from display capture setting"
-        // durchblick would otherwise suddenly show up again
-        if (Config::db)
-            Config::db->SetHideFromDisplayCapture(Config::db->GetHideFromDisplayCapture());
-    },
-        nullptr);
-
-    obs_frontend_add_event_callback([](enum obs_frontend_event event, void*) {
-        if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING) {
-            // Final save and cleanup
-            Config::Load();
-        } else if (event == OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN) {
-            // I couldn't find another event that was on exit and
-            // before source/scene data was cleared
-
-            Config::Save();
-            Config::Cleanup();
-        }
-    },
-        nullptr);
-}
-
-void Load()
+QJsonObject LoadLayoutForCurrentSceneCollection()
 {
     BPtr<char> path = obs_module_config_path("layout.json");
     BPtr<char> sc = obs_frontend_get_current_scene_collection();
-
     QFile f(utf8_to_qt(path));
     QDir dir(utf8_to_qt(path));
-
-    db = new Durchblick;
 
     // Make sure that the plugin config folder exists
     if (!dir.cd("../..")) { // cd into plugin_config
         berr("Failed to change directory from '%s'. Cannot save/load layouts.", path.Get());
-        return;
+        return {};
     }
 
     if (!dir.cd("durchblick") && !dir.mkdir("durchblick")) {
         berr("Failed to create config folder '%s'. Cannot save/load layouts.", path.Get());
-        return;
+        return {};
     }
 
     if (f.exists()) {
@@ -93,23 +64,48 @@ void Load()
             auto layouts = Cfg[utf8_to_qt(sc)].toArray();
             if (layouts.isEmpty()) {
                 berr("No layouts found");
-            } else {
-                db->Load(layouts[0].toObject());
+                return {};
             }
+            return layouts[0].toObject();
         }
     }
+    return {};
+}
 
-    if (db->GetLayout()->IsEmpty()) {
-        db->GetLayout()->CreateDefaultLayout();
-        auto cfg = obs_frontend_get_global_config();
+void RegisterCallbacks()
+{
+    obs_frontend_add_save_callback([](obs_data_t* save_data, bool saving, void* private_data) {
+        // Refresh this flag because if the user changed the "Hide OBS window from display capture setting"
+        // durchblick would otherwise suddenly show up again
+        if (db)
+            db->SetHideFromDisplayCapture(db->GetHideFromDisplayCapture());
+    },
+        nullptr);
 
-        // Automatically set settings to user default
-        if (config_get_bool(cfg, "BasicWindow", "HideOBSWindowsFromCapture"))
-            db->SetHideFromDisplayCapture(true);
+    obs_frontend_add_event_callback([](enum obs_frontend_event event, void*) {
+        if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING) {
+            // Final save and cleanup
+            Load();
+        } else if (event == OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN) {
+            // I couldn't find another event that was on exit and
+            // before source/scene data was cleared
 
-        db->SetHideCursor(config_get_bool(cfg, "BasicWindow", "HideProjectorCursor"));
-        db->SetIsAlwaysOnTop(config_get_bool(cfg, "BasicWindow", "ProjectorAlwaysOnTop"));
-    }
+            Save();
+            Cleanup();
+        } else if (event == OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGING) {
+            Save(); // Save current layout
+            db->GetLayout()->Clear();
+        } else if (event == OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGED) {
+            db->Load(LoadLayoutForCurrentSceneCollection());
+        }
+    },
+        nullptr);
+}
+
+void Load()
+{
+    db = new Durchblick;
+    db->Load(LoadLayoutForCurrentSceneCollection());
 }
 
 void Save()

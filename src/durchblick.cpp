@@ -321,6 +321,12 @@ void Durchblick::Save(QJsonObject& obj)
 
 void Durchblick::Load(QJsonObject const& obj)
 {
+    if (obj.isEmpty()) {
+        berr("Layout object was null");
+        m_layout.Clear();
+        m_layout.CreateDefaultLayout();
+        return;
+    }
     m_saved_state = (WindowState)obj["state"].toInt(WindowState::None);
 
     // Restore geometry if this view wasn't in fullscreen

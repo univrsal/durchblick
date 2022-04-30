@@ -55,7 +55,7 @@ public:
     int m_current_monitor { -1 };
     Layout m_layout;
     uint32_t m_fw {}, m_fh {}; // Base canvas width and height
-    float m_ratio { 16 / 9. };
+    float m_ratio { 16.f / 9.f };
 private slots:
     void EscapeTriggered();
     void OpenFullScreenProjector();
@@ -94,6 +94,7 @@ public:
     void Update();
 
     void Save(QJsonObject& obj);
+    /// Will either load fromt he JSON object or create the default layout
     void Load(QJsonObject const& obj);
 
     void SetHideFromDisplayCapture(bool hide_from_display_capture);
