@@ -77,8 +77,8 @@ endif()
 
 if (MSVC)
     set(durchblick_platform_source
-	./src/windows-helper.hpp
-	./src/windows-helper.cpp)
+	./src/util/windows_helper.hpp
+	./src/util/windows_helper.cpp)
     set(durchblick_platform_deps
         "${LibObs_DIR}/../deps/jansson/lib/RelWithDebInfo/jansson.lib"
         ${W32_PTHREADS_LIB})
@@ -86,32 +86,34 @@ endif()
 
 
 set(durchblick_sources
-    ./src/plugin.cpp
-    ./src/platform_util.hpp
-    ./src/durchblick.hpp
-    ./src/durchblick.cpp
+    ./src/durchblick_plugin.cpp
     ./src/layout.hpp
     ./src/layout.cpp
-    ./src/qt_display.hpp
-    ./src/qt_display.cpp
-    ./src/new_item_dialog.cpp
-    ./src/new_item_dialog.hpp
-    ./src/layout_config_dialog.cpp
-    ./src/layout_config_dialog.hpp
-    ./src/registry.cpp
-    ./src/registry.hpp
-    ./src/item.hpp
     ./src/config.cpp
     ./src/config.hpp
-    ./src/scene_item.cpp
-    ./src/scene_item.hpp
-    ./src/source_item.cpp
-    ./src/source_item.hpp
-    ./src/preview_program_item.cpp
-    ./src/preview_program_item.hpp
-    ./src/custom_item.cpp
-    ./src/custom_item.hpp
-    ./src/callbacks.h
+    ./src/util/util.h
+    ./src/util/callbacks.h
+    ./src/util/platform_util.hpp
+    ./src/util/display_helpers.hpp
+    ./src/ui/durchblick.hpp
+    ./src/ui/durchblick.cpp
+    ./src/ui/qt_display.hpp
+    ./src/ui/qt_display.cpp
+    ./src/ui/new_item_dialog.cpp
+    ./src/ui/new_item_dialog.hpp
+    ./src/ui/layout_config_dialog.cpp
+    ./src/ui/layout_config_dialog.hpp
+    ./src/items/registry.cpp
+    ./src/items/registry.hpp
+    ./src/items/item.hpp
+    ./src/items/scene_item.cpp
+    ./src/items/scene_item.hpp
+    ./src/items/source_item.cpp
+    ./src/items/source_item.hpp
+    ./src/items/preview_program_item.cpp
+    ./src/items/preview_program_item.hpp
+    ./src/items/custom_item.cpp
+    ./src/items/custom_item.hpp
     ${durchblick_platform_source}
     ${durchblick_ui_headers}
 )
