@@ -2,7 +2,7 @@ creds.txt
 *.autosave
 .DS_Store
 *.user
-build-*/
+build*/
 package/*.txt
 package/*.iss
 package/*.pkgproj
