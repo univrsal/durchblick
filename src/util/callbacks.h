@@ -27,7 +27,7 @@ extern "C" {
 struct DurchblickItemConfig {
 #if defined(__cplusplus)
     int x {}, y {};                        // Origin of multiview
-    int cx {}, cy {};                      // Multiview base size
+    int cx {}, cy {};                      // Multiview base size (same as canvas size if grid has the same amount of rows and columns)
     int canvas_width {}, canvas_height {}; // Base canvas size
     float scale {};
     float border = 4;

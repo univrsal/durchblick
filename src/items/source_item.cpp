@@ -63,11 +63,10 @@ void SourceItem::VolumeToggled(bool state)
             berr("Attaching volume meter to '%s' failed.", obs_source_get_name(m_src));
         }
         m_num_channels = obs_volmeter_get_nr_channels(m_vol_meter);
-        auto filename = obs_module_file("volume.effect");
+        BPtr<char> filename = obs_module_file("volume.effect");
         obs_enter_graphics();
         m_volume_shader = gs_effect_create_from_file(filename, nullptr);
         obs_leave_graphics();
-        bfree(filename);
 
         if (!m_volume_shader) {
             berr("Failed to load volume shader");

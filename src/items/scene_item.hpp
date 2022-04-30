@@ -89,9 +89,7 @@ public:
     {
     }
 
-    ~SceneItem()
-    {
-    }
+    ~SceneItem() = default;
 
     QWidget* GetConfigWidget() override;
     void LoadConfigFromWidget(QWidget*) override;
