@@ -206,14 +206,17 @@ void Layout::FreeSpace(LayoutItem::Cell const& c)
 
 void Layout::AddWidget(Registry::ItemRegistry::Entry const& entry, QWidget* custom_widget)
 {
-    std::lock_guard<std::mutex> lock(m_layout_mutex);
     auto target = GetSelectedArea();
-    FreeSpace(target);
     auto* Item = entry.construct(this, target.col, target.row, target.w, target.h);
     Item->LoadConfigFromWidget(custom_widget);
     Item->Update(m_cfg);
+
+    m_layout_mutex.lock();
+    FreeSpace(target);
     m_layout_items.emplace_back(Item);
     FillEmptyCells();
+    m_layout_mutex.unlock();
+
     Config::Save();
 }
 
