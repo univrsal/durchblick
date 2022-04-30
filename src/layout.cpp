@@ -18,10 +18,10 @@
 
 #include "layout.hpp"
 #include "config.hpp"
-#include "durchblick.hpp"
-#include "preview_program_item.hpp"
-#include "scene_item.hpp"
-#include "util.h"
+#include "items/preview_program_item.hpp"
+#include "items/scene_item.hpp"
+#include "ui/durchblick.hpp"
+#include "util/util.h"
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>

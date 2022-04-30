@@ -17,10 +17,10 @@
  *************************************************************************/
 
 #include "new_item_dialog.hpp"
+#include "../items/registry.hpp"
+#include "../layout.hpp"
+#include "../util/util.h"
 #include "durchblick.hpp"
-#include "layout.hpp"
-#include "registry.hpp"
-#include "util.h"
 #include <QGroupBox>
 #include <QPushButton>
 #include <QSizePolicy>

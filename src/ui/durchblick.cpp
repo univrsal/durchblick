@@ -17,15 +17,15 @@
  *************************************************************************/
 
 #include "durchblick.hpp"
+#include "../util/platform_util.hpp"
 #include "obs.hpp"
-#include "platform_util.hpp"
 #include <QApplication>
 #include <QIcon>
 #include <QWindow>
 #include <obs-module.h>
 
 #ifdef _WIN32
-#    include "windows-helper.hpp"
+#    include "../util/windows_helper.hpp"
 #    include <Windows.h>
 #endif
 

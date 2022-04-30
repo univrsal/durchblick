@@ -17,11 +17,11 @@
  *************************************************************************/
 
 #include "registry.hpp"
+#include "../util/util.h"
 #include "custom_item.hpp"
 #include "preview_program_item.hpp"
 #include "scene_item.hpp"
 #include "source_item.hpp"
-#include "util.h"
 
 namespace Registry {
 

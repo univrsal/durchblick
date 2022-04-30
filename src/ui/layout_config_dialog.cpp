@@ -17,9 +17,9 @@
  *************************************************************************/
 
 #include "layout_config_dialog.hpp"
+#include "../layout.hpp"
+#include "../util/util.h"
 #include "durchblick.hpp"
-#include "layout.hpp"
-#include "util.h"
 #include <QHBoxLayout>
 #include <QPushButton>
 

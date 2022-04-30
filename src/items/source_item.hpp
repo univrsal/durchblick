@@ -17,8 +17,8 @@
  *************************************************************************/
 
 #pragma once
+#include "../util/util.h"
 #include "item.hpp"
-#include "util.h"
 #include <QComboBox>
 #include <QFormLayout>
 #include <QVBoxLayout>

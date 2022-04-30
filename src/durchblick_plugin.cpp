@@ -17,14 +17,14 @@
  *************************************************************************/
 
 #include "config.hpp"
-#include "durchblick.hpp"
-#include "registry.hpp"
-#include "source_item.hpp"
-#include "util.h"
-#include "util/util.hpp"
+#include "items/registry.hpp"
+#include "items/source_item.hpp"
+#include "ui/durchblick.hpp"
+#include "util/util.h"
 #include <QAction>
 #include <obs-module.h>
 #include <thread>
+#include <util/util.hpp>
 #if _WIN32
 #    include <obs-frontend-api.h>
 #else

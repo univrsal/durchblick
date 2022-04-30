@@ -17,8 +17,8 @@
  *************************************************************************/
 
 #include "config.hpp"
-#include "durchblick.hpp"
-#include "util.h"
+#include "ui/durchblick.hpp"
+#include "util/util.h"
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>

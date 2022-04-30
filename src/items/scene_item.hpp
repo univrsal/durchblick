@@ -18,8 +18,8 @@
 
 #pragma once
 
+#include "../util/util.h"
 #include "source_item.hpp"
-#include "util.h"
 #include <QComboBox>
 #include <QFormLayout>
 #include <QRadioButton>

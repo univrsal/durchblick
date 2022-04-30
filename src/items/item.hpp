@@ -17,8 +17,8 @@
  *************************************************************************/
 
 #pragma once
-#include "callbacks.h"
-#include "util.h"
+#include "../util/callbacks.h"
+#include "../util/util.h"
 #include <QContextMenuEvent>
 #include <QJsonObject>
 #include <QMenu>

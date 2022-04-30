@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 #pragma once
-#include "layout.hpp"
+#include "../layout.hpp"
 #include "qt_display.hpp"
 #include <QRect>
 #include <QScreen>

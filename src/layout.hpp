@@ -18,11 +18,11 @@
 
 #pragma once
 
-#include "item.hpp"
-#include "layout_config_dialog.hpp"
-#include "new_item_dialog.hpp"
-#include "registry.hpp"
-#include "util.h"
+#include "items/item.hpp"
+#include "items/registry.hpp"
+#include "ui/layout_config_dialog.hpp"
+#include "ui/new_item_dialog.hpp"
+#include "util/util.h"
 #include <QMouseEvent>
 #include <algorithm>
 #include <memory>

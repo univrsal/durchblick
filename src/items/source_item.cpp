@@ -1,6 +1,6 @@
 #include "source_item.hpp"
-#include "display-helpers.hpp"
-#include "layout.hpp"
+#include "../layout.hpp"
+#include "../util/display_helpers.hpp"
 #include <QApplication>
 #include <QMainWindow>
 #include <util/util.hpp>
