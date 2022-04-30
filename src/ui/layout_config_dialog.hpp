@@ -27,7 +27,7 @@
 #include <QVBoxLayout>
 
 class Layout;
-class Durchblick;
+class IDurchblick;
 
 class LayoutConfigDialog : public QDialog {
     Q_OBJECT
@@ -36,11 +36,11 @@ class LayoutConfigDialog : public QDialog {
     QSpinBox *m_cols {}, *m_rows {};
     QCheckBox *m_hide_from_display_capture {}, *m_hide_cursor {};
     Layout* m_layout {};
-    Durchblick* m_durchblick {};
+    IDurchblick* m_durchblick {};
 private slots:
     void ok_clicked();
     void cancel_clicked();
 
 public:
-    LayoutConfigDialog(Durchblick* parent, Layout* layout);
+    LayoutConfigDialog(IDurchblick* parent);
 };

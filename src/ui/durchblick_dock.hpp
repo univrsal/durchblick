@@ -17,7 +17,8 @@
  *************************************************************************/
 #pragma once
 #include "../layout.hpp"
-#include "qt_display.hpp"
+#include "durchblick.hpp"
+#include "qt_dock_display.hpp"
 #include <QRect>
 #include <QScreen>
 #include <QTimer>
@@ -30,59 +31,25 @@
 #    include <obs/obs-frontend-api.h>
 #endif
 
-class IDurchblick {
-public:
-    virtual void SetHideFromDisplayCapture(bool) = 0;
-    virtual void SetHideCursor(bool) = 0;
-    virtual void SetIsAlwaysOnTop(bool, bool = true) = 0;
-    virtual bool GetIsCursorHidden() const = 0;
-    virtual bool GetHideFromDisplayCapture() = 0;
-    virtual Layout* GetLayout() = 0;
-    virtual QWidget* AsWidget() = 0;
-
-    virtual void Save(QJsonObject& obj) = 0;
-    /// Will either load fromt he JSON object or create the default layout
-    virtual void Load(QJsonObject const& obj) = 0;
-
-    virtual bool IsDock() const { return false; }
-};
-
-class Durchblick : public OBSQTDisplay
+class DurchblickDock : public OBSQTDockDisplay
     , public IDurchblick {
     Q_OBJECT
-
-    enum WindowState {
-        None,
-        Maximized,
-    } m_saved_state {};
-
-    WindowState GetWindowState() const
-    {
-        if (isMaximized())
-            return WindowState::Maximized;
-        return WindowState::None;
-    }
 
     bool m_hide_cursor { false };
     bool m_always_on_top { false };
 
 public:
-    QRect m_previous_geometry;
     bool m_ready { false };
-    QScreen* m_screen { nullptr };
-    int m_current_monitor { -1 };
     Layout m_layout;
     uint32_t m_fw {}, m_fh {}; // Base canvas width and height
     float m_ratio { 16.f / 9.f };
 private slots:
     void EscapeTriggered();
-    void OpenFullScreenProjector();
-    void OpenWindowedProjector();
     void ResizeToContent();
     void AlwaysOnTopToggled(bool alwaysOnTop);
-    void ScreenRemoved(QScreen* screen_);
+
     void Resize(int cx, int cy);
-    void ConvertToDock();
+    void ConvertToNormalWindow();
 
 protected:
     virtual void mouseMoveEvent(QMouseEvent*) override;
@@ -92,7 +59,6 @@ protected:
     virtual void contextMenuEvent(QContextMenuEvent*) override;
 
     virtual void closeEvent(QCloseEvent*) override;
-    virtual void showEvent(QShowEvent*) override;
 
 protected:
     //    void dragEnterEvent(QDragEnterEvent *event) override;
@@ -101,29 +67,26 @@ protected:
     //    void dropEvent(QDropEvent* event) override;
 
 public:
-    Durchblick(QWidget* widget = nullptr);
-    ~Durchblick();
+    DurchblickDock(QWidget* widget = nullptr);
+    ~DurchblickDock();
 
     static void RenderLayout(void* data, uint32_t cx, uint32_t cy);
-
-    void SetMonitor(int monitor);
-
     bool IsAlwaysOnTop() const;
-    void SetIsAlwaysOnTop(bool isAlwaysOnTop, bool reshow = true) override;
+    void SetIsAlwaysOnTop(bool isAlwaysOnTop, bool reshow = true);
     void Update();
 
     void Save(QJsonObject& obj) override;
     /// Will either load fromt he JSON object or create the default layout
     void Load(QJsonObject const& obj) override;
 
-    void SetHideFromDisplayCapture(bool hide_from_display_capture) override;
+    void SetHideFromDisplayCapture(bool hide_from_display_capture);
 
-    bool GetHideFromDisplayCapture() override
+    bool GetHideFromDisplayCapture()
     {
         return !windowHandle()->property("isOBSProjectorWindow").toBool();
     }
 
-    void SetHideCursor(bool hide) override
+    void SetHideCursor(bool hide)
     {
         m_hide_cursor = hide;
         if (hide)
@@ -132,9 +95,10 @@ public:
             setCursor(Qt::ArrowCursor);
     }
 
-    bool GetIsCursorHidden() const override { return m_hide_cursor; }
+    bool GetIsCursorHidden() const { return m_hide_cursor; }
 
-    Layout* GetLayout() override { return &m_layout; }
+    Layout* GetLayout() { return &m_layout; }
 
     QWidget* AsWidget() override { return this; }
+    bool IsDock() const override { return true; }
 };

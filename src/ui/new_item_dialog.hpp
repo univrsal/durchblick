@@ -25,7 +25,7 @@
 #include <QVBoxLayout>
 
 class Layout;
-class Durchblick;
+class IDurchblick;
 
 class NewItemDialog : public QDialog {
     Q_OBJECT
@@ -40,5 +40,5 @@ private slots:
     void entry_selected(int);
 
 public:
-    NewItemDialog(Durchblick* parent, Layout* layout);
+    NewItemDialog(IDurchblick* parent);
 };

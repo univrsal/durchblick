@@ -1,0 +1,41 @@
+/*************************************************************************
+ * https://github.com/obsproject/obs-studio/blob/master/UI/qt-display.cpp
+ *************************************************************************/
+
+#pragma once
+#include <QDockWidget>
+#include <obs.hpp>
+
+#define GREY_COLOR_BACKGROUND 0xFF4C4C4C
+
+class OBSQTDockDisplay : public QDockWidget {
+    Q_OBJECT
+    Q_PROPERTY(QColor displayBackgroundColor MEMBER backgroundColor READ
+            GetDisplayBackgroundColor WRITE
+                SetDisplayBackgroundColor)
+
+    OBSDisplay display;
+
+    void resizeEvent(QResizeEvent* event) override;
+    void paintEvent(QPaintEvent* event) override;
+
+signals:
+    void DisplayCreated(OBSQTDockDisplay* window);
+    void DisplayResized(int cx, int cy);
+
+public:
+    OBSQTDockDisplay(QWidget* parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
+    ~OBSQTDockDisplay() { display = nullptr; }
+
+    virtual QPaintEngine* paintEngine() const override;
+
+    inline obs_display_t* GetDisplay() const { return display; }
+
+    uint32_t backgroundColor = GREY_COLOR_BACKGROUND;
+
+    QColor GetDisplayBackgroundColor() const;
+    void SetDisplayBackgroundColor(QColor const& color);
+    void UpdateDisplayBackgroundColor();
+    void CreateDisplay(bool force = false);
+};

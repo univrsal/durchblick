@@ -18,6 +18,7 @@
 
 #include "config.hpp"
 #include "ui/durchblick.hpp"
+#include "ui/durchblick_dock.hpp"
 #include "util/util.h"
 #include <QDir>
 #include <QFile>
@@ -35,7 +36,7 @@
 
 namespace Config {
 
-Durchblick* db = nullptr;
+IDurchblick* db = nullptr;
 QJsonObject Cfg;
 QJsonObject LoadLayoutForCurrentSceneCollection()
 {
@@ -84,9 +85,9 @@ void RegisterCallbacks()
 
     obs_frontend_add_event_callback([](enum obs_frontend_event event, void*) {
         if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING) {
-            // Final save and cleanup
             Load();
         } else if (event == OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN) {
+            // Final save and cleanup
             // I couldn't find another event that was on exit and
             // before source/scene data was cleared
 
@@ -104,8 +105,20 @@ void RegisterCallbacks()
 
 void Load()
 {
-    db = new Durchblick;
-    db->Load(LoadLayoutForCurrentSceneCollection());
+    auto layout = LoadLayoutForCurrentSceneCollection();
+    if (layout.isEmpty()) {
+        db = new Durchblick;
+    } else {
+        if (layout["is_dock"].toBool()) {
+            obs_frontend_push_ui_translation(obs_module_get_string);
+            db = new DurchblickDock((QWidget*)obs_frontend_get_main_window());
+            obs_frontend_add_dock(db->AsWidget());
+            obs_frontend_pop_ui_translation();
+        } else {
+            db = new Durchblick;
+        }
+    }
+    db->Load(layout);
 }
 
 void Save()
@@ -140,7 +153,8 @@ void Save()
 
 void Cleanup()
 {
-    db->deleteLater();
+
+    db->AsWidget()->deleteLater();
     db = nullptr;
 }
 

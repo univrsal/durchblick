@@ -16,12 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 #pragma once
+#include <QJsonDocument>
 
-class Durchblick;
+class IDurchblick;
 
 namespace Config {
 
-extern Durchblick* db;
+extern QJsonObject LoadLayoutForCurrentSceneCollection();
+
+extern IDurchblick* db;
 
 extern void RegisterCallbacks();
 

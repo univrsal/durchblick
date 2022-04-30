@@ -38,6 +38,8 @@
 #define T_MENU_OPTION                   T_("Menu.Option")
 #define T_MENU_SET_WIDGET               T_("Menu.SetWidget")
 #define T_MENU_CONFIGURATION            T_("Menu.Config")
+#define T_MENU_TO_DOCK                  T_("Menu.ToDock")
+#define T_MENU_TO_NORMAL_WINDOW         T_("Menu.ToNormalWindow")
 #define T_MENU_CLEAR_ACTION             T_("Menu.ClearAction")
 #define T_SELECT_TYPE_DIALOG            T_("Dialog.Select.ItemType")
 #define T_SELECT_TYPE                   T_("Label.Select.ItemType")

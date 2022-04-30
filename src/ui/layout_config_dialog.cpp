@@ -42,9 +42,9 @@ void LayoutConfigDialog::cancel_clicked()
     hide();
 }
 
-LayoutConfigDialog::LayoutConfigDialog(Durchblick* parent, Layout* layout)
-    : QDialog(parent)
-    , m_layout(layout)
+LayoutConfigDialog::LayoutConfigDialog(IDurchblick* parent)
+    : QDialog(parent->AsWidget())
+    , m_layout(parent->GetLayout())
     , m_durchblick(parent)
 {
     m_vboxlayout = new QVBoxLayout(this);
@@ -56,11 +56,11 @@ LayoutConfigDialog::LayoutConfigDialog(Durchblick* parent, Layout* layout)
 
     m_cols->setMaximum(16);
     m_cols->setMinimum(1);
-    m_cols->setValue(layout->m_cols);
+    m_cols->setValue(m_layout->m_cols);
     m_rows->setMaximum(16);
     m_rows->setMinimum(1);
     m_rows->setValue(12);
-    m_rows->setValue(layout->m_rows);
+    m_rows->setValue(m_layout->m_rows);
 
     hlayout->addWidget(m_cols);
     hlayout->addWidget(new QLabel("x", this));

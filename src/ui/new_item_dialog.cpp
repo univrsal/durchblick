@@ -60,9 +60,9 @@ void NewItemDialog::entry_selected(int index)
     delete Item;
 }
 
-NewItemDialog::NewItemDialog(Durchblick* parent, Layout* layout)
-    : QDialog(parent)
-    , m_layout(layout)
+NewItemDialog::NewItemDialog(IDurchblick* parent)
+    : QDialog(parent->AsWidget())
+    , m_layout(parent->GetLayout())
 {
     m_config_layout = new QVBoxLayout(this);
     m_vboxlayout = new QVBoxLayout(this);

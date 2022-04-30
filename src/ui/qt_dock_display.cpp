@@ -2,12 +2,17 @@
  * https://github.com/obsproject/obs-studio/blob/master/UI/qt-display.hpp
  *************************************************************************/
 
-#include "qt_display.hpp"
+#include "qt_dock_display.hpp"
 #include "../util/display_helpers.hpp"
+#include <QGuiApplication>
+#include <QResizeEvent>
+#include <QScreen>
+#include <QShowEvent>
+#include <QWindow>
 #include <obs-config.h>
 
-OBSQTDisplay::OBSQTDisplay(QWidget* parent, Qt::WindowFlags flags)
-    : QWidget(parent, flags)
+OBSQTDockDisplay::OBSQTDockDisplay(QWidget* parent, Qt::WindowFlags flags)
+    : QDockWidget(parent, flags)
 {
     setAttribute(Qt::WA_StaticContents);
     setAttribute(Qt::WA_NoSystemBackground);
@@ -50,12 +55,12 @@ OBSQTDisplay::OBSQTDisplay(QWidget* parent, Qt::WindowFlags flags)
 #endif
 }
 
-QColor OBSQTDisplay::GetDisplayBackgroundColor() const
+QColor OBSQTDockDisplay::GetDisplayBackgroundColor() const
 {
     return rgba_to_color(backgroundColor);
 }
 
-void OBSQTDisplay::SetDisplayBackgroundColor(QColor const& color)
+void OBSQTDockDisplay::SetDisplayBackgroundColor(QColor const& color)
 {
     uint32_t newBackgroundColor = (uint32_t)color_to_int(color);
 
@@ -65,12 +70,12 @@ void OBSQTDisplay::SetDisplayBackgroundColor(QColor const& color)
     }
 }
 
-void OBSQTDisplay::UpdateDisplayBackgroundColor()
+void OBSQTDockDisplay::UpdateDisplayBackgroundColor()
 {
     obs_display_set_background_color(display, backgroundColor);
 }
 
-void OBSQTDisplay::CreateDisplay(bool force)
+void OBSQTDockDisplay::CreateDisplay(bool force)
 {
     if (display)
         return;
@@ -94,7 +99,7 @@ void OBSQTDisplay::CreateDisplay(bool force)
     emit DisplayCreated(this);
 }
 
-void OBSQTDisplay::resizeEvent(QResizeEvent* event)
+void OBSQTDockDisplay::resizeEvent(QResizeEvent* event)
 {
     QWidget::resizeEvent(event);
 
@@ -108,14 +113,14 @@ void OBSQTDisplay::resizeEvent(QResizeEvent* event)
     emit DisplayResized(size.width(), size.height());
 }
 
-void OBSQTDisplay::paintEvent(QPaintEvent* event)
+void OBSQTDockDisplay::paintEvent(QPaintEvent* event)
 {
     CreateDisplay();
 
     QWidget::paintEvent(event);
 }
 
-QPaintEngine* OBSQTDisplay::paintEngine() const
+QPaintEngine* OBSQTDockDisplay::paintEngine() const
 {
     return nullptr;
 }

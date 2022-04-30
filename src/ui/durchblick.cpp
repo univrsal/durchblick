@@ -17,7 +17,9 @@
  *************************************************************************/
 
 #include "durchblick.hpp"
+#include "../config.hpp"
 #include "../util/platform_util.hpp"
+#include "durchblick_dock.hpp"
 #include "obs.hpp"
 #include <QApplication>
 #include <QIcon>
@@ -142,6 +144,18 @@ void Durchblick::Resize(int cx, int cy)
     m_layout.Resize(m_fw, m_fh, cx, cy);
 }
 
+void Durchblick::ConvertToDock()
+{
+    QJsonObject config;
+    Save(config);
+    auto* dock = new DurchblickDock((QWidget*)obs_frontend_get_main_window());
+    dock->Load(config);
+    dock->setGeometry(geometry());
+    dock->show();
+    Config::db = dock;
+    deleteLater();
+}
+
 void Durchblick::mouseMoveEvent(QMouseEvent* e)
 {
     QWidget::mouseMoveEvent(e);
@@ -176,6 +190,7 @@ void Durchblick::mouseReleaseEvent(QMouseEvent* e)
         always_on_top->setChecked(m_always_on_top);
         connect(always_on_top, &QAction::toggled, this, &Durchblick::AlwaysOnTopToggled);
         m.addAction(always_on_top);
+        m.addAction(T_MENU_TO_DOCK, this, SLOT(ConvertToDock()));
 
         m_layout.HandleContextMenu(e, m);
         m.exec(QCursor::pos());
@@ -305,6 +320,7 @@ void Durchblick::Update()
 void Durchblick::Save(QJsonObject& obj)
 {
     obj["monitor"] = m_current_monitor;
+    obj["is_dock"] = false;
     QJsonObject geo;
     geo["x"] = geometry().x();
     geo["y"] = geometry().y();

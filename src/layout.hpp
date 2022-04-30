@@ -74,7 +74,7 @@ class Layout : public QObject {
     int m_cols { 4 }, m_rows { 4 };
     std::vector<std::unique_ptr<LayoutItem>> m_layout_items;
     DurchblickItemConfig m_cfg;
-    Durchblick* m_durchblick {};
+    IDurchblick* m_durchblick {};
     LayoutItem::Cell m_hovered_cell {}, m_selection_start {}, m_selection_end {};
     bool m_dragging {};
     std::mutex m_layout_mutex;
@@ -96,18 +96,18 @@ private slots:
     void ClearSelection();
     void ShowSetWidgetDialog()
     {
-        NewItemDialog dlg(m_durchblick, this);
+        NewItemDialog dlg(m_durchblick);
         dlg.exec();
     }
 
     void ShowLayoutConfigDialog()
     {
-        LayoutConfigDialog dlg(m_durchblick, this);
+        LayoutConfigDialog dlg(m_durchblick);
         dlg.exec();
     }
 
 public:
-    Layout(Durchblick* parent, int cols = 4, int rows = 4);
+    Layout(IDurchblick* parent, int cols = 4, int rows = 4);
     ~Layout();
 
     void MouseMoved(QMouseEvent* e);

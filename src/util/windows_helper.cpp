@@ -69,7 +69,7 @@ QString GetMonitorName(const QString& id)
         return GENERIC_MONITOR_NAME;
     }
 
-    DISPLAYCONFIG_TARGET_DEVICE_NAME target;
+    DISPLAYCONFIG_TARGET_DEVICE_NAME target {};
     bool found = false;
 
     paths.resize(numPath);

@@ -86,8 +86,8 @@ void Layout::ClearSelection()
     Config::Save();
 }
 
-Layout::Layout(Durchblick* parent, int cols, int rows)
-    : QObject(parent)
+Layout::Layout(IDurchblick* parent, int cols, int rows)
+    : QObject(parent->AsWidget())
     , m_rows(rows)
     , m_cols(cols)
     , m_durchblick(parent)
@@ -406,9 +406,11 @@ void Layout::Load(QJsonObject const& obj)
         }
     }
 
-    if (IsEmpty())
-        CreateDefaultLayout();
+    auto is_empty = IsEmpty();
     m_layout_mutex.unlock();
+    if (is_empty)
+        CreateDefaultLayout();
+
     RefreshGrid();
 }
 
@@ -438,7 +440,7 @@ void Layout::ResetHover()
     if (m_hovered_cell.col > -1) {
         m_hovered_cell.col = -1;
         m_hovered_cell.row = -1;
-        auto pos = m_durchblick->mapFromGlobal(QCursor::pos());
+        auto pos = ((QWidget*)parent())->mapFromGlobal(QCursor::pos());
         for (auto const& i : m_layout_items) {
             i->IsMouseOver(pos.x(), pos.y());
         }
