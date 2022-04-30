@@ -248,18 +248,27 @@ void SourceItem::Render(DurchblickItemConfig const& cfg)
 
     if (!m_src)
         return;
+
     auto w = obs_source_get_width(m_src);
     auto h = obs_source_get_height(m_src);
+    vec2 scale { 1, 1 };
+    int offset_x {}, offset_y {};
+
     if (m_toggle_stretch->isChecked()) {
-        gs_matrix_scale3f(m_inner_width / float(w), m_inner_height / float(h), 1);
+        scale.x = m_inner_width / float(w);
+        scale.y = m_inner_height / float(h);
     } else {
-        int x, y;
-        float scale;
-        GetScaleAndCenterPos(w, h, m_inner_width, m_inner_height, x, y, scale);
-        gs_matrix_translate3f(x, y, 0);
-        gs_matrix_scale3f(scale, scale, 1);
+        GetScaleAndCenterPos(w, h, m_inner_width, m_inner_height, offset_x, offset_y, scale.x);
+        scale.y = scale.x;
     }
+
+    gs_matrix_push();
+    gs_matrix_translate3f(offset_x, offset_y, 0);
+    gs_matrix_scale3f(scale.x, scale.y, 1);
     obs_source_video_render(m_src);
+    if (m_toggle_safe_borders->isChecked())
+        RenderSafeMargins(w, h);
+    gs_matrix_pop();
 
     if (m_toggle_volume->isChecked()) {
         auto* vol = gs_effect_get_param_by_name(m_volume_shader, "volume");
@@ -281,18 +290,24 @@ void SourceItem::Render(DurchblickItemConfig const& cfg)
         gs_matrix_pop();
     }
 
+    // Label has to be scaled and translated regardless of
+    // source/scene size because sources can have sizes different than the base canvas
     if (m_toggle_label->isChecked() && m_label) {
+        float label_scale = 1;
+        int tmp;
         auto lw = obs_source_get_width(m_label);
         auto lh = obs_source_get_height(m_label);
+
+        GetScaleAndCenterPos(cfg.canvas_width, cfg.canvas_height, cfg.cell_width - cfg.border2, cfg.cell_height - cfg.border2, tmp, tmp, label_scale);
+
         gs_matrix_push();
-        gs_matrix_translate3f((cfg.cx - lw) / 2, h * 0.85, 0.0f);
+        gs_matrix_scale3f(label_scale, label_scale, 1);
+        gs_matrix_translate3f((cfg.cx - lw) / 2, cfg.canvas_height * 0.85, 0.0f);
         DrawBox(lw, lh, labelColor);
         gs_matrix_translate3f(0, -(lh * 0.08), 0.0f);
         obs_source_video_render(m_label);
         gs_matrix_pop();
     }
-    if (m_toggle_safe_borders->isChecked())
-        RenderSafeMargins(w, h);
 }
 
 void SourceItem::ContextMenu(QMenu& m)
