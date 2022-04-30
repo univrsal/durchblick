@@ -25,13 +25,23 @@
 
 extern "C" {
 struct DurchblickItemConfig {
+#if defined(__cplusplus)
     int x {}, y {};                        // Origin of multiview
     int cx {}, cy {};                      // Multiview base size
     int canvas_width {}, canvas_height {}; // Base canvas size
     float scale {};
     float border = 4;
     float border2 = border * 2;
+    float cell_width {}, cell_height {};
+#else
+    int x, y;
+    int cx, cy;
+    int canvas_width, canvas_height;
+    float scale;
+    float border;
+    float border2;
     float cell_width, cell_height;
+#endif
 };
 
 /**
