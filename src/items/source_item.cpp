@@ -293,15 +293,19 @@ void SourceItem::Render(DurchblickItemConfig const& cfg)
     // source/scene size because sources can have sizes different than the base canvas
     if (m_toggle_label->isChecked() && m_label) {
         float label_scale = 1;
-        int tmp;
+        int tmp_x {}, tmp_y {};
         auto lw = obs_source_get_width(m_label);
         auto lh = obs_source_get_height(m_label);
 
-        GetScaleAndCenterPos(cfg.canvas_width, cfg.canvas_height, cfg.cell_width - cfg.border2, cfg.cell_height - cfg.border2, tmp, tmp, label_scale);
+        GetScaleAndCenterPos(cfg.canvas_width, cfg.canvas_height, m_inner_width, m_inner_height, tmp_x, tmp_y, label_scale);
 
         gs_matrix_push();
+        // This is very convoluted, but I don't have a better way of doing this
+        // Basically puts the label horziontally centered at the bottom of the source/scene with an offset from the bottom of 1.5 times the height of the label
+        // The scale is the same as with the builtin multiview and uses the scale that a rectangle with the base canvas aspect ratio would need
+        // this prevents the labels from getting too big/small (usually)
+        gs_matrix_translate3f((m_inner_width - lw * label_scale) / 2, offset_y + h * scale.y - lh * label_scale * 1.5, 0);
         gs_matrix_scale3f(label_scale, label_scale, 1);
-        gs_matrix_translate3f((cfg.cx - lw) / 2, cfg.canvas_height * 0.85, 0.0f);
         DrawBox(lw, lh, labelColor);
         gs_matrix_translate3f(0, -(lh * 0.08), 0.0f);
         obs_source_video_render(m_label);
