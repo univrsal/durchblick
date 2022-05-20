@@ -377,8 +377,7 @@ void Layout::CreateDefaultLayout()
     auto cfg = obs_frontend_get_global_config();
 
     // Automatically set settings to user default
-    if (config_get_bool(cfg, "BasicWindow", "HideOBSWindowsFromCapture"))
-        m_durchblick->SetHideFromDisplayCapture(true);
+    m_durchblick->SetHideFromDisplayCapture(config_get_bool(cfg, "BasicWindow", "HideOBSWindowsFromCapture"));
 
     m_durchblick->SetHideCursor(config_get_bool(cfg, "BasicWindow", "HideProjectorCursor"));
     m_durchblick->SetIsAlwaysOnTop(config_get_bool(cfg, "BasicWindow", "ProjectorAlwaysOnTop"));
