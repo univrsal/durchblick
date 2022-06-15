@@ -17,6 +17,7 @@
  *************************************************************************/
 
 #include "durchblick.hpp"
+#include "../config.hpp"
 #include "../util/platform_util.hpp"
 #include "obs.hpp"
 #include <QApplication>
@@ -194,9 +195,9 @@ void Durchblick::contextMenuEvent(QContextMenuEvent*)
 
 void Durchblick::closeEvent(QCloseEvent* e)
 {
-    e->ignore();
     m_saved_state = GetWindowState();
-    hide();
+    QWidget::closeEvent(e);
+    deleteLater();
 }
 
 void Durchblick::showEvent(QShowEvent* e)
@@ -221,7 +222,7 @@ Durchblick::Durchblick(QWidget* widget)
 #else
     setWindowIcon(QIcon::fromTheme("obs", QIcon(":/res/images/obs.png")));
 #endif
-    setAttribute(Qt::WA_DeleteOnClose, false);
+
     // disable application quit when last window closed
     setAttribute(Qt::WA_QuitOnClose, false);
     setMouseTracking(true);
@@ -259,6 +260,7 @@ Durchblick::~Durchblick()
     m_screen = nullptr;
     m_ready = false;
     m_layout.DeleteLayout();
+    Config::db = nullptr;
     deleteLater();
 }
 
