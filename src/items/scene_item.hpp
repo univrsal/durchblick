@@ -36,6 +36,7 @@ class SceneItemWidget : public QWidget {
 public:
     QComboBox* m_combo_box;
     QRadioButton *m_icon, *m_border, *m_none;
+    QDoubleSpinBox* m_font_size;
     SceneItemWidget(QWidget* parent = nullptr)
         : QWidget(parent)
     {
@@ -44,7 +45,14 @@ public:
         l->setContentsMargins(0, 0, 0, 0);
         m_combo_box = new QComboBox();
         m_combo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        m_font_size = new QDoubleSpinBox(this);
+        m_font_size->setMinimum(1);
+        m_font_size->setValue(100);
+        m_font_size->setMaximum(500);
+        m_font_size->setSuffix("%");
+        m_font_size->setDecimals(0);
         l->addRow(T_SCENE_NAME, m_combo_box);
+        l->addRow(T_FONT_SIZE, m_font_size);
 
         auto* radio_buttons = new QVBoxLayout(this);
         m_border = new QRadioButton(T_BORDER_INDICATOR, this);

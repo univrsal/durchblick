@@ -20,6 +20,7 @@
 #include "../util/util.h"
 #include "item.hpp"
 #include <QComboBox>
+#include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QVBoxLayout>
 #include <mutex>
@@ -29,15 +30,23 @@ class SourceItemWidget : public QWidget {
     Q_OBJECT
 public:
     QComboBox* m_combo_box;
+    QDoubleSpinBox* m_font_size;
     SourceItemWidget(QWidget* parent = nullptr)
         : QWidget(parent)
     {
-        auto* l = new QFormLayout();
+        auto* l = new QFormLayout(this);
         setLayout(l);
         l->setContentsMargins(0, 0, 0, 0);
-        m_combo_box = new QComboBox();
+        m_combo_box = new QComboBox(this);
         m_combo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        m_font_size = new QDoubleSpinBox(this);
+        m_font_size->setMinimum(1);
+        m_font_size->setValue(100);
+        m_font_size->setMaximum(500);
+        m_font_size->setSuffix("%");
+        m_font_size->setDecimals(0);
         l->addRow(T_SOURCE_NAME, m_combo_box);
+        l->addRow(T_FONT_SIZE, m_font_size);
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     }
 };
@@ -55,11 +64,12 @@ protected:
 
     std::mutex m_volume_mutex;
     float m_volume_peak[MAX_AUDIO_CHANNELS];
+    float m_font_scale { 1 };
     int m_num_channels {};
     gs_effect_t* m_volume_shader {};
 
     void RenderSafeMargins(int w, int h);
-    static OBSSource CreateLabel(const char* name, size_t h);
+    static OBSSource CreateLabel(const char* name, size_t h, float scale = 1.0);
 public slots:
 
     void VolumeToggled(bool);

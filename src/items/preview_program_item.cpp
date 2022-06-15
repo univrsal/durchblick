@@ -33,8 +33,10 @@ QWidget* PreviewProgramItem::GetConfigWidget()
 void PreviewProgramItem::LoadConfigFromWidget(QWidget* w)
 {
     auto* custom = dynamic_cast<PreviewProgramItemWidget*>(w);
-    if (custom)
+    if (custom) {
         m_program = !custom->m_preview->isChecked();
+        m_font_scale = custom->m_font_size->value() / 100.f;
+    }
 
     if (!m_program)
         m_toggle_safe_borders->setChecked(true); // Preview shows safe borders by default
@@ -51,7 +53,7 @@ void PreviewProgramItem::CreateLabel()
         name = T_PROGRAM;
     else
         name = T_PREVIEW;
-    m_label = SourceItem::CreateLabel(qt_to_utf8(name), h / 1.5);
+    m_label = SourceItem::CreateLabel(qt_to_utf8(name), h / 1.5, m_font_scale);
 }
 
 static const uint32_t labelColor = 0xD91F1F1F;
@@ -84,8 +86,9 @@ void PreviewProgramItem::Render(DurchblickItemConfig const& cfg)
     if (m_toggle_label->isChecked() && m_label) {
         auto lw = obs_source_get_width(m_label);
         auto lh = obs_source_get_height(m_label);
+
         gs_matrix_push();
-        gs_matrix_translate3f((cfg.canvas_width - lw) / 2, cfg.canvas_height * 0.85, 0.0f);
+        gs_matrix_translate3f((cfg.canvas_width - lw) / 2, cfg.canvas_height - lh * 1.5, 0.0f);
         DrawBox(lw, lh, labelColor);
         gs_matrix_translate3f(0, -(lh * 0.08), 0.0f);
         obs_source_video_render(m_label);

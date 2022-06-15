@@ -11,7 +11,7 @@
 #endif
 
 /* yoinked from obs window-projector.cpp */
-OBSSource SourceItem::CreateLabel(char const* name, size_t h)
+OBSSource SourceItem::CreateLabel(char const* name, size_t h, float scale)
 {
     OBSDataAutoRelease settings = obs_data_create();
     OBSDataAutoRelease font = obs_data_create();
@@ -29,7 +29,7 @@ OBSSource SourceItem::CreateLabel(char const* name, size_t h)
     obs_data_set_string(font, "face", "Monospace");
 #endif
     obs_data_set_int(font, "flags", 1); // Bold text
-    obs_data_set_int(font, "size", int(h / 9.81));
+    obs_data_set_int(font, "size", int(h / 9.81) * scale);
 
     obs_data_set_obj(settings, "font", font);
     obs_data_set_string(settings, "text", text.c_str());
@@ -184,6 +184,7 @@ void SourceItem::LoadConfigFromWidget(QWidget* w)
     auto* custom = dynamic_cast<SourceItemWidget*>(w);
     if (custom) {
         OBSSourceAutoRelease src = obs_get_source_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
+        m_font_scale = custom->m_font_size->value() / 100.f;
         SetSource(src);
     }
 }
@@ -206,7 +207,7 @@ void SourceItem::SetSource(obs_source_t* src)
             obs_get_video_info(&ovi);
 
             uint32_t h = ovi.base_height;
-            m_label = CreateLabel(obs_source_get_name(m_src), h / 1.5);
+            m_label = CreateLabel(obs_source_get_name(m_src), h / 1.5, m_font_scale);
         }
     }
 }
@@ -217,6 +218,9 @@ void SourceItem::ReadFromJson(QJsonObject const& Obj)
     m_toggle_safe_borders->setChecked(Obj["show_safe_borders"].toBool());
     m_toggle_label->setChecked(Obj["show_label"].toBool());
     m_toggle_volume->setChecked(Obj["show_volume"].toBool());
+
+    if (Obj["font_scale"].isDouble())
+        m_font_scale = Obj["font_scale"].toDouble(1);
 
     OBSSourceAutoRelease src = obs_get_source_by_name(qt_to_utf8(Obj["source"].toString()));
     if (src)
@@ -233,6 +237,7 @@ void SourceItem::WriteToJson(QJsonObject& Obj)
     Obj["show_safe_borders"] = m_toggle_safe_borders->isChecked();
     Obj["show_label"] = m_toggle_label->isChecked();
     Obj["show_volume"] = m_toggle_volume->isChecked();
+    Obj["font_scale"] = m_font_scale;
 }
 
 static const uint32_t outerColor = 0xFFD0D0D0;

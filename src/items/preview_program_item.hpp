@@ -22,6 +22,7 @@
 #include "source_item.hpp"
 #include <QApplication>
 #include <QHBoxLayout>
+#include <QLabel>
 #include <QRadioButton>
 #include <obs.hpp>
 
@@ -29,17 +30,29 @@ class PreviewProgramItemWidget : public QWidget {
     Q_OBJECT
 public:
     QRadioButton *m_preview, *m_program;
+    QDoubleSpinBox* m_font_size;
     PreviewProgramItemWidget(QWidget* parent = nullptr)
         : QWidget(parent)
     {
+        auto* form = new QFormLayout(this);
         auto* l = new QHBoxLayout();
-        setLayout(l);
         l->setContentsMargins(0, 0, 0, 0);
-        m_preview = new QRadioButton(T_PREVIEW);
-        m_program = new QRadioButton(T_PROGRAM);
+        m_preview = new QRadioButton(T_PREVIEW, this);
+        m_program = new QRadioButton(T_PROGRAM, this);
         m_preview->setChecked(true);
         l->addWidget(m_preview);
         l->addWidget(m_program);
+        form->addRow("", l);
+        form->setContentsMargins(0, 0, 0, 0);
+
+        m_font_size = new QDoubleSpinBox(this);
+        m_font_size->setMinimum(1);
+        m_font_size->setValue(100);
+        m_font_size->setMaximum(500);
+        m_font_size->setSuffix("%");
+        m_font_size->setDecimals(0);
+        form->addRow(T_FONT_SIZE, m_font_size);
+        setLayout(form);
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     }
 };

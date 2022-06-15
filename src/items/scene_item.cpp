@@ -43,6 +43,7 @@ void SceneItem::LoadConfigFromWidget(QWidget* w)
     auto* custom = dynamic_cast<SceneItemWidget*>(w);
     if (custom) {
         OBSSceneAutoRelease s = obs_get_scene_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
+        m_font_scale = custom->m_font_size->value() / 100.f;
         SetSource(obs_scene_get_source(s));
         if (custom->m_border->isChecked())
             m_indicator_type = Indicator::BORDER;
