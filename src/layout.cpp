@@ -86,6 +86,69 @@ void Layout::ClearSelection()
     Config::Save();
 }
 
+void Layout::FillSelectionWithScenes()
+{
+    {
+        std::lock_guard<std::mutex> lock(m_layout_mutex);
+        struct obs_frontend_source_list scenes = {};
+        obs_frontend_get_scenes(&scenes);
+
+        auto target = GetSelectedArea();
+        auto cells_to_fill = target.w * target.h;
+        std::vector<std::string> existing_scenes;
+        FreeSpace(target);
+
+        // Get all scenes that are already in the layout
+        for (auto const& item : m_layout_items) {
+            auto* si = dynamic_cast<SceneItem*>(item.get());
+            if (si && si->GetSource().Get())
+                existing_scenes.emplace_back(obs_source_get_name(si->GetSource()));
+        }
+
+        auto* ItemEntry = Registry::GetEntryById("SceneItem");
+        if (!ItemEntry)
+            return;
+
+        int col {}, row {};
+        for (int i = 0; i < scenes.sources.num && cells_to_fill > 0; i++) {
+            auto* src = scenes.sources.array[i];
+
+            // Don't add scenes that shouldn't be shown in the normal multiview
+            OBSDataAutoRelease data = obs_source_get_private_settings(src);
+            obs_data_set_default_bool(data, "show_in_multiview", true);
+            if (!obs_data_get_bool(data, "show_in_multiview"))
+                continue;
+
+            std::string n(obs_source_get_name(src));
+            auto exists = std::find_if(existing_scenes.begin(), existing_scenes.end(), [n](std::string const& name) {
+                return n == name;
+            });
+            if (exists != existing_scenes.end())
+                continue;
+
+            LayoutItem::Cell c;
+            c.col = target.col + col;
+            c.row = target.row + row;
+
+            col++;
+            if (col >= target.w) {
+                col = 0;
+                row++;
+            }
+
+            auto* Item = new SceneItem(this, c.col, c.row);
+            Item->Update(m_cfg);
+            Item->SetSource(src);
+            FreeSpace(c);
+            m_layout_items.emplace_back(Item);
+            cells_to_fill--;
+        }
+        FillEmptyCells();
+        obs_frontend_source_list_free(&scenes);
+    }
+    Config::Save();
+}
+
 Layout::Layout(Durchblick* parent, int cols, int rows)
     : QObject(parent)
     , m_rows(rows)
@@ -184,10 +247,13 @@ void Layout::HandleContextMenu(QMouseEvent*, QMenu& m)
 
     m.addAction(T_MENU_CONFIGURATION, this, SLOT(ShowLayoutConfigDialog()));
     std::lock_guard<std::mutex> lock(m_layout_mutex);
+
     for (auto& Item : m_layout_items) {
         if (Item->Hovered()) {
+            auto* sub_menu = m.addMenu(T_MENU_QUICK_ACTIONS);
+            sub_menu->addAction(T_MENU_FILL_ACTION, this, SLOT(FillSelectionWithScenes()));
+            sub_menu->addAction(T_MENU_CLEAR_ACTION, this, SLOT(ClearSelection()));
             m.addAction(T_MENU_SET_WIDGET, this, SLOT(ShowSetWidgetDialog()));
-            m.addAction(T_MENU_CLEAR_ACTION, this, SLOT(ClearSelection()));
             m.addSeparator();
             Item->ContextMenu(m);
             break;
@@ -204,20 +270,24 @@ void Layout::FreeSpace(LayoutItem::Cell const& c)
     m_layout_items.erase(it, m_layout_items.end());
 }
 
-void Layout::AddWidget(Registry::ItemRegistry::Entry const& entry, QWidget* custom_widget)
+void Layout::AddWidget(Registry::ItemRegistry::Entry const& entry, const LayoutItem::Cell& c, QWidget* custom_widget)
 {
-    auto target = GetSelectedArea();
-    auto* Item = entry.construct(this, target.col, target.row, target.w, target.h);
+    auto* Item = entry.construct(this, c.col, c.row, c.w, c.h);
     Item->LoadConfigFromWidget(custom_widget);
     Item->Update(m_cfg);
 
     m_layout_mutex.lock();
-    FreeSpace(target);
+    FreeSpace(c);
     m_layout_items.emplace_back(Item);
     FillEmptyCells();
     m_layout_mutex.unlock();
 
     Config::Save();
+}
+
+void Layout::AddWidget(Registry::ItemRegistry::Entry const& entry, QWidget* custom_widget)
+{
+    AddWidget(entry, GetSelectedArea(), custom_widget);
 }
 
 void Layout::SetRegion(float bx, float by, float cx, float cy)

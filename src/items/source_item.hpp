@@ -106,6 +106,8 @@ public:
         m_toggle_safe_borders->setChecked(b);
     }
 
+    OBSSource GetSource() { return m_src; }
+
     virtual void ReadFromJson(QJsonObject const& Obj) override;
     virtual void WriteToJson(QJsonObject& Obj) override;
     virtual void Render(DurchblickItemConfig const& cfg) override;

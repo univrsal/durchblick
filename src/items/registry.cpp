@@ -141,4 +141,13 @@ void RegisterCustomWidgetProcedure()
         nullptr);
 }
 
+const ItemRegistry::Entry* GetEntryById(const QString& id)
+{
+    for (auto const& Entry : qAsConst(ItemRegistry::Entries)) {
+        if (Entry.id == id)
+            return &Entry;
+    }
+    return nullptr;
+}
+
 }

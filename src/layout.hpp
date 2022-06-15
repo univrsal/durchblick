@@ -106,6 +106,8 @@ private slots:
         dlg.exec();
     }
 
+    void FillSelectionWithScenes();
+
 public:
     Layout(Durchblick* parent, int cols = 4, int rows = 4);
     ~Layout();
@@ -116,6 +118,7 @@ public:
     void MouseDoubleClicked(QMouseEvent* e);
     void HandleContextMenu(QMouseEvent* e, QMenu& m);
     void FreeSpace(LayoutItem::Cell const& c);
+    void AddWidget(Registry::ItemRegistry::Entry const& entry, LayoutItem::Cell const& c, QWidget* custom_widget);
     void AddWidget(Registry::ItemRegistry::Entry const& entry, QWidget* custom_widget);
     void SetRegion(float bx, float by, float cx, float cy);
     void Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy);

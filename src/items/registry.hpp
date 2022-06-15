@@ -60,6 +60,7 @@ public:
 
 extern void RegisterDefaults();
 extern LayoutItem* MakeItem(Layout* l, QJsonObject const& obj);
+extern ItemRegistry::Entry const* GetEntryById(QString const&);
 extern void Free();
 extern void RegisterCustomWidgetProcedure();
 
