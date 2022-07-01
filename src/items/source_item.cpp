@@ -46,37 +46,13 @@ OBSSource SourceItem::CreateLabel(char const* name, size_t h, float scale)
     return txtSource.Get();
 }
 
-static void VolumeCallback(
-    void* param, const float magnitude[MAX_AUDIO_CHANNELS],
-    const float peak[MAX_AUDIO_CHANNELS],
-    const float input_peak[MAX_AUDIO_CHANNELS])
-{
-    static_cast<SourceItem*>(param)->SetVolumePeak(input_peak);
-}
-
 void SourceItem::VolumeToggled(bool state)
 {
-    if (state) {
-        m_vol_meter = obs_volmeter_create(OBS_FADER_LOG);
-        obs_volmeter_add_callback(m_vol_meter, VolumeCallback, this);
-        if (!obs_volmeter_attach_source(m_vol_meter, m_src)) {
-            berr("Attaching volume meter to '%s' failed.", obs_source_get_name(m_src));
-        }
-        m_num_channels = obs_volmeter_get_nr_channels(m_vol_meter);
-        BPtr<char> filename = obs_module_file("volume.effect");
-        obs_enter_graphics();
-        m_volume_shader = gs_effect_create_from_file(filename, nullptr);
-        obs_leave_graphics();
-
-        if (!m_volume_shader) {
-            berr("Failed to load volume shader");
-            m_toggle_volume->setChecked(false);
-        }
+    if (state && m_src) {
+        auto h = obs_source_get_height(m_src);
+        m_vol_meter = std::make_unique<VolumeMeter>(m_src, 10, 10, h / 2);
     } else {
-        obs_volmeter_destroy(m_vol_meter);
-        gs_effect_destroy(m_volume_shader);
         m_vol_meter = nullptr;
-        m_volume_shader = nullptr;
     }
 }
 
@@ -154,8 +130,6 @@ SourceItem::~SourceItem()
 {
     if (m_src)
         obs_source_dec_showing(m_src);
-    obs_volmeter_destroy(m_vol_meter);
-    gs_effect_destroy(m_volume_shader);
 }
 
 QWidget* SourceItem::GetConfigWidget()
@@ -194,11 +168,10 @@ void SourceItem::SetSource(obs_source_t* src)
     if (m_src)
         obs_source_dec_showing(m_src);
 
-    if (m_vol_meter && src)
-        obs_volmeter_attach_source(m_vol_meter, src);
-
     m_src = src;
     if (m_src) {
+        if (m_vol_meter)
+            m_vol_meter->set_source(src);
         removedSignal = OBSSignal(obs_source_get_signal_handler(m_src), "remove",
             SourceItem::OBSSourceRemoved, this);
         obs_source_inc_showing(m_src);
@@ -274,25 +247,8 @@ void SourceItem::Render(DurchblickItemConfig const& cfg)
         RenderSafeMargins(w, h);
     gs_matrix_pop();
 
-    if (m_toggle_volume->isChecked()) {
-        auto* vol = gs_effect_get_param_by_name(m_volume_shader, "volume");
-        gs_technique_t* tech = gs_effect_get_technique(m_volume_shader, "Solid");
-        m_volume_mutex.lock();
-        auto f = obs_db_to_mul(m_volume_peak[0]);
-        gs_effect_set_float(vol, f);
-        m_volume_mutex.unlock();
-
-        gs_matrix_push();
-        gs_technique_begin(tech);
-        gs_technique_begin_pass(tech, 0);
-
-        gs_matrix_translate3f(30, 30, 0);
-        gs_draw_sprite(0, 0, 10, 90);
-
-        gs_technique_end_pass(tech);
-        gs_technique_end(tech);
-        gs_matrix_pop();
-    }
+    if (m_vol_meter)
+        m_vol_meter->render(cfg.scale);
 
     // Label has to be scaled and translated regardless of
     // source/scene size because sources can have sizes different than the base canvas

@@ -95,6 +95,8 @@ set(durchblick_sources
     ./src/util/callbacks.h
     ./src/util/platform_util.hpp
     ./src/util/display_helpers.hpp
+    ./src/util/volume_meter.cpp
+    ./src/util/volume_meter.hpp
     ./src/ui/durchblick.hpp
     ./src/ui/durchblick.cpp
     ./src/ui/qt_display.hpp

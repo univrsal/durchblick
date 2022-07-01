@@ -18,11 +18,13 @@
 
 #pragma once
 #include "../util/util.h"
+#include "../util/volume_meter.hpp"
 #include "item.hpp"
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
 #include <QVBoxLayout>
+#include <memory>
 #include <mutex>
 #include <obs.hpp>
 
@@ -60,14 +62,8 @@ protected:
     QAction* m_toggle_safe_borders;
     QAction* m_toggle_label;
     QAction* m_toggle_volume;
-    obs_volmeter_t* m_vol_meter {};
-
-    std::mutex m_volume_mutex;
-    float m_volume_peak[MAX_AUDIO_CHANNELS];
+    std::unique_ptr<VolumeMeter> m_vol_meter {};
     float m_font_scale { 1 };
-    int m_num_channels {};
-    gs_effect_t* m_volume_shader {};
-
     void RenderSafeMargins(int w, int h);
     static OBSSource CreateLabel(const char* name, size_t h, float scale = 1.0);
 public slots:
@@ -85,11 +81,6 @@ public:
     void LoadConfigFromWidget(QWidget*) override;
 
     void SetSource(obs_source_t* src);
-    void SetVolumePeak(float const peak[MAX_AUDIO_CHANNELS])
-    {
-        std::lock_guard<std::mutex> lock(m_volume_mutex);
-        memcpy(m_volume_peak, peak, sizeof(float) * MAX_AUDIO_CHANNELS);
-    }
 
     void SetLabel(bool b)
     {
