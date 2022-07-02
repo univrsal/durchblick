@@ -113,6 +113,13 @@ void VolumeMeter::update(const float magnitude[], const float peak[], const floa
     QMutexLocker locker(&m_data_mutex);
 
     m_current_last_update_time = ts;
+
+    if (m_clipping) {
+        if ((ts - m_clip_begin_time) * 0.000000001 > CLIP_FLASH_DURATION_MS) {
+            m_clipping = false;
+        }
+    }
+
     for (int channelNr = 0; channelNr < MAX_AUDIO_CHANNELS; channelNr++) {
         m_current_magnitude[channelNr] = magnitude[channelNr];
         m_current_peak[channelNr] = peak[channelNr];
@@ -225,114 +232,112 @@ void VolumeMeter::render(float cell_scale)
         qreal scale = m_height / m_minimum_level;
 
         QMutexLocker locker(&m_data_mutex);
-        int minimumPosition = m_y;
-        int maximumPosition = m_y + m_height;
-        int magnitudePosition = int(m_y + m_height - (magnitude * scale));
-        int peakPosition = int(m_y + m_height - (peak * scale));
+        int lower_limit = m_y + m_height;
+        int upper_limit = m_y;
+        int magnitude_position = int(lower_limit - (magnitude * scale));
+        int peak_position = int(lower_limit - (m_height - (peak * scale)));
         int peakHoldPosition = int(m_y + m_height - (peakHold * scale));
-        int warningPosition = int(m_y + m_height - (m_warning_level * scale));
-        int errorPosition = int(m_y + m_height - (m_error_level * scale));
+        int nominal_position = int(upper_limit + (m_warning_level * scale));
+        int warning_position = int(upper_limit + (m_error_level * scale));
 
-        int nominalLength = warningPosition - minimumPosition;
-        int warningLength = errorPosition - warningPosition;
-        int errorLength = maximumPosition - errorPosition;
+        int nominal_ength = lower_limit - nominal_position;
+        int warning_length = nominal_position - warning_position;
+        int error_length = warning_position - upper_limit;
+        int error_position = 0;
 
         locker.unlock();
         auto w = m_channel_width / cell_scale;
         auto x = m_x + (w + 2) * i;
 
-        if (m_clipping)
-            peakPosition = maximumPosition;
-
-        if (peakPosition < minimumPosition) {
-            draw_rectangle(x, maximumPosition - nominalLength, w, nominalLength,
+        //        if (m_clipping)
+        //            peak_position = upper_limit;
+        binfo("PEAK: %i", peak_position);
+        if (peak_position > lower_limit) { // Peak is below the meter -> no peak visible
+            draw_rectangle(x, nominal_position, w, nominal_ength,
                 m_muted ? m_background_nominal_color_disabled
                         : m_background_nominal_color);
-            draw_rectangle(x, maximumPosition - warningLength - nominalLength, w, warningLength,
+            draw_rectangle(x, warning_position, w, warning_length,
                 m_muted ? m_background_warning_color_disabled
                         : m_background_warning_color);
-            draw_rectangle(x, maximumPosition - warningLength - nominalLength - errorLength, w, errorLength,
+            draw_rectangle(x, upper_limit, w, error_length,
                 m_muted ? m_background_error_color_disabled
                         : m_background_error_color);
-        } else if (peakPosition < warningPosition) {
+        } else if (peak_position > nominal_position) {
             // Nominal (green + background)
-            draw_rectangle(x, maximumPosition - peakPosition, w,
-                peakPosition,
+            draw_rectangle(x, peak_position, w,
+                lower_limit - peak_position,
                 m_muted ? m_foreground_nominal_color_disabled
                         : m_foreground_nominal_color);
-            draw_rectangle(x, maximumPosition - warningPosition, w,
-                warningPosition - peakPosition,
+            draw_rectangle(x, nominal_position, w,
+                peak_position - nominal_position,
                 m_muted ? m_background_nominal_color_disabled
                         : m_background_nominal_color);
 
             // Warning (yellow) and error (red)
-            draw_rectangle(x, maximumPosition - warningLength - nominalLength, w, warningLength,
+            draw_rectangle(x, warning_position, w, warning_length,
                 m_muted ? m_background_warning_color_disabled
                         : m_background_warning_color);
-            draw_rectangle(x, maximumPosition - warningLength - nominalLength - errorLength, w, errorLength,
+            draw_rectangle(x, upper_limit, w, error_length,
                 m_muted ? m_background_error_color_disabled
                         : m_background_error_color);
-        } else if (peakPosition < errorPosition) {
-            draw_rectangle(x, maximumPosition - nominalLength, w, nominalLength,
+        } else if (peak_position > warning_position) {
+            draw_rectangle(x, nominal_position, w, nominal_ength,
                 m_muted ? m_foreground_nominal_color_disabled
                         : m_foreground_nominal_color);
 
             // Warning (yellow + background)
-            draw_rectangle(x, maximumPosition - nominalLength - (peakPosition - warningPosition), w,
-                peakPosition - warningPosition,
+            draw_rectangle(x, peak_position, w,
+                nominal_position - peak_position,
                 m_muted ? m_foreground_warning_color_disabled
                         : m_foreground_warning_color);
-            draw_rectangle(x, maximumPosition - nominalLength - warningLength, w,
-                errorPosition - peakPosition,
+            draw_rectangle(x, warning_position, w,
+                peak_position - warning_position,
                 m_muted ? m_background_warning_color_disabled
                         : m_background_warning_color);
 
-            draw_rectangle(x, maximumPosition - warningLength - nominalLength - errorLength, w, errorLength,
+            draw_rectangle(x, upper_limit, w, error_length,
                 m_muted ? m_background_error_color_disabled
                         : m_background_error_color);
-        } else if (peakPosition < maximumPosition) {
-            draw_rectangle(x, maximumPosition - nominalLength, w, nominalLength,
-                m_muted ? m_foreground_nominal_color_disabled
-                        : m_foreground_nominal_color);
-            draw_rectangle(x, maximumPosition - warningLength - nominalLength, w, warningLength,
-                m_muted ? m_foreground_warning_color_disabled
-                        : m_foreground_warning_color);
-
-            draw_rectangle(x, minimumPosition, w,
-                maximumPosition - peakPosition,
-                m_muted ? m_background_error_color_disabled
-                        : m_background_error_color);
-            draw_rectangle(x, minimumPosition + (maximumPosition - peakPosition), w,
-                peakPosition - errorPosition,
+        } else if (peak_position > error_position) {
+            draw_rectangle(x, peak_position, w, warning_position - peak_position,
                 m_muted ? m_foreground_error_color_disabled
                         : m_foreground_error_color);
+            draw_rectangle(x, upper_limit, w, peak_position - upper_limit,
+                m_muted ? m_background_error_color_disabled
+                        : m_background_error_color);
+
+            draw_rectangle(x, nominal_position, w, nominal_ength,
+                m_muted ? m_foreground_nominal_color_disabled
+                        : m_foreground_nominal_color);
+            draw_rectangle(x, warning_position, w, warning_length,
+                m_muted ? m_foreground_warning_color_disabled
+                        : m_foreground_warning_color);
         } else {
             if (!m_clipping) {
-                //                QTimer::singleShot(CLIP_FLASH_DURATION_MS, this,
-                //                    SLOT(ClipEnding()));
+                m_clip_begin_time = os_gettime_ns();
                 m_clipping = true;
             }
 
-            int end = errorLength + warningLength + nominalLength;
+            int end = error_length + warning_length + nominal_ength;
             //            draw_rectangle(x, minimumPosition, w, end,
             //                muted ? foregroundErrorColorDisabled
             //                      : foregroundErrorColor);
         }
 
-        //        if (peakHoldPosition - 3 < minimumPosition)
-        //            ; // Peak-hold below minimum, no drawing.
-        //        else if (peakHoldPosition < warningPosition)
-        //            draw_rectangle(x, peakHoldPosition - 3, w, 3,
-        //                muted ? foregroundNominalColorDisabled
-        //                      : foregroundNominalColor);
-        //        else if (peakHoldPosition < errorPosition)
-        //            draw_rectangle(x, peakHoldPosition - 3, w, 3,
-        //                muted ? foregroundWarningColorDisabled
-        //                      : foregroundWarningColor);
-        //        else
-        //            draw_rectangle(x, peakHoldPosition - 3, w, 3,
-        //                muted ? foregroundErrorColorDisabled
-        //                      : foregroundErrorColor);
+        if (peakHoldPosition - 3 < lower_limit)
+            ; // Peak-hold below minimum, no drawing.
+        else if (peakHoldPosition < warning_position)
+            draw_rectangle(x, upper_limit - peakHoldPosition - 3, w, 3,
+                m_muted ? m_foreground_nominal_color_disabled
+                        : m_foreground_nominal_color);
+        else if (peakHoldPosition < error_position)
+            draw_rectangle(x, upper_limit - peakHoldPosition - 3, w, 3,
+                m_muted ? m_foreground_warning_color_disabled
+                        : m_foreground_warning_color);
+        else
+            draw_rectangle(x, upper_limit - peakHoldPosition - 3, w, 3,
+                m_muted ? m_foreground_error_color
+                        : m_foreground_error_color);
 
         //        if (magnitudePosition - 3 >= minimumPosition)
         //            draw_rectangle(x, magnitudePosition + 5, w, 3,

@@ -25,6 +25,7 @@
 
 class VolumeMeter {
     bool m_muted = false;
+    uint64_t m_clip_begin_time = 0;
     uint64_t m_last_redraw_time = 0;
     uint64_t m_current_last_update_time = 0;
     int m_channels = 0;
