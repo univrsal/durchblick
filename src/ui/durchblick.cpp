@@ -196,6 +196,7 @@ void Durchblick::contextMenuEvent(QContextMenuEvent*)
 void Durchblick::closeEvent(QCloseEvent* e)
 {
     m_saved_state = GetWindowState();
+    Config::Save();
     QWidget::closeEvent(e);
     deleteLater();
 }

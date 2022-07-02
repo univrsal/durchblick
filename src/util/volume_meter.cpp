@@ -60,36 +60,36 @@ VolumeMeter::VolumeMeter(OBSSource src, int x, int y, int height, int channel_wi
 {
     set_type(OBS_FADER_LOG);
     set_source(src);
-    minimumLevel = -60.0;           // -60 dB
-    warningLevel = -20.0;           // -20 dB
-    errorLevel = -9.0;              //  -9 dB
-    clipLevel = -0.5;               //  -0.5 dB
-    minimumInputLevel = -50.0;      // -50 dB
-    peakDecayRate = 11.76;          //  20 dB / 1.7 sec
-    magnitudeIntegrationTime = 0.3; //  99% in 300 ms
-    peakHoldDuration = 20.0;        //  20 seconds
-    inputPeakHoldDuration = 1.0;    //  1 second
-    meterThickness = 3;             // Bar thickness in pixels
-                                    // channels = (int)audio_output_get_channels(obs_get_audio());
+    m_minimum_level = -60.0;            // -60 dB
+    m_warning_level = -20.0;            // -20 dB
+    m_error_level = -9.0;               //  -9 dB
+    m_clip_level = -0.5;                //  -0.5 dB
+    m_minimum_input_level = -50.0;      // -50 dB
+    m_peak_decay_rate = 11.76;          //  20 dB / 1.7 sec
+    m_magnitude_integration_time = 0.3; //  99% in 300 ms
+    m_peak_hold_duration = 20.0;        //  20 seconds
+    m_input_peak_hold_duration = 1.0;   //  1 second
+    m_channel_thickness = 3;            // Bar thickness in pixels
+                                        // channels = (int)audio_output_get_channels(obs_get_audio());
 
-    backgroundNominalColor = ARGB32(0xff, 0x26, 0x7f, 0x26); // Dark green
-    backgroundWarningColor = ARGB32(0xff, 0x7f, 0x7f, 0x26); // Dark yellow
-    backgroundErrorColor = ARGB32(0xff, 0x7f, 0x26, 0x26);   // Dark red
-    foregroundNominalColor = ARGB32(0xff, 0x4c, 0xff, 0x4c); // Bright green
-    foregroundWarningColor = ARGB32(0xff, 0xff, 0xff, 0x4c); // Bright yellow
-    foregroundErrorColor = ARGB32(0xff, 0xff, 0x4c, 0x4c);   // Bright red
+    m_background_nominal_color = ARGB32(0xff, 0x26, 0x7f, 0x26); // Dark green
+    m_background_warning_color = ARGB32(0xff, 0x7f, 0x7f, 0x26); // Dark yellow
+    m_background_error_color = ARGB32(0xff, 0x7f, 0x26, 0x26);   // Dark red
+    m_foreground_nominal_color = ARGB32(0xff, 0x4c, 0xff, 0x4c); // Bright green
+    m_foreground_warning_color = ARGB32(0xff, 0xff, 0xff, 0x4c); // Bright yellow
+    m_foreground_error_color = ARGB32(0xff, 0xff, 0x4c, 0x4c);   // Bright red
 
-    backgroundNominalColorDisabled = ARGB32(0xff, 90, 90, 90);
-    backgroundWarningColorDisabled = ARGB32(0xff, 117, 117, 117);
-    backgroundErrorColorDisabled = ARGB32(0xff, 65, 65, 65);
-    foregroundNominalColorDisabled = ARGB32(0xff, 163, 163, 163);
-    foregroundWarningColorDisabled = ARGB32(0xff, 217, 217, 217);
-    foregroundErrorColorDisabled = ARGB32(0xff, 113, 113, 113);
+    m_background_nominal_color_disabled = ARGB32(0xff, 90, 90, 90);
+    m_background_warning_color_disabled = ARGB32(0xff, 117, 117, 117);
+    m_background_error_color_disabled = ARGB32(0xff, 65, 65, 65);
+    m_foreground_nominal_color_disabled = ARGB32(0xff, 163, 163, 163);
+    m_foreground_warning_color_disabled = ARGB32(0xff, 217, 217, 217);
+    m_foreground_error_color_disabled = ARGB32(0xff, 113, 113, 113);
 
-    clipColor = ARGB32(0xff, 0xff, 0xff, 0xff);      // Bright white
-    magnitudeColor = ARGB32(0xff, 0x00, 0x00, 0x00); // Black
-    majorTickColor = ARGB32(0xff, 0xff, 0xff, 0xff); // Black
-    minorTickColor = ARGB32(0xff, 0xcc, 0xcc, 0xcc); // Black
+    m_clip_color = ARGB32(0xff, 0xff, 0xff, 0xff);       // Bright white
+    m_magniteude_color = ARGB32(0xff, 0x00, 0x00, 0x00); // Black
+    m_major_tick_color = ARGB32(0xff, 0xff, 0xff, 0xff); // Black
+    m_minor_tick_color = ARGB32(0xff, 0xcc, 0xcc, 0xcc); // Black
 }
 
 VolumeMeter::~VolumeMeter()
@@ -110,13 +110,13 @@ void VolumeMeter::set_type(obs_fader_type t)
 void VolumeMeter::update(const float magnitude[], const float peak[], const float inputPeak[])
 {
     uint64_t ts = os_gettime_ns();
-    QMutexLocker locker(&dataMutex);
+    QMutexLocker locker(&m_data_mutex);
 
-    currentLastUpdateTime = ts;
+    m_current_last_update_time = ts;
     for (int channelNr = 0; channelNr < MAX_AUDIO_CHANNELS; channelNr++) {
-        currentMagnitude[channelNr] = magnitude[channelNr];
-        currentPeak[channelNr] = peak[channelNr];
-        currentInputPeak[channelNr] = inputPeak[channelNr];
+        m_current_magnitude[channelNr] = magnitude[channelNr];
+        m_current_peak[channelNr] = peak[channelNr];
+        m_current_input_peak[channelNr] = inputPeak[channelNr];
     }
 
     // In case there are more updates then redraws we must make sure
@@ -138,7 +138,7 @@ void VolumeMeter::set_source(OBSSource src)
 
         int currentNrAudioChannels = obs_volmeter_get_nr_channels(m_meter);
 
-        muted = obs_source_muted(src);
+        m_muted = obs_source_muted(src);
         signal_handler_connect(obs_source_get_signal_handler(src), "mute", on_source_muted, this);
         if (!currentNrAudioChannels) {
             struct obs_audio_info oai;
@@ -156,82 +156,82 @@ inline void
 VolumeMeter::calculateBallisticsForChannel(int channelNr, uint64_t ts,
     qreal timeSinceLastRedraw)
 {
-    if (currentPeak[channelNr] >= displayPeak[channelNr] || isnan(displayPeak[channelNr])) {
+    if (m_current_peak[channelNr] >= m_display_peak[channelNr] || isnan(m_display_peak[channelNr])) {
         // Attack of peak is immediate.
-        displayPeak[channelNr] = currentPeak[channelNr];
+        m_display_peak[channelNr] = m_current_peak[channelNr];
     } else {
         // Decay of peak is 40 dB / 1.7 seconds for Fast Profile
         // 20 dB / 1.7 seconds for Medium Profile (Type I PPM)
         // 24 dB / 2.8 seconds for Slow Profile (Type II PPM)
-        float decay = float(peakDecayRate * timeSinceLastRedraw);
-        displayPeak[channelNr] = CLAMP(displayPeak[channelNr] - decay,
-            currentPeak[channelNr], 0);
+        float decay = float(m_peak_decay_rate * timeSinceLastRedraw);
+        m_display_peak[channelNr] = CLAMP(m_display_peak[channelNr] - decay,
+            m_current_peak[channelNr], 0);
     }
 
-    if (currentPeak[channelNr] >= displayPeakHold[channelNr] || !isfinite(displayPeakHold[channelNr])) {
+    if (m_current_peak[channelNr] >= m_display_peak_hold[channelNr] || !isfinite(m_display_peak_hold[channelNr])) {
         // Attack of peak-hold is immediate, but keep track
         // when it was last updated.
-        displayPeakHold[channelNr] = currentPeak[channelNr];
-        displayPeakHoldLastUpdateTime[channelNr] = ts;
+        m_display_peak_hold[channelNr] = m_current_peak[channelNr];
+        m_display_peak_hold_last_update_time[channelNr] = ts;
     } else {
         // The peak and hold falls back to peak
         // after 20 seconds.
-        qreal timeSinceLastPeak = (uint64_t)(ts - displayPeakHoldLastUpdateTime[channelNr]) * 0.000000001;
-        if (timeSinceLastPeak > peakHoldDuration) {
-            displayPeakHold[channelNr] = currentPeak[channelNr];
-            displayPeakHoldLastUpdateTime[channelNr] = ts;
+        qreal timeSinceLastPeak = (uint64_t)(ts - m_display_peak_hold_last_update_time[channelNr]) * 0.000000001;
+        if (timeSinceLastPeak > m_peak_hold_duration) {
+            m_display_peak_hold[channelNr] = m_current_peak[channelNr];
+            m_display_peak_hold_last_update_time[channelNr] = ts;
         }
     }
 
-    if (currentInputPeak[channelNr] >= displayInputPeakHold[channelNr] || !isfinite(displayInputPeakHold[channelNr])) {
+    if (m_current_input_peak[channelNr] >= m_display_input_peak_hold[channelNr] || !isfinite(m_display_input_peak_hold[channelNr])) {
         // Attack of peak-hold is immediate, but keep track
         // when it was last updated.
-        displayInputPeakHold[channelNr] = currentInputPeak[channelNr];
-        displayInputPeakHoldLastUpdateTime[channelNr] = ts;
+        m_display_input_peak_hold[channelNr] = m_current_input_peak[channelNr];
+        m_display_input_peak_hold_last_upate_time[channelNr] = ts;
     } else {
         // The peak and hold falls back to peak after 1 second.
-        qreal timeSinceLastPeak = (uint64_t)(ts - displayInputPeakHoldLastUpdateTime[channelNr]) * 0.000000001;
-        if (timeSinceLastPeak > inputPeakHoldDuration) {
-            displayInputPeakHold[channelNr] = currentInputPeak[channelNr];
-            displayInputPeakHoldLastUpdateTime[channelNr] = ts;
+        qreal timeSinceLastPeak = (uint64_t)(ts - m_display_input_peak_hold_last_upate_time[channelNr]) * 0.000000001;
+        if (timeSinceLastPeak > m_input_peak_hold_duration) {
+            m_display_input_peak_hold[channelNr] = m_current_input_peak[channelNr];
+            m_display_input_peak_hold_last_upate_time[channelNr] = ts;
         }
     }
 
-    if (!isfinite(displayMagnitude[channelNr])) {
+    if (!isfinite(m_display_maginuted[channelNr])) {
         // The statements in the else-leg do not work with
         // NaN and infinite displayMagnitude.
-        displayMagnitude[channelNr] = currentMagnitude[channelNr];
+        m_display_maginuted[channelNr] = m_current_magnitude[channelNr];
     } else {
         // A VU meter will integrate to the new value to 99% in 300 ms.
         // The calculation here is very simplified and is more accurate
         // with higher frame-rate.
-        float attack = float((currentMagnitude[channelNr] - displayMagnitude[channelNr]) * (timeSinceLastRedraw / magnitudeIntegrationTime) * 0.99);
-        displayMagnitude[channelNr] = CLAMP(displayMagnitude[channelNr] + attack,
-            (float)minimumLevel, 0);
+        float attack = float((m_current_magnitude[channelNr] - m_display_maginuted[channelNr]) * (timeSinceLastRedraw / m_magnitude_integration_time) * 0.99);
+        m_display_maginuted[channelNr] = CLAMP(m_display_maginuted[channelNr] + attack,
+            (float)m_minimum_level, 0);
     }
 }
 
 void VolumeMeter::render(float cell_scale)
 {
     uint64_t ts = os_gettime_ns();
-    qreal timeSinceLastRedraw = (ts - lastRedrawTime) * 0.000000001;
+    qreal timeSinceLastRedraw = (ts - m_last_redraw_time) * 0.000000001;
     calculateBallistics(ts, timeSinceLastRedraw);
     bool idle = detect_idle(ts);
 
     for (int i = 0; i < m_channels; i++) {
-        auto magnitude = displayMagnitude[i];
-        auto peak = displayPeak[i];
-        auto peakHold = displayPeakHold[i];
-        qreal scale = m_height / minimumLevel;
+        auto magnitude = m_display_maginuted[i];
+        auto peak = m_display_peak[i];
+        auto peakHold = m_display_peak_hold[i];
+        qreal scale = m_height / m_minimum_level;
 
-        QMutexLocker locker(&dataMutex);
+        QMutexLocker locker(&m_data_mutex);
         int minimumPosition = m_y;
         int maximumPosition = m_y + m_height;
         int magnitudePosition = int(m_y + m_height - (magnitude * scale));
         int peakPosition = int(m_y + m_height - (peak * scale));
         int peakHoldPosition = int(m_y + m_height - (peakHold * scale));
-        int warningPosition = int(m_y + m_height - (warningLevel * scale));
-        int errorPosition = int(m_y + m_height - (errorLevel * scale));
+        int warningPosition = int(m_y + m_height - (m_warning_level * scale));
+        int errorPosition = int(m_y + m_height - (m_error_level * scale));
 
         int nominalLength = warningPosition - minimumPosition;
         int warningLength = errorPosition - warningPosition;
@@ -239,73 +239,73 @@ void VolumeMeter::render(float cell_scale)
 
         locker.unlock();
         auto w = m_channel_width / cell_scale;
-        auto x = m_x + (w * 1.5) * i;
+        auto x = m_x + (w + 2) * i;
 
         if (m_clipping)
             peakPosition = maximumPosition;
 
         if (peakPosition < minimumPosition) {
             draw_rectangle(x, maximumPosition - nominalLength, w, nominalLength,
-                muted ? backgroundNominalColorDisabled
-                      : backgroundNominalColor);
+                m_muted ? m_background_nominal_color_disabled
+                        : m_background_nominal_color);
             draw_rectangle(x, maximumPosition - warningLength - nominalLength, w, warningLength,
-                muted ? backgroundWarningColorDisabled
-                      : backgroundWarningColor);
+                m_muted ? m_background_warning_color_disabled
+                        : m_background_warning_color);
             draw_rectangle(x, maximumPosition - warningLength - nominalLength - errorLength, w, errorLength,
-                muted ? backgroundErrorColorDisabled
-                      : backgroundErrorColor);
+                m_muted ? m_background_error_color_disabled
+                        : m_background_error_color);
         } else if (peakPosition < warningPosition) {
             // Nominal (green + background)
             draw_rectangle(x, maximumPosition - peakPosition, w,
                 peakPosition,
-                muted ? foregroundNominalColorDisabled
-                      : foregroundNominalColor);
+                m_muted ? m_foreground_nominal_color_disabled
+                        : m_foreground_nominal_color);
             draw_rectangle(x, maximumPosition - warningPosition, w,
                 warningPosition - peakPosition,
-                muted ? backgroundNominalColorDisabled
-                      : backgroundNominalColor);
+                m_muted ? m_background_nominal_color_disabled
+                        : m_background_nominal_color);
 
             // Warning (yellow) and error (red)
             draw_rectangle(x, maximumPosition - warningLength - nominalLength, w, warningLength,
-                muted ? backgroundWarningColorDisabled
-                      : backgroundWarningColor);
+                m_muted ? m_background_warning_color_disabled
+                        : m_background_warning_color);
             draw_rectangle(x, maximumPosition - warningLength - nominalLength - errorLength, w, errorLength,
-                muted ? backgroundErrorColorDisabled
-                      : backgroundErrorColor);
+                m_muted ? m_background_error_color_disabled
+                        : m_background_error_color);
         } else if (peakPosition < errorPosition) {
             draw_rectangle(x, maximumPosition - nominalLength, w, nominalLength,
-                muted ? foregroundNominalColorDisabled
-                      : foregroundNominalColor);
+                m_muted ? m_foreground_nominal_color_disabled
+                        : m_foreground_nominal_color);
 
             // Warning (yellow + background)
             draw_rectangle(x, maximumPosition - nominalLength - (peakPosition - warningPosition), w,
                 peakPosition - warningPosition,
-                muted ? foregroundWarningColorDisabled
-                      : foregroundWarningColor);
+                m_muted ? m_foreground_warning_color_disabled
+                        : m_foreground_warning_color);
             draw_rectangle(x, maximumPosition - nominalLength - warningLength, w,
                 errorPosition - peakPosition,
-                muted ? backgroundWarningColorDisabled
-                      : backgroundWarningColor);
+                m_muted ? m_background_warning_color_disabled
+                        : m_background_warning_color);
 
             draw_rectangle(x, maximumPosition - warningLength - nominalLength - errorLength, w, errorLength,
-                muted ? backgroundErrorColorDisabled
-                      : backgroundErrorColor);
+                m_muted ? m_background_error_color_disabled
+                        : m_background_error_color);
         } else if (peakPosition < maximumPosition) {
             draw_rectangle(x, maximumPosition - nominalLength, w, nominalLength,
-                muted ? foregroundNominalColorDisabled
-                      : foregroundNominalColor);
+                m_muted ? m_foreground_nominal_color_disabled
+                        : m_foreground_nominal_color);
             draw_rectangle(x, maximumPosition - warningLength - nominalLength, w, warningLength,
-                muted ? foregroundWarningColorDisabled
-                      : foregroundWarningColor);
+                m_muted ? m_foreground_warning_color_disabled
+                        : m_foreground_warning_color);
 
             draw_rectangle(x, minimumPosition, w,
                 maximumPosition - peakPosition,
-                muted ? backgroundErrorColorDisabled
-                      : backgroundErrorColor);
+                m_muted ? m_background_error_color_disabled
+                        : m_background_error_color);
             draw_rectangle(x, minimumPosition + (maximumPosition - peakPosition), w,
                 peakPosition - errorPosition,
-                muted ? foregroundErrorColorDisabled
-                      : foregroundErrorColor);
+                m_muted ? m_foreground_error_color_disabled
+                        : m_foreground_error_color);
         } else {
             if (!m_clipping) {
                 //                QTimer::singleShot(CLIP_FLASH_DURATION_MS, this,
@@ -341,16 +341,16 @@ void VolumeMeter::render(float cell_scale)
         if (idle)
             continue;
         uint32_t color;
-        if (peakHold < minimumInputLevel)
-            color = backgroundNominalColor;
-        else if (peakHold < warningLevel)
-            color = foregroundNominalColor;
-        else if (peakHold < errorLevel)
-            color = foregroundWarningColor;
-        else if (peakHold <= clipLevel)
-            color = foregroundErrorColor;
+        if (peakHold < m_minimum_input_level)
+            color = m_background_nominal_color;
+        else if (peakHold < m_warning_level)
+            color = m_foreground_nominal_color;
+        else if (peakHold < m_error_level)
+            color = m_foreground_warning_color;
+        else if (peakHold <= m_clip_level)
+            color = m_foreground_error_color;
         else
-            color = clipColor;
+            color = m_clip_color;
 
         //        draw_rectangle(i * (meterThickness + 1), m_y - 5, meterThickness, INDICATOR_THICKNESS, color);
     }
@@ -359,7 +359,7 @@ void VolumeMeter::render(float cell_scale)
 inline void VolumeMeter::calculateBallistics(uint64_t ts,
     qreal timeSinceLastRedraw)
 {
-    QMutexLocker locker(&dataMutex);
+    QMutexLocker locker(&m_data_mutex);
 
     for (int channelNr = 0; channelNr < MAX_AUDIO_CHANNELS; channelNr++)
         calculateBallisticsForChannel(channelNr, ts,

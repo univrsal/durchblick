@@ -35,6 +35,8 @@ protected:
     Layout* m_layout {};
     QAction* m_toggle_stretch;
 
+    int m_mouse_x {}, m_mouse_y {};
+
 public:
     struct Cell {
     private:
@@ -149,6 +151,8 @@ public:
             int y = e.y / cfg.cell_height;
             m_hovered_cell.col = x;
             m_hovered_cell.row = y;
+            m_mouse_x = ((e.x - m_rel_left - cfg.border) / (cfg.cell_width * m_cell.w - cfg.border2)) * m_inner_width;
+            m_mouse_y = ((e.y - m_rel_top - cfg.border) / (cfg.cell_height * m_cell.h - cfg.border2)) * m_inner_height;
         }
     }
 

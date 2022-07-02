@@ -24,9 +24,9 @@
 #include <obs.hpp>
 
 class VolumeMeter {
-    bool muted = false;
-    uint64_t lastRedrawTime = 0;
-    uint64_t currentLastUpdateTime = 0;
+    bool m_muted = false;
+    uint64_t m_last_redraw_time = 0;
+    uint64_t m_current_last_update_time = 0;
     int m_channels = 0;
     bool m_clipping = false;
     OBSSource m_source;
@@ -34,48 +34,47 @@ class VolumeMeter {
 
     int m_x, m_y, m_height, m_channel_width;
 
-    float currentMagnitude[MAX_AUDIO_CHANNELS];
-    float currentPeak[MAX_AUDIO_CHANNELS];
-    float currentInputPeak[MAX_AUDIO_CHANNELS];
+    float m_current_magnitude[MAX_AUDIO_CHANNELS];
+    float m_current_peak[MAX_AUDIO_CHANNELS];
+    float m_current_input_peak[MAX_AUDIO_CHANNELS];
 
-    int displayNrAudioChannels = 0;
-    float displayMagnitude[MAX_AUDIO_CHANNELS];
-    float displayPeak[MAX_AUDIO_CHANNELS];
-    float displayPeakHold[MAX_AUDIO_CHANNELS];
-    uint64_t displayPeakHoldLastUpdateTime[MAX_AUDIO_CHANNELS];
-    float displayInputPeakHold[MAX_AUDIO_CHANNELS];
-    uint64_t displayInputPeakHoldLastUpdateTime[MAX_AUDIO_CHANNELS];
+    float m_display_maginuted[MAX_AUDIO_CHANNELS];
+    float m_display_peak[MAX_AUDIO_CHANNELS];
+    float m_display_peak_hold[MAX_AUDIO_CHANNELS];
+    uint64_t m_display_peak_hold_last_update_time[MAX_AUDIO_CHANNELS];
+    float m_display_input_peak_hold[MAX_AUDIO_CHANNELS];
+    uint64_t m_display_input_peak_hold_last_upate_time[MAX_AUDIO_CHANNELS];
 
-    int meterThickness;
-    qreal minimumLevel;
-    qreal warningLevel;
-    qreal errorLevel;
-    qreal clipLevel;
-    qreal minimumInputLevel;
-    qreal peakDecayRate;
-    qreal magnitudeIntegrationTime;
-    qreal peakHoldDuration;
-    qreal inputPeakHoldDuration;
-    QMutex dataMutex;
+    int m_channel_thickness;
+    qreal m_minimum_level;
+    qreal m_warning_level;
+    qreal m_error_level;
+    qreal m_clip_level;
+    qreal m_minimum_input_level;
+    qreal m_peak_decay_rate;
+    qreal m_magnitude_integration_time;
+    qreal m_peak_hold_duration;
+    qreal m_input_peak_hold_duration;
+    QMutex m_data_mutex;
 
-    uint32_t backgroundNominalColor;
-    uint32_t backgroundWarningColor;
-    uint32_t backgroundErrorColor;
-    uint32_t foregroundNominalColor;
-    uint32_t foregroundWarningColor;
-    uint32_t foregroundErrorColor;
+    uint32_t m_background_nominal_color;
+    uint32_t m_background_warning_color;
+    uint32_t m_background_error_color;
+    uint32_t m_foreground_nominal_color;
+    uint32_t m_foreground_warning_color;
+    uint32_t m_foreground_error_color;
 
-    uint32_t backgroundNominalColorDisabled;
-    uint32_t backgroundWarningColorDisabled;
-    uint32_t backgroundErrorColorDisabled;
-    uint32_t foregroundNominalColorDisabled;
-    uint32_t foregroundWarningColorDisabled;
-    uint32_t foregroundErrorColorDisabled;
+    uint32_t m_background_nominal_color_disabled;
+    uint32_t m_background_warning_color_disabled;
+    uint32_t m_background_error_color_disabled;
+    uint32_t m_foreground_nominal_color_disabled;
+    uint32_t m_foreground_warning_color_disabled;
+    uint32_t m_foreground_error_color_disabled;
 
-    uint32_t clipColor;
-    uint32_t magnitudeColor;
-    uint32_t majorTickColor;
-    uint32_t minorTickColor;
+    uint32_t m_clip_color;
+    uint32_t m_magniteude_color;
+    uint32_t m_major_tick_color;
+    uint32_t m_minor_tick_color;
 
     inline void draw_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t color);
 
@@ -85,7 +84,7 @@ public:
 
     bool detect_idle(uint64_t ts)
     {
-        double timeSinceLastUpdate = (ts - currentLastUpdateTime) * 0.000000001;
+        double timeSinceLastUpdate = (ts - m_current_last_update_time) * 0.000000001;
         if (timeSinceLastUpdate > 0.5) {
             reset_levels();
             return true;
@@ -96,7 +95,7 @@ public:
 
     void set_type(obs_fader_type t);
 
-    void set_muted(bool m) { muted = m; }
+    void set_muted(bool m) { m_muted = m; }
 
     void update(const float magnitude[MAX_AUDIO_CHANNELS],
         const float peak[MAX_AUDIO_CHANNELS],
@@ -104,19 +103,34 @@ public:
 
     void reset_levels()
     {
-        currentLastUpdateTime = 0;
+        m_current_last_update_time = 0;
         for (int channelNr = 0; channelNr < MAX_AUDIO_CHANNELS; channelNr++) {
-            currentMagnitude[channelNr] = -M_INFINITE;
-            currentPeak[channelNr] = -M_INFINITE;
-            currentInputPeak[channelNr] = -M_INFINITE;
+            m_current_magnitude[channelNr] = -M_INFINITE;
+            m_current_peak[channelNr] = -M_INFINITE;
+            m_current_input_peak[channelNr] = -M_INFINITE;
 
-            displayMagnitude[channelNr] = -M_INFINITE;
-            displayPeak[channelNr] = -M_INFINITE;
-            displayPeakHold[channelNr] = -M_INFINITE;
-            displayPeakHoldLastUpdateTime[channelNr] = 0;
-            displayInputPeakHold[channelNr] = -M_INFINITE;
-            displayInputPeakHoldLastUpdateTime[channelNr] = 0;
+            m_display_maginuted[channelNr] = -M_INFINITE;
+            m_display_peak[channelNr] = -M_INFINITE;
+            m_display_peak_hold[channelNr] = -M_INFINITE;
+            m_display_peak_hold_last_update_time[channelNr] = 0;
+            m_display_input_peak_hold[channelNr] = -M_INFINITE;
+            m_display_input_peak_hold_last_upate_time[channelNr] = 0;
         }
+    }
+
+    int get_x() const { return m_x; }
+    int get_y() const { return m_y; }
+    int get_height() const { return m_height; }
+    int get_width() const { return (m_channel_thickness + 2) * m_channels; }
+    void set_pos(int x, int y)
+    {
+        m_x = x;
+        m_y = y;
+    }
+
+    bool mouse_over(int x, int y)
+    {
+        return x >= m_x && x <= m_x + get_width() && y >= m_y && y <= m_y + m_height;
     }
 
     void set_source(OBSSource);

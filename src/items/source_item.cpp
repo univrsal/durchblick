@@ -50,8 +50,12 @@ void SourceItem::VolumeToggled(bool state)
 {
     if (state && m_src) {
         auto h = obs_source_get_height(m_src);
-        m_vol_meter = std::make_unique<VolumeMeter>(m_src, 10, 10, h / 2);
+        m_vol_meter = std::make_unique<VolumeMeter>(m_src, m_volume_meter_x, m_volume_meter_y, h / 2);
     } else {
+        if (m_vol_meter) {
+            m_volume_meter_x = m_vol_meter->get_x();
+            m_volume_meter_y = m_vol_meter->get_y();
+        }
         m_vol_meter = nullptr;
     }
 }
@@ -109,6 +113,8 @@ void SourceItem::OBSSourceRemoved(void* data, calldata_t* params)
 {
     SourceItem* window = reinterpret_cast<SourceItem*>(data);
     window->m_src = placeholder_source;
+    if (window->m_vol_meter)
+        window->m_vol_meter->set_source(placeholder_source);
 }
 
 SourceItem::SourceItem(Layout* parent, int x, int y, int w, int h)
@@ -159,6 +165,13 @@ void SourceItem::LoadConfigFromWidget(QWidget* w)
     if (custom) {
         OBSSourceAutoRelease src = obs_get_source_by_name(qt_to_utf8(custom->m_combo_box->currentText()));
         m_font_scale = custom->m_font_size->value() / 100.f;
+        m_channel_width = custom->m_channel_width->value();
+        m_volume_meter_height = custom->m_volume_meter_height->value() / 100.f;
+        m_toggle_volume->setChecked(custom->m_show_volume_meter->isChecked());
+        if (src && custom->m_show_volume_meter->isChecked()) {
+            auto h = obs_source_get_height(src);
+            m_vol_meter = std::make_unique<VolumeMeter>(src.Get(), 10, 10, int(h * m_volume_meter_height));
+        }
         SetSource(src);
     }
 }
@@ -195,11 +208,27 @@ void SourceItem::ReadFromJson(QJsonObject const& Obj)
     if (Obj["font_scale"].isDouble())
         m_font_scale = Obj["font_scale"].toDouble(1);
 
+    if (Obj["volume_meter_channel_width"].isDouble())
+        m_channel_width = Obj["volume_meter_channel_width"].toInt(2);
+
+    if (Obj["volume_meter_height"].isDouble())
+        m_volume_meter_height = Obj["volume_meter_height"].toDouble(.5);
+
+    if (Obj["volume_meter_x"].isDouble())
+        m_volume_meter_x = Obj["volume_meter_x"].toDouble(10);
+    if (Obj["volume_meter_y"].isDouble())
+        m_volume_meter_y = Obj["volume_meter_y"].toDouble(10);
+
     OBSSourceAutoRelease src = obs_get_source_by_name(qt_to_utf8(Obj["source"].toString()));
     if (src)
         SetSource(src);
     else
         SetSource(placeholder_source);
+
+    if (src.Get() && m_toggle_volume->isChecked()) {
+        auto h = obs_source_get_height(src);
+        m_vol_meter = std::make_unique<VolumeMeter>(src.Get(), m_volume_meter_x, m_volume_meter_y, int(h * m_volume_meter_height));
+    }
 }
 
 void SourceItem::WriteToJson(QJsonObject& Obj)
@@ -211,6 +240,16 @@ void SourceItem::WriteToJson(QJsonObject& Obj)
     Obj["show_label"] = m_toggle_label->isChecked();
     Obj["show_volume"] = m_toggle_volume->isChecked();
     Obj["font_scale"] = m_font_scale;
+    Obj["volume_meter_channel_width"] = m_channel_width;
+    Obj["volume_meter_height"] = m_volume_meter_height;
+
+    if (m_vol_meter) {
+        Obj["volume_meter_x"] = m_vol_meter->get_x();
+        Obj["volume_meter_y"] = m_vol_meter->get_y();
+    } else {
+        Obj["volume_meter_x"] = m_volume_meter_x;
+        Obj["volume_meter_y"] = m_volume_meter_y;
+    }
 }
 
 static const uint32_t outerColor = 0xFFD0D0D0;
@@ -285,4 +324,21 @@ void SourceItem::ContextMenu(QMenu& m)
 void SourceItem::MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
 {
     LayoutItem::MouseEvent(e, cfg);
+    if (m_vol_meter) {
+        if (e.buttons & Qt::LeftButton && m_mouse_over) {
+            if (m_vol_meter->mouse_over(m_mouse_x, m_mouse_y)) {
+                if (!m_dragging_volume) {
+                    m_dragging_volume = true;
+                    m_drag_start_x = m_mouse_x - m_vol_meter->get_x();
+                    m_drag_start_y = m_mouse_y - m_vol_meter->get_y();
+                }
+            }
+
+            if (m_dragging_volume) {
+                m_vol_meter->set_pos(qBound(0, m_mouse_x - m_drag_start_x, m_width - m_vol_meter->get_width()), qBound(0, m_mouse_y - m_drag_start_y, m_height - m_vol_meter->get_height()));
+            }
+        } else {
+            m_dragging_volume = false;
+        }
+    }
 }

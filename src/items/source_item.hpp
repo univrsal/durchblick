@@ -20,6 +20,7 @@
 #include "../util/util.h"
 #include "../util/volume_meter.hpp"
 #include "item.hpp"
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QFormLayout>
@@ -33,6 +34,9 @@ class SourceItemWidget : public QWidget {
 public:
     QComboBox* m_combo_box;
     QDoubleSpinBox* m_font_size;
+    QCheckBox* m_show_volume_meter;
+    QSpinBox* m_channel_width;
+    QDoubleSpinBox* m_volume_meter_height;
     SourceItemWidget(QWidget* parent = nullptr)
         : QWidget(parent)
     {
@@ -47,8 +51,19 @@ public:
         m_font_size->setMaximum(500);
         m_font_size->setSuffix("%");
         m_font_size->setDecimals(0);
+        m_show_volume_meter = new QCheckBox(T_SOURCE_ITEM_VOLUME, this);
+        m_channel_width = new QSpinBox(this);
+        m_volume_meter_height = new QDoubleSpinBox(this);
+        m_volume_meter_height->setMinimum(10);
+        m_volume_meter_height->setMaximum(100);
+        m_volume_meter_height->setValue(50);
+        m_volume_meter_height->setSuffix("%");
+        m_channel_width->setMinimum(2);
+        m_channel_width->setMaximum(32);
         l->addRow(T_SOURCE_NAME, m_combo_box);
         l->addRow(T_FONT_SIZE, m_font_size);
+        l->addRow(T_CHANNEL_WIDTH, m_channel_width);
+        l->addRow(T_VOLUME_METER_HEIGHT, m_volume_meter_height);
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     }
 };
@@ -56,6 +71,8 @@ public:
 class SourceItem : public LayoutItem {
     Q_OBJECT
 protected:
+    bool m_dragging_volume {};
+    int m_drag_start_x {}, m_drag_start_y {};
     OBSSource m_src;
     OBSSourceAutoRelease m_label;
     OBSSignal removedSignal;
@@ -64,6 +81,9 @@ protected:
     QAction* m_toggle_volume;
     std::unique_ptr<VolumeMeter> m_vol_meter {};
     float m_font_scale { 1 };
+    float m_volume_meter_height { .5 };
+    int m_volume_meter_x { 10 }, m_volume_meter_y { 10 };
+    int m_channel_width { 2 };
     void RenderSafeMargins(int w, int h);
     static OBSSource CreateLabel(const char* name, size_t h, float scale = 1.0);
 public slots:

@@ -45,6 +45,8 @@
 #define T_SELECT_TYPE                   T_("Label.Select.ItemType")
 #define T_WIDGET_SETTINGS               T_("Label.WidgetSettings")
 #define T_SOURCE_NAME                   T_("Label.SourceName")
+#define T_CHANNEL_WIDTH                 T_("Label.ChannelWidth")
+#define T_VOLUME_METER_HEIGHT           T_("Label.VolumeMeterHeight")
 #define T_FONT_SIZE                     T_("Label.FontSize")
 #define T_SCENE_NAME                    T_("Label.SceneName")
 #define T_BORDER_INDICATOR              T_("Label.BorderForIndicator")
