@@ -116,8 +116,14 @@ if (LOCAL_INSTALLATION)
     endif()
 endif()
 
+if (WIN32 OR APPLE)
+    find_package(Jansson REQUIRED)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Jansson::Jansson)
+endif()
+
 find_package(libobs REQUIRED)
 find_package(obs-frontend-api REQUIRED)
+
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
