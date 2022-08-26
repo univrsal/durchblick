@@ -3,7 +3,7 @@
 #include "../util/display_helpers.hpp"
 #include <QApplication>
 #include <QMainWindow>
-#include <obs/obs-frontend-api.h>
+#include <obs-frontend-api.h>
 #include <util/util.hpp>
 
 /* yoinked from obs window-projector.cpp */
