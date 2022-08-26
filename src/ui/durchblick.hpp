@@ -23,12 +23,7 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWindow>
-
-#if _WIN32
-#    include <obs-frontend-api.h>
-#else
-#    include <obs/obs-frontend-api.h>
-#endif
+#include <obs-frontend-api.h>
 
 class Durchblick : public OBSQTDisplay {
     Q_OBJECT

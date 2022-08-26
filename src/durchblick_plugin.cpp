@@ -23,14 +23,10 @@
 #include "ui/durchblick.hpp"
 #include "util/util.h"
 #include <QAction>
+#include <obs-frontend-api.h>
 #include <obs-module.h>
 #include <thread>
 #include <util/util.hpp>
-#if _WIN32
-#    include <obs-frontend-api.h>
-#else
-#    include <obs/obs-frontend-api.h>
-#endif
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("durchblick", "en-US")

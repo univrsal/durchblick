@@ -25,12 +25,8 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <obs-frontend-api.h>
 #include <util/config-file.h>
-#if _WIN32
-#    include <obs-frontend-api.h>
-#else
-#    include <obs/obs-frontend-api.h>
-#endif
 
 void Layout::FillEmptyCells()
 {

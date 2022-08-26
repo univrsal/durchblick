@@ -25,13 +25,9 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <obs-frontend-api.h>
 #include <obs-module.h>
 #include <util/util.hpp>
-#if _WIN32
-#    include <obs-frontend-api.h>
-#else
-#    include <obs/obs-frontend-api.h>
-#endif
 
 namespace Config {
 
