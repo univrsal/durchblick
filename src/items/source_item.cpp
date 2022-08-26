@@ -109,7 +109,7 @@ void SourceItem::Deinit()
     obs_source_release(placeholder_source);
 }
 
-void SourceItem::OBSSourceRemoved(void* data, calldata_t* params)
+void SourceItem::OBSSourceRemoved(void* data, calldata_t*)
 {
     SourceItem* window = reinterpret_cast<SourceItem*>(data);
     window->m_src = placeholder_source;

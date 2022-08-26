@@ -39,7 +39,7 @@ void NewItemDialog::cancel_clicked()
     hide();
 }
 
-void NewItemDialog::entry_selected(int index)
+void NewItemDialog::entry_selected(int)
 {
     auto i = m_select_type->currentData().toInt();
     auto* Item = Registry::ItemRegistry::Entries[i].construct(nullptr, 0, 0, 0, 0);

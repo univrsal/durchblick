@@ -6,3 +6,4 @@ build*/
 package/*.txt
 package/*.iss
 package/*.pkgproj
+src/*.generated.h

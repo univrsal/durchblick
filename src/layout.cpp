@@ -110,7 +110,7 @@ void Layout::FillSelectionWithScenes()
             return;
 
         int col {}, row {};
-        for (int i = 0; i < scenes.sources.num && cells_to_fill > 0; i++) {
+        for (int i = 0; i < int(scenes.sources.num) && cells_to_fill > 0; i++) {
             auto* src = scenes.sources.array[i];
 
             // Don't add scenes that shouldn't be shown in the normal multiview
@@ -151,8 +151,8 @@ void Layout::FillSelectionWithScenes()
 
 Layout::Layout(Durchblick* parent, int cols, int rows)
     : QObject(parent)
-    , m_rows(rows)
     , m_cols(cols)
+    , m_rows(rows)
     , m_durchblick(parent)
 {
 }
@@ -164,8 +164,8 @@ Layout::~Layout()
 void Layout::MouseMoved(QMouseEvent* e)
 {
     LayoutItem::MouseData d(
-        int((e->x() - m_cfg.x) / m_cfg.scale),
-        int((e->y() - m_cfg.y) / m_cfg.scale),
+        int((e->pos().x() - m_cfg.x) / m_cfg.scale),
+        int((e->pos().y() - m_cfg.y) / m_cfg.scale),
         e->modifiers(),
         e->buttons(),
         e->type());
@@ -197,8 +197,8 @@ void Layout::MouseMoved(QMouseEvent* e)
 void Layout::MousePressed(QMouseEvent* e)
 {
     LayoutItem::MouseData d(
-        int((e->x() - m_cfg.x) / m_cfg.scale),
-        int((e->y() - m_cfg.y) / m_cfg.scale),
+        int((e->pos().x() - m_cfg.x) / m_cfg.scale),
+        int((e->pos().y() - m_cfg.y) / m_cfg.scale),
         e->modifiers(),
         e->buttons(),
         e->type());
@@ -216,8 +216,8 @@ void Layout::MousePressed(QMouseEvent* e)
 void Layout::MouseReleased(QMouseEvent* e)
 {
     LayoutItem::MouseData d(
-        int((e->x() - m_cfg.x) / m_cfg.scale),
-        int((e->y() - m_cfg.y) / m_cfg.scale),
+        int((e->pos().x() - m_cfg.x) / m_cfg.scale),
+        int((e->pos().y() - m_cfg.y) / m_cfg.scale),
         e->modifiers(),
         e->buttons(),
         e->type());
@@ -229,8 +229,8 @@ void Layout::MouseReleased(QMouseEvent* e)
 void Layout::MouseDoubleClicked(QMouseEvent* e)
 {
     LayoutItem::MouseData d(
-        int((e->x() - m_cfg.x) / m_cfg.scale),
-        int((e->y() - m_cfg.y) / m_cfg.scale),
+        int((e->pos().x() - m_cfg.x) / m_cfg.scale),
+        int((e->pos().y() - m_cfg.y) / m_cfg.scale),
         e->modifiers(),
         e->buttons(),
         e->type());
@@ -304,7 +304,7 @@ void Layout::SetRegion(float bx, float by, float cx, float cy)
     startRegion(vX, vY, vCX, vCY, oL, oR, oT, oB);
 }
 
-void Layout::Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy)
+void Layout::Render(int, int, uint32_t, uint32_t)
 {
     // Define the whole usable region for the multiview
     startRegion(m_cfg.x, m_cfg.y, m_cfg.cx * m_cfg.scale, m_cfg.cy * m_cfg.scale, 0.0f, m_cfg.cx,
@@ -429,7 +429,7 @@ void Layout::CreateDefaultLayout()
 
     obs_frontend_get_scenes(&scenes);
     for (int i = 0; i < 8; i++) {
-        if (i >= scenes.sources.num) {
+        if (i >= int(scenes.sources.num)) {
             auto* Item = new PlaceholderItem(this, i % 4, i > 3 ? 3 : 2);
             Item->Update(m_cfg);
             m_layout_items.emplace_back(Item);

@@ -226,7 +226,7 @@ void VolumeMeter::render(float cell_scale)
     bool idle = detect_idle(ts);
 
     for (int i = 0; i < m_channels; i++) {
-        auto magnitude = m_display_maginuted[i];
+        //        auto magnitude = m_display_maginuted[i];
         auto peak = m_display_peak[i];
         auto peakHold = m_display_peak_hold[i];
         qreal scale = m_height / m_minimum_level;
@@ -234,7 +234,7 @@ void VolumeMeter::render(float cell_scale)
         QMutexLocker locker(&m_data_mutex);
         int lower_limit = m_y + m_height;
         int upper_limit = m_y;
-        int magnitude_position = int(lower_limit - (magnitude * scale));
+        //        int magnitude_position = int(lower_limit - (magnitude * scale));
         int peak_position = int(lower_limit - (m_height - (peak * scale)));
         int peakHoldPosition = int(m_y + m_height - (peakHold * scale));
         int nominal_position = int(upper_limit + (m_warning_level * scale));
@@ -318,7 +318,7 @@ void VolumeMeter::render(float cell_scale)
                 m_clipping = true;
             }
 
-            int end = error_length + warning_length + nominal_ength;
+            //            int end = error_length + warning_length + nominal_ength;
             //            draw_rectangle(x, minimumPosition, w, end,
             //                muted ? foregroundErrorColorDisabled
             //                      : foregroundErrorColor);
@@ -345,17 +345,17 @@ void VolumeMeter::render(float cell_scale)
 
         if (idle)
             continue;
-        uint32_t color;
-        if (peakHold < m_minimum_input_level)
-            color = m_background_nominal_color;
-        else if (peakHold < m_warning_level)
-            color = m_foreground_nominal_color;
-        else if (peakHold < m_error_level)
-            color = m_foreground_warning_color;
-        else if (peakHold <= m_clip_level)
-            color = m_foreground_error_color;
-        else
-            color = m_clip_color;
+        //        uint32_t color;
+        //        if (peakHold < m_minimum_input_level)
+        //            color = m_background_nominal_color;
+        //        else if (peakHold < m_warning_level)
+        //            color = m_foreground_nominal_color;
+        //        else if (peakHold < m_error_level)
+        //            color = m_foreground_warning_color;
+        //        else if (peakHold <= m_clip_level)
+        //            color = m_foreground_error_color;
+        //        else
+        //            color = m_clip_color;
 
         //        draw_rectangle(i * (meterThickness + 1), m_y - 5, meterThickness, INDICATOR_THICKNESS, color);
     }

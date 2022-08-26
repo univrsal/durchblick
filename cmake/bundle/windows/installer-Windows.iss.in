@@ -1,7 +1,7 @@
 #define MyAppName "@CMAKE_PROJECT_NAME@"
 #define MyAppVersion "@CMAKE_PROJECT_VERSION@"
 #define MyAppPublisher "@PLUGIN_AUTHOR@"
-#define MyAppURL "https://github.com/univrsal/@PLUGIN_GIT@"
+#define MyAppURL "https://vrsal.xyz"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -25,7 +25,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 Source: "..\release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\COPYING.txt"; Flags: dontcopy
+Source: "..\LICENSE"; Flags: dontcopy
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -38,8 +38,8 @@ var
   GPLText: AnsiString;
   Page: TOutputMsgMemoWizardPage;
 begin
-  ExtractTemporaryFile('COPYING.txt');
-  LoadStringFromFile(ExpandConstant('{tmp}\COPYING.txt'), GPLText);
+  ExtractTemporaryFile('LICENSE');
+  LoadStringFromFile(ExpandConstant('{tmp}\LICENSE'), GPLText);
   Page := CreateOutputMsgMemoPage(wpWelcome,
     'License Information', 'Please review the license terms before installing {#MyAppName}',
     'Press Page Down to see the rest of the agreement. Once you are aware of your rights, click Next to continue.',
@@ -55,7 +55,7 @@ var
 begin
   // initialize default path, which will be returned when the following registry
   // key queries fail due to missing keys or for some different reason
-  Result := '{pf}\obs-studio';
+  Result := '{autopf}\obs-studio';
   // query the first registry value; if this succeeds, return the obtained value
   if RegQueryStringValue(HKLM32, 'SOFTWARE\OBS Studio', '', InstallPath) then
     Result := InstallPath

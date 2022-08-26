@@ -41,8 +41,8 @@ QJsonObject LoadLayoutForCurrentSceneCollection()
 {
     BPtr<char> path = obs_module_config_path("layout.json");
     BPtr<char> sc = obs_frontend_get_current_scene_collection();
-    QFile f(utf8_to_qt(path));
-    QDir dir(utf8_to_qt(path));
+    QFile f(utf8_to_qt(path.Get()));
+    QDir dir(utf8_to_qt(path.Get()));
 
     // Make sure that the plugin config folder exists
     if (!dir.cd("../..")) { // cd into plugin_config
@@ -61,7 +61,7 @@ QJsonObject LoadLayoutForCurrentSceneCollection()
             doc = QJsonDocument::fromJson(f.readAll());
             f.close();
             Cfg = doc.object();
-            auto layouts = Cfg[utf8_to_qt(sc)].toArray();
+            auto layouts = Cfg[utf8_to_qt(sc.Get())].toArray();
             if (layouts.isEmpty()) {
                 berr("No layouts found");
                 return {};
@@ -74,7 +74,7 @@ QJsonObject LoadLayoutForCurrentSceneCollection()
 
 void RegisterCallbacks()
 {
-    obs_frontend_add_save_callback([](obs_data_t* save_data, bool saving, void* private_data) {
+    obs_frontend_add_save_callback([](obs_data_t*, bool, void*) {
         // Refresh this flag because if the user changed the "Hide OBS window from display capture setting"
         // durchblick would otherwise suddenly show up again
         if (db)
@@ -116,11 +116,11 @@ void Save()
     QJsonObject obj;
     BPtr<char> path = obs_module_config_path("layout.json");
     BPtr<char> sc = obs_frontend_get_current_scene_collection();
-    QFile f(utf8_to_qt(path));
+    QFile f(utf8_to_qt(path.Get()));
 
     db->Save(obj);
     layouts.append(obj);
-    Cfg[utf8_to_qt(sc)] = layouts;
+    Cfg[utf8_to_qt(sc.Get())] = layouts;
     if (f.open(QIODevice::WriteOnly)) {
         QJsonDocument doc;
         doc.setObject(Cfg);
@@ -130,7 +130,7 @@ void Save()
         if (data.length() != wrote) {
             berr("Couldn't write config file to %s, only"
                  "wrote %lli bytes out of %i",
-                path.Get(), wrote, data.length());
+                path.Get(), wrote, int(data.length()));
         }
         f.close();
     } else {

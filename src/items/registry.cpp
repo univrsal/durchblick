@@ -32,7 +32,10 @@ QList<std::function<void()>> ItemRegistry::DeinitCallbacks;
 void ItemRegistry::Register(Constructor const& c, char const* n, char const* id)
 {
     // Make sure internal types are always at the beginning (index 0 is the placeholder)
-    Entries.insert(1, Entry { c, id, n });
+    if (Entries.empty())
+        Entries.insert(0, Entry { c, id, n });
+    else
+        Entries.insert(1, Entry { c, id, n });
 }
 
 void ItemRegistry::RegisterCustom(DurchblickCallbacks const* Callbacks)

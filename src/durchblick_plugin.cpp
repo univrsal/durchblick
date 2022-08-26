@@ -19,6 +19,7 @@
 #include "config.hpp"
 #include "items/registry.hpp"
 #include "items/source_item.hpp"
+#include "plugin-macros.generated.h"
 #include "ui/durchblick.hpp"
 #include "util/util.h"
 #include <QAction>

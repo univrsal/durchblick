@@ -39,13 +39,13 @@ public:
 
         Entry(Constructor const& c, const char* _id, const char* _name)
             : construct(c)
-            , id(utf8_to_qt(_id))
             , name(utf8_to_qt(_name))
+            , id(utf8_to_qt(_id))
         {
         }
         Entry(const char* _id, const char* _name)
-            : id(utf8_to_qt(_id))
-            , name(utf8_to_qt(_name))
+            : name(utf8_to_qt(_name))
+            , id(utf8_to_qt(_id))
         {
         }
     };

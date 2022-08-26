@@ -1,91 +1,35 @@
-cmake_minimum_required(VERSION 3.5)
-project(durchblick VERSION 0.3.0)
+cmake_minimum_required(VERSION 3.16...3.21)
 
-
-set(PLUGIN_AUTHOR "univrsal")
-set(PLUGIN_GIT durchblick)
-set(LINUX_MAINTAINER_EMAIL "uni@vrsal.xyz")
-set(MACOS_BUNDLEID "xyz.vrsal.durchblick")
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_PREFIX_PATH "${QTDIR}")
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
+# Change obs-plugintemplate to your plugin's name in a machine-readable format (e.g.:
+# obs-myawesomeplugin) and set
+project(durchblick VERSION 0.4.0)
+add_library(${CMAKE_PROJECT_NAME} MODULE)
 
 string(TIMESTAMP TODAY "%Y.%m.%d %H:%M")
 add_definitions(-DBUILD_TIME="${TODAY}")
-add_definitions(-DPLUGIN_VERSION="${PROJECT_VERSION}")
+add_definitions(-DSCRAB_VERSION="${PROJECT_VERSION}")
 
-if (MSVC OR APPLE)
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
-endif()
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/external")
 
-find_package(LibObs REQUIRED)
-find_package(Qt5Widgets REQUIRED)
+# Replace `Your Name Here` with the name (yours or your organization's) you want to see as the
+# author of the plugin (in the plugin's metadata itself and in the installers)
+set(PLUGIN_AUTHOR "univrsal")
+
+# Replace `com.example.obs-plugin-template` with a unique Bundle ID for macOS releases (used both in
+# the installer and when submitting the installer for notarization)
+set(MACOS_BUNDLEID "xyz.vrsal.${CMAKE_PROJECT_NAME}")
+
+# Replace `me@contoso.com` with the maintainer email address you want to put in Linux packages
+set(LINUX_MAINTAINER_EMAIL "uni@vrsal.xyz")
 
 option(LOCAL_INSTALLATION "Whether to install for the current user (default: OFF)" OFF)
-option(GLOBAL_INSTALLATION "Whether to install for all users (default: OFF)" OFF)
-
-
-if (OBS_FRONTEND_INCLUDE)
-    include_directories(${OBS_FRONTEND_INCLUDE})
-endif()
-
-configure_file(
-    package/installer-macOS.pkgproj.in
-    ../package/installer-macOS.pkgproj
-)
-configure_file(
-    package/installer-Windows.iss.in
-    ../package/installer-Windows.iss
-)
-configure_file(
-    package/README.txt.in
-    ../package/README.txt
-)
-
-set(durchblick_ui
-        )
-
-qt5_wrap_ui(durchblick_ui_headers ${durchblick_ui})
-
-if (UNIX AND NOT APPLE)
-    set(LIBOBS_LIBRARIES "libobs")
-    set(OBS_FRONTEND_LIB "obs-frontend-api")
-endif()
-
-if (UNIX)
-    find_package(Qt5Gui REQUIRED)
-    include_directories(${Qt5Gui_PRIVATE_INCLUDE_DIRS})
-    set(durchblick_platform_deps
-        Qt5::Gui
-        )
-endif()
-
-if (APPLE)
-    add_definitions(-DMACOS=1)
-    find_library(COCOA Cocoa)
-
-    include_directories(${COCOA})
-
-    set(FRONTEND_LIB "${OBS_FRONTEND_LIB}")
-else()
-    set(FRONTEND_LIB "obs-frontend-api")
-    set(OBS_LIB "libobs")
-endif()
-
 if (MSVC)
-    set(durchblick_platform_source
-	./src/util/windows_helper.hpp
-	./src/util/windows_helper.cpp)
-    set(durchblick_platform_deps
-        "${LibObs_DIR}/../deps/jansson/lib/RelWithDebInfo/jansson.lib"
-        ${W32_PTHREADS_LIB})
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+        ./src/util/windows_helper.hpp
+        ./src/util/windows_helper.cpp)
 endif()
 
-
-set(durchblick_sources
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ./src/durchblick_plugin.cpp
     ./src/layout.hpp
     ./src/layout.cpp
@@ -116,146 +60,112 @@ set(durchblick_sources
     ./src/items/preview_program_item.hpp
     ./src/items/custom_item.cpp
     ./src/items/custom_item.hpp
-    ${durchblick_platform_source}
-    ${durchblick_ui_headers}
 )
 
-add_library(durchblick MODULE
-    ${durchblick_sources}
-    ${durchblick_ui}
-    ${durchblick_platform_sources})
+# Import libobs as main plugin dependency
+include(cmake/ObsPluginHelpers.cmake)
 
-if (MSVC)
-    target_compile_definitions(durchblick PRIVATE UNICODE _UNICODE)
-    set(platform_includes "${LibObs_DIR}/../deps/jansson/include")
+# Uncomment these lines if you want to use the OBS Frontend API in your plugin
+
+if (LOCAL_INSTALLATION)
+
+    if (UNIX AND NOT APPLE)
+        target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "/usr/include/obs")
+        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+        find_package(LibObs REQUIRED)
+        target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE obs-frontend-api libobs)
+
+        # Installs into home directory
+        add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+            # Copy to obs-studio dev environment for immediate testing
+            COMMAND "${CMAKE_COMMAND}" -E make_directory
+                    "$ENV{HOME}/.config/obs-studio/plugins/${CMAKE_PROJECT_NAME}/bin/64bit"
+            COMMAND "${CMAKE_COMMAND}" -E make_directory
+                    "$ENV{HOME}/.config/obs-studio/plugins/${CMAKE_PROJECT_NAME}/data"
+            COMMAND "${CMAKE_COMMAND}" -E copy
+                    "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>"
+                    "$ENV{HOME}/.config/obs-studio/plugins/${CMAKE_PROJECT_NAME}/bin/64bit"
+            COMMAND "${CMAKE_COMMAND}" -E copy_directory
+                    "${PROJECT_SOURCE_DIR}/data"
+                    "$ENV{HOME}/.config/obs-studio/plugins/${CMAKE_PROJECT_NAME}/data"
+        )
+    elseif (WIN32)
+        # Enable Multicore Builds and disable FH4 (to not depend on VCRUNTIME140_1.DLL when building with VS2019)
+        if (MSVC)
+            add_definitions(/MP /d2FH4-)
+        endif()
+
+        add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+            # Copy to obs-studio dev environment for immediate testing
+            COMMAND if $<CONFIG:Debug>==1 (
+                "${CMAKE_COMMAND}" -E copy
+                    "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>"
+                    "${libobs_DIR}/../rundir/$<CONFIG>/obs-plugins/64bit")
+            COMMAND if $<CONFIG:Debug>==1 (
+                "${CMAKE_COMMAND}" -E copy
+                    "$<TARGET_PDB_FILE:${CMAKE_PROJECT_NAME}>"
+                    "${libobs_DIR}/../rundir/$<CONFIG>/obs-plugins/64bit")
+            COMMAND if $<CONFIG:Debug>==1 (
+                "${CMAKE_COMMAND}" -E make_directory
+                    "${libobs_DIR}/../rundir/$<CONFIG>/data/obs-plugins/${CMAKE_PROJECT_NAME}")
+            COMMAND if $<CONFIG:Debug>==1 (
+                "${CMAKE_COMMAND}" -E copy_directory
+                    "${PROJECT_SOURCE_DIR}/data"
+                    "${libobs_DIR}/../rundir/$<CONFIG>/data/obs-plugins/${CMAKE_PROJECT_NAME}")
+        )
+    endif()
 endif()
 
-include_directories(
-    "${LIBOBS_INCLUDE_DIR}/../UI/obs-frontend-api"
-    ${LIBOBS_INCLUDE_DIR}
-    ${Qt5Core_INCLUDES}
-    ${Qt5Widgets_INCLUDES}
-    ${platform_includes}
-)
+find_package(libobs REQUIRED)
+find_package(obs-frontend-api REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
-target_link_libraries(durchblick
-    ${LIBOBS_LIBRARIES}
-    Qt5::Widgets
-    Qt5::Core
-    Qt5::Gui
-    ${OBS_FRONTEND_LIB}
-    ${durchblick_platform_deps})
+# Uncomment those lines if you want to use Qt in your plugin
+find_qt(COMPONENTS Widgets Core Gui)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt::Core Qt::Widgets Qt::Gui)
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES AUTOMOC ON AUTOUIC ON AUTORCC ON)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${Qt6Gui_INCLUDES})
+
+configure_file(src/plugin-macros.h.in ${CMAKE_SOURCE_DIR}/src/plugin-macros.generated.h)
+
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-macros.generated.h)
+
+# /!\ TAKE NOTE: No need to edit things past this point /!\
+
+# --- Platform-independent build settings ---
+
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+
+# --- End of section ---
 
 # --- Windows-specific build settings and tasks ---
-if(WIN32)
-    if(NOT DEFINED OBS_FRONTEND_LIB)
-        set(OBS_FRONTEND_LIB "OBS_FRONTEND_LIB-NOTFOUND" CACHE FILEPATH "OBS frontend library")
-        message(FATAL_ERROR "Could not find OBS Frontend API\'s library !")
-    endif()
+if(OS_WINDOWS)
+  configure_file(cmake/bundle/windows/installer-Windows.iss.in
+                 ${CMAKE_BINARY_DIR}/installer-Windows.generated.iss)
 
-    # Enable Multicore Builds and disable FH4 (to not depend on VCRUNTIME140_1.DLL when building with VS2019)
-    if (MSVC)
-        add_definitions(/MP /d2FH4-)
-    endif()
+  if(MSVC)
+    target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4)
+  endif()
+  # --- End of section ---
 
-    include_directories(
-        "${LIBOBS_INCLUDE_DIR}"
-    )
+  # -- macOS specific build settings and tasks --
+elseif(OS_MACOS)
+  configure_file(cmake/bundle/macos/installer-macos.pkgproj.in
+                 ${CMAKE_BINARY_DIR}/installer-macos.generated.pkgproj)
 
-    target_link_libraries(${CMAKE_PROJECT_NAME}
-        "${OBS_FRONTEND_LIB}"
-    )
+  set(MACOSX_PLUGIN_GUI_IDENTIFIER "${MACOS_BUNDLEID}")
+  set(MACOSX_PLUGIN_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}")
+  set(MACOSX_PLUGIN_SHORT_VERSION_STRING "1")
 
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(ARCH_NAME "64bit")
-        set(OBS_BUILDDIR_ARCH "build64")
-    else()
-        set(ARCH_NAME "32bit")
-        set(OBS_BUILDDIR_ARCH "build32")
-    endif()
+  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall)
+  # --- End of section ---
 
-    get_filename_component(LibOBS_DIR ${LIBOBS_LIB} DIRECTORY)
-
-    add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
-        # Copy to obs-studio dev environment for immediate testing
-        COMMAND if $<CONFIG:Debug>==1 (
-            "${CMAKE_COMMAND}" -E copy
-                "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>"
-                "${LibOBS_DIR}/../../rundir/$<CONFIG>/obs-plugins/${ARCH_NAME}")
-
-        COMMAND if $<CONFIG:Debug>==1 (
-            "${CMAKE_COMMAND}" -E copy
-                "$<TARGET_PDB_FILE:${CMAKE_PROJECT_NAME}>"
-                "${LibOBS_DIR}/../../rundir/$<CONFIG>/obs-plugins/${ARCH_NAME}")
-
-        COMMAND if $<CONFIG:Debug>==1 (
-            "${CMAKE_COMMAND}" -E make_directory
-                "${LibOBS_DIR}/../../rundir/$<CONFIG>/data/obs-plugins/${CMAKE_PROJECT_NAME}")
-
-        COMMAND if $<CONFIG:Debug>==1 (
-            "${CMAKE_COMMAND}" -E copy_directory
-                "${PROJECT_SOURCE_DIR}/data"
-                "${LibOBS_DIR}/../../rundir/$<CONFIG>/data/obs-plugins/${CMAKE_PROJECT_NAME}")
-    )
-
-elseif(UNIX AND NOT APPLE)
-    include(GNUInstallDirs)
-
-    set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES PREFIX "")
-    target_link_libraries(${CMAKE_PROJECT_NAME} obs-frontend-api)
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(OBS_ARCH_NAME "64bit")
-        set(OBS_BUILDDIR_ARCH "build64")
-    else()
-        set(OBS_ARCH_NAME "32bit")
-        set(OBS_BUILDDIR_ARCH "build32")
-    endif()
-    if (LOCAL_INSTALLATION)
-        # Installs into home directory
-        install(TARGETS ${CMAKE_PROJECT_NAME}
-            LIBRARY DESTINATION "$ENV{HOME}/.config/obs-studio/plugins/${CMAKE_PROJECT_NAME}/bin/${OBS_ARCH_NAME}")
-
-        install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/data
-            DESTINATION "$ENV{HOME}/.config/obs-studio/plugins/${CMAKE_PROJECT_NAME}")
-    elseif(GLOBAL_INSTALLATION)
-        # For *.deb installer
-        install(TARGETS ${CMAKE_PROJECT_NAME}
-            LIBRARY DESTINATION "/usr/lib/obs-plugins") # hardcoded, since ubuntu uses the wrong path by default
-
-        file(GLOB locale_files data/locale/*.ini)
-        file(GLOB other_files data/*.*)
-
-        install(FILES ${locale_files}
-            DESTINATION "${CMAKE_INSTALL_FULL_DATAROOTDIR}/obs/obs-plugins/${CMAKE_PROJECT_NAME}/locale")
-        install(FILES ${other_files}
-            DESTINATION "${CMAKE_INSTALL_FULL_DATAROOTDIR}/obs/obs-plugins/${CMAKE_PROJECT_NAME}")
-    else()
-        # For *.zip binary
-        install(TARGETS ${CMAKE_PROJECT_NAME}
-            LIBRARY DESTINATION "${CMAKE_PROJECT_NAME}/bin/${OBS_ARCH_NAME}")
-
-        install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/data
-            DESTINATION "${CMAKE_PROJECT_NAME}")
-
-        install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/package/README.txt"
-            DESTINATION "${CMAKE_PROJECT_NAME}")
-    endif()
-elseif(APPLE)
-    if(NOT DEFINED OBS_FRONTEND_LIB)
-        set(OBS_FRONTEND_LIB "OBS_FRONTEND_LIB-NOTFOUND" CACHE FILEPATH "OBS frontend library")
-        message(FATAL_ERROR "Could not find OBS Frontend API\'s library !")
-    endif()
-
-    target_link_libraries(${CMAKE_PROJECT_NAME}
-        "${OBS_FRONTEND_LIB}"
-    )
-
-    if (LOCAL_INSTALLATION)
-        # Installs into home directory
-        install(TARGETS ${CMAKE_PROJECT_NAME}
-            LIBRARY DESTINATION "$ENV{HOME}/Library/Application Support/obs-studio/plugins/${CMAKE_PROJECT_NAME}/bin/")
-
-        install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/data
-            DESTINATION "$ENV{HOME}/Library/Application Support/obs-studio/plugins/${CMAKE_PROJECT_NAME}")
-    endif()
+  # --- Linux-specific build settings and tasks ---
+else()
+  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall)
 endif()
+# --- End of section ---
+
+setup_plugin_target(${CMAKE_PROJECT_NAME})

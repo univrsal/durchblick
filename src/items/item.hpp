@@ -137,7 +137,7 @@ public:
         m.addAction(m_toggle_stretch);
     }
 
-    virtual void Render(DurchblickItemConfig const& cfg)
+    virtual void Render(DurchblickItemConfig const&)
     {
         DrawBox(0, 0, m_inner_width, m_inner_height, COLOR_BLACK);
     }
@@ -212,5 +212,5 @@ public:
         : LayoutItem(parent, x, y, w, h)
     {
     }
-    void ContextMenu(QMenu& m) override { }
+    void ContextMenu(QMenu&) override { }
 };
