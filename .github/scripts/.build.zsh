@@ -195,7 +195,6 @@ Usage: %B${functrace[1]%:*}%b <option> [<options>]
       -DCMAKE_BUILD_TYPE=${BUILD_CONFIG:-RelWithDebInfo}
       -DQT_VERSION=${QT_VERSION}
       -DLINUX_PORTABLE=OFF
-      -DCMAKE_PREFIX_PATH="${_plugin_deps}"
       -DCREDS="${SPOTIFY_TOKEN}"
       -DLASTFM_CREDS="${LASTFM_KEY}"
     )
@@ -217,6 +216,7 @@ Usage: %B${functrace[1]%:*}%b <option> [<options>]
           -DCMAKE_OSX_ARCHITECTURES=${${target##*-}//universal/x86_64;arm64}
           -DCMAKE_OSX_DEPLOYMENT_TARGET=${DEPLOYMENT_TARGET:-10.15}
           -DOBS_CODESIGN_LINKER=ON
+          -DCMAKE_PREFIX_PATH="${_plugin_deps};${project_root:h}/obs-studio/plugin_build_${target##*-}/deps/jansson"
           -DOBS_BUNDLE_CODESIGN_IDENTITY="${CODESIGN_IDENT:--}"
 	  -DCREDS="${SPOTIFY_TOKEN}"
 	  -DLASTFM_CREDS="${LASTFM_KEY}"
@@ -225,7 +225,10 @@ Usage: %B${functrace[1]%:*}%b <option> [<options>]
         ;;
       linux-*)
         if (( ${+CI} )) {
-          cmake_args+=(-DCMAKE_INSTALL_PREFIX=/usr)
+          cmake_args+=(
+            -DCMAKE_INSTALL_PREFIX=/usr
+            -DCMAKE_PREFIX_PATH="${_plugin_deps}"
+          )
         }
         num_procs=$(( $(nproc) + 1 ))
         ;;
