@@ -117,8 +117,8 @@ if (LOCAL_INSTALLATION)
 endif()
 
 if (WIN32 OR APPLE)
-    find_package(Jansson REQUIRED)
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Jansson::Jansson)
+    find_package(jansson REQUIRED)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE jansson)
 endif()
 
 find_package(libobs REQUIRED)
