@@ -195,10 +195,11 @@ void Durchblick::contextMenuEvent(QContextMenuEvent*)
 
 void Durchblick::closeEvent(QCloseEvent* e)
 {
-    m_saved_state = GetWindowState();
+    e->accept();
+    OnClose();
     Config::Save();
-    QWidget::closeEvent(e);
-    deleteLater();
+    m_layout.DeleteLayout();
+    hide();
 }
 
 void Durchblick::showEvent(QShowEvent* e)
@@ -208,6 +209,7 @@ void Durchblick::showEvent(QShowEvent* e)
         setWindowState(windowState() | Qt::WindowMaximized);
     else if (m_current_monitor >= 0)
         SetMonitor(m_current_monitor);
+
 }
 
 Durchblick::Durchblick(QWidget* widget)
@@ -261,8 +263,12 @@ Durchblick::~Durchblick()
     m_screen = nullptr;
     m_ready = false;
     m_layout.DeleteLayout();
-    Config::db = nullptr;
     deleteLater();
+}
+
+void Durchblick::OnClose()
+{
+    m_saved_state = GetWindowState();
 }
 
 void Durchblick::RenderLayout(void* data, uint32_t cx, uint32_t cy)

@@ -18,6 +18,7 @@
 
 #include "config.hpp"
 #include "ui/durchblick.hpp"
+#include "ui/durchblick_dock.hpp"
 #include "util/util.h"
 #include <QDir>
 #include <QFile>
@@ -28,28 +29,27 @@
 #include <obs-frontend-api.h>
 #include <obs-module.h>
 #include <util/util.hpp>
+#include <util/platform.h>
 
 namespace Config {
 
 Durchblick* db = nullptr;
+DurchblickDock* dbdock = nullptr;
+
 QJsonObject Cfg;
-QJsonObject LoadLayoutForCurrentSceneCollection()
+
+QJsonArray LoadLayoutsForCurrentSceneCollection()
 {
     BPtr<char> path = obs_module_config_path("layout.json");
     BPtr<char> sc = obs_frontend_get_current_scene_collection();
+    BPtr<char> folder = obs_module_config_path("");
+
+    if (os_mkdirs(folder) == MKDIR_ERROR) {
+        berr("Failed to change directory from '%s'. Cannot save/load layouts.", folder.Get());
+        return {};
+    }
+
     QFile f(utf8_to_qt(path.Get()));
-    QDir dir(utf8_to_qt(path.Get()));
-
-    // Make sure that the plugin config folder exists
-    if (!dir.cd("../..")) { // cd into plugin_config
-        berr("Failed to change directory from '%s'. Cannot save/load layouts.", path.Get());
-        return {};
-    }
-
-    if (!dir.cd("durchblick") && !dir.mkdir("durchblick")) {
-        berr("Failed to create config folder '%s'. Cannot save/load layouts.", path.Get());
-        return {};
-    }
 
     if (f.exists()) {
         if (f.open(QIODevice::ReadOnly)) {
@@ -62,7 +62,7 @@ QJsonObject LoadLayoutForCurrentSceneCollection()
                 berr("No layouts found");
                 return {};
             }
-            return layouts[0].toObject();
+            return layouts;
         }
     }
     return {};
@@ -80,7 +80,6 @@ void RegisterCallbacks()
 
     obs_frontend_add_event_callback([](enum obs_frontend_event event, void*) {
         if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING) {
-            // Final save and cleanup
             Load();
         } else if (event == OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN) {
             // I couldn't find another event that was on exit and
@@ -92,7 +91,8 @@ void RegisterCallbacks()
             Save(); // Save current layout
             db->GetLayout()->Clear();
         } else if (event == OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGED) {
-            db->Load(LoadLayoutForCurrentSceneCollection());
+            auto layouts = LoadLayoutsForCurrentSceneCollection();
+            db->Load(layouts[0].toObject());
         }
     },
         nullptr);
@@ -100,22 +100,38 @@ void RegisterCallbacks()
 
 void Load()
 {
+    auto layouts = LoadLayoutsForCurrentSceneCollection();
+
     db = new Durchblick;
-    db->Load(LoadLayoutForCurrentSceneCollection());
+    db->Load(layouts[0].toObject());
+    dbdock = new DurchblickDock;
+    if (layouts.size() > 1)
+        dbdock->GetDurchblick()->Load(layouts[1].toObject());
 }
 
 void Save()
 {
-    if (!db)
-        return;
-    QJsonArray layouts;
-    QJsonObject obj;
+
+    QJsonArray layouts {};
+    QJsonObject obj1 {}, obj2 {};
     BPtr<char> path = obs_module_config_path("layout.json");
     BPtr<char> sc = obs_frontend_get_current_scene_collection();
     QFile f(utf8_to_qt(path.Get()));
 
-    db->Save(obj);
-    layouts.append(obj);
+    if (db) {
+        db->Save(obj1);
+        layouts.append(obj1);
+    } else {
+        layouts.append({});
+    }
+
+    if (dbdock) {
+        dbdock->GetDurchblick()->Save(obj2);
+        layouts.append(obj2);
+    } else {
+        layouts.append({});
+    }
+
     Cfg[utf8_to_qt(sc.Get())] = layouts;
     if (f.open(QIODevice::WriteOnly)) {
         QJsonDocument doc;
@@ -138,6 +154,8 @@ void Cleanup()
 {
     db->deleteLater();
     db = nullptr;
+    dbdock->deleteLater();
+    dbdock = nullptr;
 }
 
 }

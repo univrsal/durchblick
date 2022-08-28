@@ -16,12 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *************************************************************************/
 #pragma once
+#include <QJsonArray>
 
 class Durchblick;
+class DurchblickDock;
 
 namespace Config {
 
+extern QJsonArray LoadLayoutsForCurrentSceneCollection();
+
 extern Durchblick* db;
+extern DurchblickDock* dbdock;
 
 extern void RegisterCallbacks();
 

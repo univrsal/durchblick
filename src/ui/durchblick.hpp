@@ -42,7 +42,7 @@ class Durchblick : public OBSQTDisplay {
 
     bool m_hide_cursor { false };
     bool m_always_on_top { false };
-
+    
 public:
     QRect m_previous_geometry;
     bool m_ready { false };
@@ -79,6 +79,8 @@ protected:
 public:
     Durchblick(QWidget* widget = nullptr);
     ~Durchblick();
+
+    void OnClose();
 
     static void RenderLayout(void* data, uint32_t cx, uint32_t cy);
 

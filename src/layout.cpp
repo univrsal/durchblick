@@ -470,10 +470,10 @@ void Layout::Load(QJsonObject const& obj)
             berr("Widget JSON: %s", qt_to_utf8(QString(doc.toJson())));
         }
     }
-
+    m_layout_mutex.unlock();
     if (IsEmpty())
         CreateDefaultLayout();
-    m_layout_mutex.unlock();
+    
     RefreshGrid();
 }
 
