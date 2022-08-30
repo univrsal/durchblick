@@ -313,19 +313,29 @@ void Durchblick::Update()
 
 void Durchblick::Save(QJsonObject& obj)
 {
-    obj["monitor"] = m_current_monitor;
-    QJsonObject geo;
-    geo["x"] = geometry().x();
-    geo["y"] = geometry().y();
-    geo["w"] = geometry().width();
-    geo["h"] = geometry().height();
-    obj["geometry"] = geo;
-    obj["visible"] = isVisible();
-    obj["state"] = GetWindowState();
-    obj["hide_from_display_capture"] = GetHideFromDisplayCapture();
-    obj["hide_cursor"] = m_hide_cursor;
-    obj["always_on_top"] = m_always_on_top;
-    m_layout.Save(obj);
+    if (isVisible()) {
+        obj["monitor"] = m_current_monitor;
+        QJsonObject geo;
+        geo["x"] = geometry().x();
+        geo["y"] = geometry().y();
+        geo["w"] = geometry().width();
+        geo["h"] = geometry().height();
+        obj["geometry"] = geo;
+        obj["visible"] = isVisible();
+        obj["state"] = GetWindowState();
+        obj["hide_from_display_capture"] = GetHideFromDisplayCapture();
+        obj["hide_cursor"] = m_hide_cursor;
+        obj["always_on_top"] = m_always_on_top;
+        m_layout.Save(obj);
+        m_cached_layout = obj;
+    } else {
+        // When the window is hidden we delete the layout
+        // so that we don't hold onto source references
+        // that also means that we don't have a layout to save, so we just use the last saved layout
+        // as it can't really change while the window isn't visible
+        obj = m_cached_layout;
+        obj["visible"] = false;
+    }
 }
 
 void Durchblick::Load(QJsonObject const& obj)
@@ -336,6 +346,7 @@ void Durchblick::Load(QJsonObject const& obj)
         m_layout.CreateDefaultLayout();
         return;
     }
+    m_cached_layout = obj;
     m_saved_state = (WindowState)obj["state"].toInt(WindowState::None);
 
     // Restore geometry if this view wasn't in fullscreen

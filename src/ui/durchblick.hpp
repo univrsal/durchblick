@@ -42,7 +42,9 @@ class Durchblick : public OBSQTDisplay {
 
     bool m_hide_cursor { false };
     bool m_always_on_top { false };
-    
+
+    QJsonObject m_cached_layout {};
+
 public:
     QRect m_previous_geometry;
     bool m_ready { false };
