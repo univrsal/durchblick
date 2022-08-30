@@ -293,6 +293,9 @@ void SourceItem::Render(DurchblickItemConfig const& cfg)
         auto lw = obs_source_get_width(m_label);
         auto lh = obs_source_get_height(m_label);
 
+        if (lw == 0 || lh == 0)
+            return;
+
         GetScaleAndCenterPos(cfg.canvas_width, cfg.canvas_height, m_inner_width, m_inner_height, tmp_x, tmp_y, label_scale);
 
         gs_matrix_push();
