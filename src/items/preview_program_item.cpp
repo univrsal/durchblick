@@ -83,12 +83,14 @@ void PreviewProgramItem::Render(DurchblickItemConfig const& cfg)
         auto lw = obs_source_get_width(m_label);
         auto lh = obs_source_get_height(m_label);
 
-        gs_matrix_push();
-        gs_matrix_translate3f((cfg.canvas_width - lw) / 2, cfg.canvas_height - lh * 1.5, 0.0f);
-        DrawBox(lw, lh, labelColor);
-        gs_matrix_translate3f(0, -(lh * 0.08), 0.0f);
-        obs_source_video_render(m_label);
-        gs_matrix_pop();
+        if (lw >= 30 && lh >= 10) { // No reason to draw an unreadable label
+            gs_matrix_push();
+            gs_matrix_translate3f((cfg.canvas_width - lw) / 2, cfg.canvas_height - lh * 1.5, 0.0f);
+            DrawBox(lw, lh, labelColor);
+            gs_matrix_translate3f(0, -(lh * 0.08), 0.0f);
+            obs_source_video_render(m_label);
+            gs_matrix_pop();
+        }
     }
     if (m_toggle_safe_borders->isChecked())
         RenderSafeMargins(w, h);
