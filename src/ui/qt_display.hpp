@@ -38,4 +38,5 @@ public:
     void SetDisplayBackgroundColor(QColor const& color);
     void UpdateDisplayBackgroundColor();
     void CreateDisplay(bool force = false);
+    void DeleteDisplay() { display = nullptr; }
 };
