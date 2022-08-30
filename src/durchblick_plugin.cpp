@@ -18,7 +18,6 @@
 
 #include "config.hpp"
 #include "items/registry.hpp"
-#include "items/source_item.hpp"
 #include "plugin-macros.generated.h"
 #include "ui/durchblick.hpp"
 #include "util/util.h"
@@ -27,8 +26,6 @@
 #include <obs-module.h>
 #include <thread>
 #include <util/util.hpp>
-#include <QMainWindow>
-#include "ui/durchblick_dock.hpp"
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("durchblick", "en-US")
@@ -51,18 +48,12 @@ bool obs_module_load()
         });
 
     Config::RegisterCallbacks();
-
+    Config::Load();
     return true;
 }
 
 void obs_module_post_load()
 {
-    const auto main_window = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-    obs_frontend_push_ui_translation(obs_module_get_string);
-    auto dock = new DurchblickDock(main_window);
-    dock->hide();
-    obs_frontend_add_dock(dock);
-    obs_frontend_pop_ui_translation();
 }
 
 void obs_module_unload()

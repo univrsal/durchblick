@@ -28,8 +28,8 @@
 #include <QJsonObject>
 #include <obs-frontend-api.h>
 #include <obs-module.h>
-#include <util/util.hpp>
 #include <util/platform.h>
+#include <util/util.hpp>
 
 namespace Config {
 
@@ -102,11 +102,26 @@ void Load()
 {
     auto layouts = LoadLayoutsForCurrentSceneCollection();
 
-    db = new Durchblick;
-    db->Load(layouts[0].toObject());
-    dbdock = new DurchblickDock;
+    if (!db)
+        db = new Durchblick;
+
+    if (layouts.size() > 0)
+        db->Load(layouts[0].toObject());
+    else
+        db->setVisible(false);
+
+    if (!dbdock) {
+        const auto main_window = static_cast<QMainWindow*>(obs_frontend_get_main_window());
+        obs_frontend_push_ui_translation(obs_module_get_string);
+        dbdock = new DurchblickDock((QWidget*)main_window);
+        obs_frontend_add_dock(Config::dbdock);
+        obs_frontend_pop_ui_translation();
+    }
+
     if (layouts.size() > 1)
         dbdock->GetDurchblick()->Load(layouts[1].toObject());
+    else
+        dbdock->setVisible(false);
 }
 
 void Save()
