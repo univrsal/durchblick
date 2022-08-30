@@ -17,13 +17,18 @@ void DurchblickDock::closeEvent(QCloseEvent* e)
 void DurchblickDock::showEvent(QShowEvent* e)
 {
     QWidget::showEvent(e);
-    auto layouts = Config::LoadLayoutsForCurrentSceneCollection();
-
-    if (layouts.size() > 1) {
-        if (layouts[1].toObject().isEmpty())
-            db->GetLayout()->CreateDefaultLayout();
-        else
+    if (!e->spontaneous()) {
+        auto layouts = Config::LoadLayoutsForCurrentSceneCollection();
+        db->GetLayout()->DeleteLayout();
+        db->CreateDisplay(true);
+        if (layouts.size() > 1) {
             db->Load(layouts[1].toObject());
+        } else {
+            db->GetLayout()->CreateDefaultLayout();
+        }
+        // Forces a grid refresh
+        // just refreshing the grid doesn't seem to work
+        resize(size().grownBy({ 1, 0, 0, 0 }));
     }
 }
 
