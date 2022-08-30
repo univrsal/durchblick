@@ -200,6 +200,7 @@ void Durchblick::closeEvent(QCloseEvent* e)
     Config::Save();
     m_layout.DeleteLayout();
     hide();
+    DeleteDisplay();
 }
 
 void Durchblick::showEvent(QShowEvent* e)
@@ -209,7 +210,6 @@ void Durchblick::showEvent(QShowEvent* e)
         setWindowState(windowState() | Qt::WindowMaximized);
     else if (m_current_monitor >= 0)
         SetMonitor(m_current_monitor);
-
 }
 
 Durchblick::Durchblick(QWidget* widget)

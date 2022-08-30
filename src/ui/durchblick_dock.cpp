@@ -1,14 +1,16 @@
 #include "durchblick_dock.hpp"
-#include "durchblick.hpp"
 #include "config.hpp"
+#include "durchblick.hpp"
+#include <QShowEvent>
 #include <QVBoxLayout>
-
 
 void DurchblickDock::closeEvent(QCloseEvent* e)
 {
     e->accept();
     db->OnClose();
     Config::Save();
+    db->GetLayout()->DeleteLayout();
+    db->DeleteDisplay();
     hide();
 }
 
@@ -44,5 +46,4 @@ DurchblickDock::DurchblickDock(QWidget* parent)
 
 DurchblickDock::~DurchblickDock()
 {
-
 }

@@ -43,6 +43,7 @@ bool obs_module_load()
     QAction::connect(static_cast<QAction*>(obs_frontend_add_tools_menu_qaction(T_MENU_OPTION)),
         &QAction::triggered, [] {
             auto layouts = Config::LoadLayoutsForCurrentSceneCollection();
+            Config::db->CreateDisplay(true);
             Config::db->Load(layouts[0].toObject());
             Config::db->show();
         });
