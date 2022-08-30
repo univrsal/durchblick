@@ -41,6 +41,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ./src/util/display_helpers.hpp
     ./src/util/volume_meter.cpp
     ./src/util/volume_meter.hpp
+    ./src/ui/durchblick_dock.hpp
+    ./src/ui/durchblick_dock.cpp
     ./src/ui/durchblick.hpp
     ./src/ui/durchblick.cpp
     ./src/ui/qt_display.hpp
