@@ -274,7 +274,7 @@ void Durchblick::OnClose()
 void Durchblick::RenderLayout(void* data, uint32_t cx, uint32_t cy)
 {
     auto* w = (Durchblick*)data;
-    if (!w->m_ready)
+    if (!w->m_ready || !w->isVisible())
         return;
     w->m_layout.Render(w->m_fw, w->m_fh, cx, cy);
 }
