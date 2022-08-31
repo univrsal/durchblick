@@ -263,27 +263,26 @@ void SourceItem::Render(DurchblickItemConfig const& cfg)
 
     auto w = obs_source_get_width(m_src);
     auto h = obs_source_get_height(m_src);
-    vec2 scale { 1, 1 };
     int offset_x {}, offset_y {};
 
     if (m_toggle_stretch->isChecked()) {
-        scale.x = m_inner_width / float(w);
-        scale.y = m_inner_height / float(h);
+        m_scale.x = m_inner_width / float(w);
+        m_scale.y = m_inner_height / float(h);
     } else {
-        GetScaleAndCenterPos(w, h, m_inner_width, m_inner_height, offset_x, offset_y, scale.x);
-        scale.y = scale.x;
+        GetScaleAndCenterPos(w, h, m_inner_width, m_inner_height, offset_x, offset_y, m_scale.x);
+        m_scale.y = m_scale.x;
     }
 
     gs_matrix_push();
     gs_matrix_translate3f(offset_x, offset_y, 0);
-    gs_matrix_scale3f(scale.x, scale.y, 1);
+    gs_matrix_scale3f(m_scale.x, m_scale.y, 1);
     obs_source_video_render(m_src);
     if (m_toggle_safe_borders->isChecked())
         RenderSafeMargins(w, h);
     gs_matrix_pop();
 
     if (m_vol_meter)
-        m_vol_meter->render(cfg.scale);
+        m_vol_meter->render(cfg.scale, m_scale.x, m_scale.y);
 
     // Label has to be scaled and translated regardless of
     // source/scene size because sources can have sizes different than the base canvas
@@ -303,7 +302,7 @@ void SourceItem::Render(DurchblickItemConfig const& cfg)
         // Basically puts the label horziontally centered at the bottom of the source/scene with an offset from the bottom of 1.5 times the height of the label
         // The scale is the same as with the builtin multiview and uses the scale that a rectangle with the base canvas aspect ratio would need
         // this prevents the labels from getting too big/small (usually)
-        gs_matrix_translate3f((m_inner_width - lw * label_scale) / 2, offset_y + h * scale.y - lh * label_scale * 1.5, 0);
+        gs_matrix_translate3f((m_inner_width - lw * label_scale) / 2, offset_y + h * m_scale.y - lh * label_scale * 1.5, 0);
         gs_matrix_scale3f(label_scale, label_scale, 1);
         DrawBox(lw, lh, labelColor);
         gs_matrix_translate3f(0, -(lh * 0.08), 0.0f);
@@ -334,7 +333,9 @@ void SourceItem::MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
             }
 
             if (m_dragging_volume) {
-                m_vol_meter->set_pos(qBound(0, m_mouse_x - m_drag_start_x, m_width - m_vol_meter->get_width()), qBound(0, m_mouse_y - m_drag_start_y, m_height - m_vol_meter->get_height()));
+                auto x = qBound(0, m_mouse_x - m_drag_start_x, qMax(int(m_width - m_vol_meter->get_width() * m_scale.x), 1));
+                auto y = qBound(0, m_mouse_y - m_drag_start_y, qMax(int(m_height - m_vol_meter->get_height() * m_scale.y), 1));
+                m_vol_meter->set_pos(x, y);
             }
         } else {
             m_dragging_volume = false;

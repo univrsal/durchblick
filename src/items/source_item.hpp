@@ -86,6 +86,7 @@ protected:
     int m_channel_width { 2 };
     void RenderSafeMargins(int w, int h);
     static OBSSource CreateLabel(const char* name, size_t h, float scale = 1.0);
+    vec2 m_scale {};
 public slots:
 
     void VolumeToggled(bool);

@@ -136,7 +136,7 @@ public:
 
     void set_source(OBSSource);
 
-    void render(float scale);
+    void render(float cell_scale, float source_scale_x, float source_scale_y);
 
     void calculateBallistics(uint64_t ts,
         qreal timeSinceLastRedraw = 0.0);

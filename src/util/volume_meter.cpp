@@ -218,25 +218,26 @@ VolumeMeter::calculateBallisticsForChannel(int channelNr, uint64_t ts,
     }
 }
 
-void VolumeMeter::render(float cell_scale)
+void VolumeMeter::render(float cell_scale, float, float src_scale_y)
 {
     uint64_t ts = os_gettime_ns();
     qreal timeSinceLastRedraw = (ts - m_last_redraw_time) * 0.000000001;
     calculateBallistics(ts, timeSinceLastRedraw);
     bool idle = detect_idle(ts);
 
+    auto h = m_height * src_scale_y;
     for (int i = 0; i < m_channels; i++) {
         //        auto magnitude = m_display_maginuted[i];
         auto peak = m_display_peak[i];
         auto peakHold = m_display_peak_hold[i];
-        qreal scale = m_height / m_minimum_level;
+        qreal scale = h / m_minimum_level;
 
         QMutexLocker locker(&m_data_mutex);
-        int lower_limit = m_y + m_height;
+        int lower_limit = m_y + h;
         int upper_limit = m_y;
         //        int magnitude_position = int(lower_limit - (magnitude * scale));
-        int peak_position = int(lower_limit - (m_height - (peak * scale)));
-        int peakHoldPosition = int(m_y + m_height - (peakHold * scale));
+        int peak_position = int(lower_limit - (h - (peak * scale)));
+        int peakHoldPosition = int(m_y + h - (peakHold * scale));
         int nominal_position = int(upper_limit + (m_warning_level * scale));
         int warning_position = int(upper_limit + (m_error_level * scale));
 
