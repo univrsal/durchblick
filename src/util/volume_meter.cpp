@@ -252,7 +252,6 @@ void VolumeMeter::render(float cell_scale, float, float src_scale_y)
 
         //        if (m_clipping)
         //            peak_position = upper_limit;
-        binfo("PEAK: %i", peak_position);
         if (peak_position > lower_limit) { // Peak is below the meter -> no peak visible
             draw_rectangle(x, nominal_position, w, nominal_ength,
                 m_muted ? m_background_nominal_color_disabled
