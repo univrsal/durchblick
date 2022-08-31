@@ -62,6 +62,7 @@ public:
         m_channel_width->setMaximum(32);
         l->addRow(T_SOURCE_NAME, m_combo_box);
         l->addRow(T_FONT_SIZE, m_font_size);
+        l->addRow("", m_show_volume_meter);
         l->addRow(T_CHANNEL_WIDTH, m_channel_width);
         l->addRow(T_VOLUME_METER_HEIGHT, m_volume_meter_height);
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
