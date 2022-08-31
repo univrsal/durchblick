@@ -115,7 +115,7 @@ void VolumeMeter::update(const float magnitude[], const float peak[], const floa
     m_current_last_update_time = ts;
 
     if (m_clipping) {
-        if ((ts - m_clip_begin_time) * 0.000000001 > CLIP_FLASH_DURATION_MS) {
+        if ((ts - m_clip_begin_time) * 0.000001 > CLIP_FLASH_DURATION_MS) {
             m_clipping = false;
         }
     }
@@ -250,8 +250,9 @@ void VolumeMeter::render(float cell_scale, float, float src_scale_y)
         auto w = m_channel_width / cell_scale;
         auto x = m_x + (w + 2) * i;
 
-        //        if (m_clipping)
-        //            peak_position = upper_limit;
+        if (m_clipping)
+            peak_position = 0;
+
         if (peak_position > lower_limit) { // Peak is below the meter -> no peak visible
             draw_rectangle(x, nominal_position, w, nominal_ength,
                 m_muted ? m_background_nominal_color_disabled
@@ -317,11 +318,11 @@ void VolumeMeter::render(float cell_scale, float, float src_scale_y)
                 m_clip_begin_time = os_gettime_ns();
                 m_clipping = true;
             }
+            int end = error_length + warning_length + nominal_ength;
 
-            //            int end = error_length + warning_length + nominal_ength;
-            //            draw_rectangle(x, minimumPosition, w, end,
-            //                muted ? foregroundErrorColorDisabled
-            //                      : foregroundErrorColor);
+            draw_rectangle(x, upper_limit, w, end,
+                m_muted ? m_foreground_error_color_disabled
+                        : m_foreground_error_color);
         }
 
         if (peakHoldPosition - 3 < lower_limit)
