@@ -237,7 +237,7 @@ void VolumeMeter::render(float cell_scale, float, float src_scale_y)
         int upper_limit = m_y;
         //        int magnitude_position = int(lower_limit - (magnitude * scale));
         int peak_position = int(lower_limit - (h - (peak * scale)));
-        int peakHoldPosition = int(m_y + h - (peakHold * scale));
+        int peakHoldPosition = int(lower_limit - (h - (peakHold * scale)));
         int nominal_position = int(upper_limit + (m_warning_level * scale));
         int warning_position = int(upper_limit + (m_error_level * scale));
 
@@ -325,19 +325,20 @@ void VolumeMeter::render(float cell_scale, float, float src_scale_y)
                         : m_foreground_error_color);
         }
 
-        if (peakHoldPosition - 3 < lower_limit)
-            ; // Peak-hold below minimum, no drawing.
-        else if (peakHoldPosition < warning_position)
-            draw_rectangle(x, upper_limit - peakHoldPosition - 3, w, 3,
-                m_muted ? m_foreground_nominal_color_disabled
+        auto size = 3 / cell_scale;
+        if (peakHoldPosition - size > lower_limit)
+            ;
+        else if (peakHoldPosition - size / 2 > nominal_position)
+            draw_rectangle(x, peakHoldPosition, w, size,
+                m_muted ? m_foreground_nominal_color
                         : m_foreground_nominal_color);
-        else if (peakHoldPosition < error_position)
-            draw_rectangle(x, upper_limit - peakHoldPosition - 3, w, 3,
+        else if (peakHoldPosition - size / 2 > warning_position)
+            draw_rectangle(x, peakHoldPosition, w, size,
                 m_muted ? m_foreground_warning_color_disabled
                         : m_foreground_warning_color);
         else
-            draw_rectangle(x, upper_limit - peakHoldPosition - 3, w, 3,
-                m_muted ? m_foreground_error_color
+            draw_rectangle(x, peakHoldPosition, w, size,
+                m_muted ? m_foreground_error_color_disabled
                         : m_foreground_error_color);
 
         //        if (magnitudePosition - 3 >= minimumPosition)
