@@ -473,7 +473,7 @@ void Layout::Load(QJsonObject const& obj)
     m_layout_mutex.unlock();
     if (IsEmpty())
         CreateDefaultLayout();
-    
+
     RefreshGrid();
 }
 
