@@ -87,7 +87,7 @@ VolumeMeter::VolumeMeter(OBSSource src, int x, int y, int height, int channel_wi
     m_foreground_error_color_disabled = ARGB32(0xff, 113, 113, 113);
 
     m_clip_color = ARGB32(0xff, 0xff, 0xff, 0xff);       // Bright white
-    m_magniteude_color = ARGB32(0xff, 0x00, 0x00, 0x00); // Black
+    m_magnitude_color = ARGB32(0xff, 0x1f, 0x1e, 0x1f);  // Dark gray
     m_major_tick_color = ARGB32(0xff, 0xff, 0xff, 0xff); // Black
     m_minor_tick_color = ARGB32(0xff, 0xcc, 0xcc, 0xcc); // Black
 }
@@ -204,16 +204,16 @@ VolumeMeter::calculateBallisticsForChannel(int channelNr, uint64_t ts,
         }
     }
 
-    if (!isfinite(m_display_maginuted[channelNr])) {
+    if (!isfinite(m_display_magnitude[channelNr])) {
         // The statements in the else-leg do not work with
         // NaN and infinite displayMagnitude.
-        m_display_maginuted[channelNr] = m_current_magnitude[channelNr];
+        m_display_magnitude[channelNr] = m_current_magnitude[channelNr];
     } else {
         // A VU meter will integrate to the new value to 99% in 300 ms.
         // The calculation here is very simplified and is more accurate
         // with higher frame-rate.
-        float attack = float((m_current_magnitude[channelNr] - m_display_maginuted[channelNr]) * (timeSinceLastRedraw / m_magnitude_integration_time) * 0.99);
-        m_display_maginuted[channelNr] = CLAMP(m_display_maginuted[channelNr] + attack,
+        float attack = float((m_current_magnitude[channelNr] - m_display_magnitude[channelNr]) * (timeSinceLastRedraw / m_magnitude_integration_time) * 0.99);
+        m_display_magnitude[channelNr] = CLAMP(m_display_magnitude[channelNr] + attack,
             (float)m_minimum_level, 0);
     }
 }
@@ -227,9 +227,9 @@ void VolumeMeter::render(float cell_scale, float, float src_scale_y)
 
     auto h = m_height * src_scale_y;
     for (int i = 0; i < m_channels; i++) {
-        //        auto magnitude = m_display_maginuted[i];
+        auto magnitude = m_display_magnitude[i];
         auto peak = m_display_peak[i];
-        auto peakHold = m_display_peak_hold[i];
+        auto peak_hold = m_display_peak_hold[i];
         qreal scale = h / m_minimum_level;
 
         QMutexLocker locker(&m_data_mutex);
@@ -237,10 +237,10 @@ void VolumeMeter::render(float cell_scale, float, float src_scale_y)
         int upper_limit = m_y;
         //        int magnitude_position = int(lower_limit - (magnitude * scale));
         int peak_position = int(lower_limit - (h - (peak * scale)));
-        int peakHoldPosition = int(lower_limit - (h - (peakHold * scale)));
+        int peak_hold_position = int(lower_limit - (h - (peak_hold * scale)));
         int nominal_position = int(upper_limit + (m_warning_level * scale));
         int warning_position = int(upper_limit + (m_error_level * scale));
-
+        int magnitude_position = int(lower_limit - (h - (magnitude * scale)));
         int nominal_ength = lower_limit - nominal_position;
         int warning_length = nominal_position - warning_position;
         int error_length = warning_position - upper_limit;
@@ -299,7 +299,7 @@ void VolumeMeter::render(float cell_scale, float, float src_scale_y)
             draw_rectangle(x, upper_limit, w, error_length,
                 m_muted ? m_background_error_color_disabled
                         : m_background_error_color);
-        } else if (peak_position > error_position) {
+        } else if (peak_position > error_position && peak_position > upper_limit) {
             draw_rectangle(x, peak_position, w, warning_position - peak_position,
                 m_muted ? m_foreground_error_color_disabled
                         : m_foreground_error_color);
@@ -326,41 +326,45 @@ void VolumeMeter::render(float cell_scale, float, float src_scale_y)
         }
 
         auto size = 3 / cell_scale;
-        if (peakHoldPosition - size > lower_limit)
+        if (peak_hold_position - size > lower_limit)
             ;
-        else if (peakHoldPosition - size / 2 > nominal_position)
-            draw_rectangle(x, peakHoldPosition, w, size,
+        else if (peak_hold_position - size / 2 > nominal_position)
+            draw_rectangle(x, peak_hold_position, w, size,
                 m_muted ? m_foreground_nominal_color
                         : m_foreground_nominal_color);
-        else if (peakHoldPosition - size / 2 > warning_position)
-            draw_rectangle(x, peakHoldPosition, w, size,
+        else if (peak_hold_position - size / 2 > warning_position)
+            draw_rectangle(x, peak_hold_position, w, size,
                 m_muted ? m_foreground_warning_color_disabled
                         : m_foreground_warning_color);
-        else
-            draw_rectangle(x, peakHoldPosition, w, size,
+        else if (peak_hold_position - size / 2 > upper_limit)
+            draw_rectangle(x, peak_hold_position, w, size,
                 m_muted ? m_foreground_error_color_disabled
                         : m_foreground_error_color);
 
-        //        if (magnitudePosition - 3 >= minimumPosition)
-        //            draw_rectangle(x, magnitudePosition + 5, w, 3,
-        //                magnitudeColor);
+        if (magnitude_position - size / 2 >= upper_limit) {
+            draw_rectangle(x, magnitude_position - size / 2, w, size,
+                m_magnitude_color);
+        }
 
         if (idle)
             continue;
-        //        uint32_t color;
-        //        if (peakHold < m_minimum_input_level)
-        //            color = m_background_nominal_color;
-        //        else if (peakHold < m_warning_level)
-        //            color = m_foreground_nominal_color;
-        //        else if (peakHold < m_error_level)
-        //            color = m_foreground_warning_color;
-        //        else if (peakHold <= m_clip_level)
-        //            color = m_foreground_error_color;
-        //        else
-        //            color = m_clip_color;
 
-        //        draw_rectangle(i * (meterThickness + 1), m_y - 5, meterThickness, INDICATOR_THICKNESS, color);
+        auto input_peak_hold = m_display_input_peak_hold[i];
+        uint32_t color;
+        if (input_peak_hold < m_minimum_input_level)
+            color = m_background_nominal_color;
+        else if (input_peak_hold < m_warning_level)
+            color = m_foreground_nominal_color;
+        else if (input_peak_hold < m_error_level)
+            color = m_foreground_warning_color;
+        else if (input_peak_hold <= m_clip_level)
+            color = m_foreground_error_color;
+        else
+            color = m_clip_color;
+
+        draw_rectangle(x, lower_limit + 1 / cell_scale, w, w, color);
     }
+    m_last_redraw_time = ts;
 }
 
 inline void VolumeMeter::calculateBallistics(uint64_t ts,

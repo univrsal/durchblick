@@ -39,7 +39,7 @@ class VolumeMeter {
     float m_current_peak[MAX_AUDIO_CHANNELS];
     float m_current_input_peak[MAX_AUDIO_CHANNELS];
 
-    float m_display_maginuted[MAX_AUDIO_CHANNELS];
+    float m_display_magnitude[MAX_AUDIO_CHANNELS];
     float m_display_peak[MAX_AUDIO_CHANNELS];
     float m_display_peak_hold[MAX_AUDIO_CHANNELS];
     uint64_t m_display_peak_hold_last_update_time[MAX_AUDIO_CHANNELS];
@@ -73,7 +73,7 @@ class VolumeMeter {
     uint32_t m_foreground_error_color_disabled;
 
     uint32_t m_clip_color;
-    uint32_t m_magniteude_color;
+    uint32_t m_magnitude_color;
     uint32_t m_major_tick_color;
     uint32_t m_minor_tick_color;
 
@@ -110,7 +110,7 @@ public:
             m_current_peak[channelNr] = -M_INFINITE;
             m_current_input_peak[channelNr] = -M_INFINITE;
 
-            m_display_maginuted[channelNr] = -M_INFINITE;
+            m_display_magnitude[channelNr] = -M_INFINITE;
             m_display_peak[channelNr] = -M_INFINITE;
             m_display_peak_hold[channelNr] = -M_INFINITE;
             m_display_peak_hold_last_update_time[channelNr] = 0;
