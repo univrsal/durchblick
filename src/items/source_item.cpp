@@ -281,7 +281,7 @@ void SourceItem::Render(DurchblickItemConfig const& cfg)
         RenderSafeMargins(w, h);
     gs_matrix_pop();
 
-    if (m_vol_meter)
+    if (m_vol_meter && obs_source_active(m_src))
         m_vol_meter->render(cfg.scale, m_scale.x, m_scale.y);
 
     // Label has to be scaled and translated regardless of
