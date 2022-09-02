@@ -237,22 +237,28 @@ void Layout::MouseDoubleClicked(QMouseEvent* e)
 
 void Layout::HandleContextMenu(QMouseEvent*, QMenu& m)
 {
-    // Keep drawing the selection if it wasn't reset
-    if (!m_selection_end.empty())
-        m_dragging = true;
+    if (m_locked) {
+        m.addAction(T_MENU_UNLOCK, this, SLOT(Unlock()));
+    } else {
 
-    m.addAction(T_MENU_CONFIGURATION, this, SLOT(ShowLayoutConfigDialog()));
-    std::lock_guard<std::mutex> lock(m_layout_mutex);
+        // Keep drawing the selection if it wasn't reset
+        if (!m_selection_end.empty())
+            m_dragging = true;
 
-    for (auto& Item : m_layout_items) {
-        if (Item->Hovered()) {
-            auto* sub_menu = m.addMenu(T_MENU_QUICK_ACTIONS);
-            sub_menu->addAction(T_MENU_FILL_ACTION, this, SLOT(FillSelectionWithScenes()));
-            sub_menu->addAction(T_MENU_CLEAR_ACTION, this, SLOT(ClearSelection()));
-            m.addAction(T_MENU_SET_WIDGET, this, SLOT(ShowSetWidgetDialog()));
-            m.addSeparator();
-            Item->ContextMenu(m);
-            break;
+        m.addAction(T_MENU_CONFIGURATION, this, SLOT(ShowLayoutConfigDialog()));
+        m.addAction(T_MENU_LOCK, this, SLOT(Lock()));
+        std::lock_guard<std::mutex> lock(m_layout_mutex);
+
+        for (auto& Item : m_layout_items) {
+            if (Item->Hovered()) {
+                auto* sub_menu = m.addMenu(T_MENU_QUICK_ACTIONS);
+                sub_menu->addAction(T_MENU_FILL_ACTION, this, SLOT(FillSelectionWithScenes()));
+                sub_menu->addAction(T_MENU_CLEAR_ACTION, this, SLOT(ClearSelection()));
+                m.addAction(T_MENU_SET_WIDGET, this, SLOT(ShowSetWidgetDialog()));
+                m.addSeparator();
+                Item->ContextMenu(m);
+                break;
+            }
         }
     }
 }
@@ -456,6 +462,7 @@ void Layout::Load(QJsonObject const& obj)
     m_layout_mutex.lock();
     m_cols = obj["cols"].toInt();
     m_rows = obj["rows"].toInt();
+    m_locked = obj["locked"].toBool();
     auto items = obj["items"].toArray();
 
     for (auto const& item : qAsConst(items)) {
@@ -483,6 +490,7 @@ void Layout::Save(QJsonObject& obj)
     QJsonArray items;
     obj["cols"] = m_cols;
     obj["rows"] = m_rows;
+    obj["locked"] = m_locked;
     for (auto const& Item : m_layout_items) {
         QJsonObject obj;
         Item->WriteToJson(obj);

@@ -35,6 +35,8 @@
 /* Misc */
 #define U_(s)                           QApplication::translate("", s)
 #define T_(v)                           obs_module_text(v)
+#define T_MENU_LOCK                     T_("Menu.Lock")
+#define T_MENU_UNLOCK                   T_("Menu.Unlock")
 #define T_MENU_OPTION                   T_("Menu.Option")
 #define T_MENU_SET_WIDGET               T_("Menu.SetWidget")
 #define T_MENU_CONFIGURATION            T_("Menu.Config")

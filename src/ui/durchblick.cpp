@@ -162,21 +162,24 @@ void Durchblick::mouseReleaseEvent(QMouseEvent* e)
     if (e->button() == Qt::RightButton) {
         QMenu m(T_MENU_OPTION, this);
         auto* projectorMenu = new QMenu(T_FULLSCREEN);
-        AddProjectorMenuMonitors(projectorMenu, this, SLOT(OpenFullScreenProjector()));
-        m.addMenu(projectorMenu);
 
-        if (m_current_monitor > -1) {
-            m.addAction(T_WINDOWED, this, SLOT(OpenWindowedProjector()));
-        } else if (!this->isMaximized()) {
-            m.addAction(T_RESIZE_WINDOW_CONTENT,
-                this, SLOT(ResizeToContent()));
+        if (!m_layout.IsLocked()) {
+            AddProjectorMenuMonitors(projectorMenu, this, SLOT(OpenFullScreenProjector()));
+            m.addMenu(projectorMenu);
+
+            if (m_current_monitor > -1) {
+                m.addAction(T_WINDOWED, this, SLOT(OpenWindowedProjector()));
+            } else if (!this->isMaximized()) {
+                m.addAction(T_RESIZE_WINDOW_CONTENT,
+                    this, SLOT(ResizeToContent()));
+            }
+
+            auto* always_on_top = new QAction(T_ALWAYS_ON_TOP, this);
+            always_on_top->setCheckable(true);
+            always_on_top->setChecked(m_always_on_top);
+            connect(always_on_top, &QAction::toggled, this, &Durchblick::AlwaysOnTopToggled);
+            m.addAction(always_on_top);
         }
-
-        auto* always_on_top = new QAction(T_ALWAYS_ON_TOP, this);
-        always_on_top->setCheckable(true);
-        always_on_top->setChecked(m_always_on_top);
-        connect(always_on_top, &QAction::toggled, this, &Durchblick::AlwaysOnTopToggled);
-        m.addAction(always_on_top);
 
         m_layout.HandleContextMenu(e, m);
         m.exec(QCursor::pos());

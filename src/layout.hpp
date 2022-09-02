@@ -76,7 +76,7 @@ class Layout : public QObject {
     DurchblickItemConfig m_cfg;
     Durchblick* m_durchblick {};
     LayoutItem::Cell m_hovered_cell {}, m_selection_start {}, m_selection_end {};
-    bool m_dragging {};
+    bool m_dragging {}, m_locked {};
     std::mutex m_layout_mutex;
     Q_OBJECT
 
@@ -106,6 +106,9 @@ private slots:
         dlg.exec();
     }
 
+    void Lock() { m_locked = true; }
+    void Unlock() { m_locked = false; }
+
     void FillSelectionWithScenes();
 
 public:
@@ -129,6 +132,7 @@ public:
     void Load(QJsonObject const& obj);
     void Save(QJsonObject& obj);
     bool IsEmpty() const { return m_layout_items.empty(); }
+    bool IsLocked() const { return m_locked; }
     void DeleteLayout();
     void ResetHover();
     void Clear()
