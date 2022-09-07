@@ -126,4 +126,6 @@ public:
     virtual void Render(DurchblickItemConfig const& cfg) override;
     virtual void ContextMenu(QMenu&) override;
     virtual void MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg) override;
+
+    virtual bool EnableVolumeMeter() const { return true; }
 };

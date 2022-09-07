@@ -102,4 +102,5 @@ public:
     uint32_t GetFillColor() override;
     void ReadFromJson(QJsonObject const& Obj) override;
     void WriteToJson(QJsonObject& Obj) override;
+    bool EnableVolumeMeter() const override { return false; }
 };

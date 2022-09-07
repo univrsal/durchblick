@@ -316,7 +316,8 @@ void SourceItem::ContextMenu(QMenu& m)
     LayoutItem::ContextMenu(m);
     m.addAction(m_toggle_safe_borders);
     m.addAction(m_toggle_label);
-    m.addAction(m_toggle_volume);
+    if (EnableVolumeMeter())
+        m.addAction(m_toggle_volume);
 }
 
 void SourceItem::MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
