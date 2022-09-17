@@ -329,7 +329,7 @@ void MixerMeter::Render(float cell_scale, float, float src_scale_y)
             ;
         else if (peak_hold_position - size / 2 > nominal_position)
             draw_rectangle(x, peak_hold_position, w, size,
-                m_muted ? m_foreground_nominal_color
+                m_muted ? m_foreground_nominal_color_disabled
                         : m_foreground_nominal_color);
         else if (peak_hold_position - size / 2 > warning_position)
             draw_rectangle(x, peak_hold_position, w, size,
