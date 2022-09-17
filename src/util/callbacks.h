@@ -18,6 +18,7 @@
 
 #pragma once
 #include <jansson.h>
+#include <obs.h>
 
 // Provide this when registering your widgets. This makes sure that
 // no widgets get registered if the version does not match.
@@ -163,4 +164,16 @@ struct DurchblickCallbacks {
     DurchblickItemIdCb GetId;
     DurchblickItemNameCb GetName;
 };
+
+static inline bool durchblick_register_custom_widget(struct DurchblickCallbacks const* cbs)
+{
+    auto* ph = obs_get_proc_handler();
+    auto* data = calldata_create();
+    calldata_set_int(data, "api_version", DURCHBLICK_CUSTOM_WIDGET_API_VERSION);
+    calldata_set_ptr(data, "callbacks", &cbs);
+
+    bool result = proc_handler_call(ph, "durchblick_register_custom_widget", data);
+    calldata_destroy(data);
+    return result;
+}
 }
