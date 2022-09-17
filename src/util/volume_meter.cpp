@@ -34,10 +34,10 @@ static void volume_meter(void* data,
     const float peak[MAX_AUDIO_CHANNELS],
     const float inputPeak[MAX_AUDIO_CHANNELS])
 {
-    static_cast<VolumeMeter*>(data)->update(magnitude, peak, inputPeak);
+    static_cast<MixerMeter*>(data)->update(magnitude, peak, inputPeak);
 }
 
-void VolumeMeter::draw_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t c)
+void MixerMeter::draw_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t c)
 {
     if (!(w > 0 && h > 0))
         return;
@@ -52,14 +52,13 @@ void VolumeMeter::draw_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h,
     gs_matrix_pop();
 }
 
-VolumeMeter::VolumeMeter(OBSSource src, int x, int y, int height, int channel_width)
-    : m_x(x)
+MixerMeter::MixerMeter(OBSSource src, int x, int y, int height, int channel_width)
+    : m_source(src)
+    , m_x(x)
     , m_y(y)
     , m_height(height)
     , m_channel_width(channel_width)
 {
-    set_type(OBS_FADER_LOG);
-    set_source(src);
     m_minimum_level = -60.0;            // -60 dB
     m_warning_level = -20.0;            // -20 dB
     m_error_level = -9.0;               //  -9 dB
@@ -92,13 +91,13 @@ VolumeMeter::VolumeMeter(OBSSource src, int x, int y, int height, int channel_wi
     m_minor_tick_color = ARGB32(0xff, 0xcc, 0xcc, 0xcc); // Black
 }
 
-VolumeMeter::~VolumeMeter()
+MixerMeter::~MixerMeter()
 {
     obs_volmeter_remove_callback(m_meter, volume_meter, this);
     obs_volmeter_destroy(m_meter);
 }
 
-void VolumeMeter::set_type(obs_fader_type t)
+void MixerMeter::set_type(obs_fader_type t)
 {
     obs_volmeter_remove_callback(m_meter, volume_meter, this);
     obs_volmeter_destroy(m_meter);
@@ -107,7 +106,7 @@ void VolumeMeter::set_type(obs_fader_type t)
     m_channels = obs_volmeter_get_nr_channels(m_meter);
 }
 
-void VolumeMeter::update(const float magnitude[], const float peak[], const float inputPeak[])
+void MixerMeter::update(const float magnitude[], const float peak[], const float inputPeak[])
 {
     uint64_t ts = os_gettime_ns();
     QMutexLocker locker(&m_data_mutex);
@@ -134,11 +133,11 @@ void VolumeMeter::update(const float magnitude[], const float peak[], const floa
 
 static void on_source_muted(void* data, calldata_t* calldata)
 {
-    VolumeMeter* meter = static_cast<VolumeMeter*>(data);
+    MixerMeter* meter = static_cast<MixerMeter*>(data);
     meter->set_muted(calldata_bool(calldata, "muted"));
 }
 
-void VolumeMeter::set_source(OBSSource src)
+void MixerMeter::set_source(OBSSource src)
 {
     m_source = src;
     if (m_meter) {
@@ -160,7 +159,7 @@ void VolumeMeter::set_source(OBSSource src)
 }
 
 inline void
-VolumeMeter::calculateBallisticsForChannel(int channelNr, uint64_t ts,
+MixerMeter::calculateBallisticsForChannel(int channelNr, uint64_t ts,
     qreal timeSinceLastRedraw)
 {
     if (m_current_peak[channelNr] >= m_display_peak[channelNr] || isnan(m_display_peak[channelNr])) {
@@ -218,7 +217,7 @@ VolumeMeter::calculateBallisticsForChannel(int channelNr, uint64_t ts,
     }
 }
 
-void VolumeMeter::render(float cell_scale, float, float src_scale_y)
+void MixerMeter::Render(float cell_scale, float, float src_scale_y)
 {
     uint64_t ts = os_gettime_ns();
     qreal timeSinceLastRedraw = (ts - m_last_redraw_time) * 0.000000001;
@@ -367,7 +366,7 @@ void VolumeMeter::render(float cell_scale, float, float src_scale_y)
     m_last_redraw_time = ts;
 }
 
-inline void VolumeMeter::calculateBallistics(uint64_t ts,
+inline void MixerMeter::calculateBallistics(uint64_t ts,
     qreal timeSinceLastRedraw)
 {
     QMutexLocker locker(&m_data_mutex);

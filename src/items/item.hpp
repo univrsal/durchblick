@@ -169,6 +169,11 @@ public:
         return m_hovered_cell;
     }
 
+    uint32_t Width() const { return m_width; }
+    uint32_t Height() const { return m_height; }
+    uint32_t MouseX() const { return m_mouse_x; }
+    uint32_t MouseY() const { return m_mouse_y; }
+
     virtual void Update(DurchblickItemConfig const& cfg)
     {
         m_rel_left = cfg.cell_width * m_cell.col;

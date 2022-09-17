@@ -49,7 +49,7 @@ void PreviewProgramItem::CreateLabel()
         name = T_PROGRAM;
     else
         name = T_PREVIEW;
-    m_label = SourceItem::CreateLabel(qt_to_utf8(name), h / 1.5, m_font_scale);
+    m_label = ::CreateLabel(qt_to_utf8(name), h / 1.5, m_font_scale);
 }
 
 static const uint32_t labelColor = 0xD91F1F1F;

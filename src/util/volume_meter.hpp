@@ -23,7 +23,8 @@
 #include <obs-module.h>
 #include <obs.hpp>
 
-class VolumeMeter {
+class MixerMeter {
+protected:
     bool m_muted = false;
     uint64_t m_clip_begin_time = 0;
     uint64_t m_last_redraw_time = 0;
@@ -80,8 +81,8 @@ class VolumeMeter {
     inline void draw_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t color);
 
 public:
-    VolumeMeter(OBSSource, int x = 10, int y = 10, int height = 100, int channel_width = 3);
-    ~VolumeMeter();
+    MixerMeter(OBSSource, int x = 10, int y = 10, int height = 100, int channel_width = 3);
+    ~MixerMeter();
 
     bool detect_idle(uint64_t ts)
     {
@@ -94,7 +95,7 @@ public:
         }
     }
 
-    void set_type(obs_fader_type t);
+    virtual void set_type(obs_fader_type t);
 
     void set_muted(bool m) { m_muted = m; }
 
@@ -134,9 +135,9 @@ public:
         return x >= m_x && x <= m_x + get_width() && y >= m_y && y <= m_y + m_height;
     }
 
-    void set_source(OBSSource);
+    virtual void set_source(OBSSource);
 
-    void render(float cell_scale, float source_scale_x, float source_scale_y);
+    virtual void Render(float cell_scale, float source_scale_x, float source_scale_y);
 
     void calculateBallistics(uint64_t ts,
         qreal timeSinceLastRedraw = 0.0);

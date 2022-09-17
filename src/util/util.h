@@ -63,6 +63,7 @@
 #define T_SOURCE_ITEM_VOLUME            T_("SourceItem.Volume")
 #define T_WIDGET_SOURCE                 T_("Widget.SourceDisplay")
 #define T_WIDGET_SCENE                  T_("Widget.SceneDisplay")
+#define T_WIDGET_AUDIO_MIXER            T_("Widget.AudioMixer")
 #define T_WIDGET_PREVIEW_PROGRAM        T_("Widget.PreviewProgramDisplay")
 
 #define T_DRAW_SAFE_BORDERS             U_("Basic.Settings.General.Multiview.DrawSafeAreas")

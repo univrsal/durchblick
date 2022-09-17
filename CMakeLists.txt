@@ -41,6 +41,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ./src/util/display_helpers.hpp
     ./src/util/volume_meter.cpp
     ./src/util/volume_meter.hpp
+    ./src/util/mixer_renderer.cpp
+    ./src/util/mixer_renderer.hpp
     ./src/ui/durchblick_dock.hpp
     ./src/ui/durchblick_dock.cpp
     ./src/ui/durchblick.hpp
@@ -62,6 +64,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ./src/items/preview_program_item.hpp
     ./src/items/custom_item.cpp
     ./src/items/custom_item.hpp
+    ./src/items/audio_mixer.cpp
+    ./src/items/audio_mixer.hpp
 )
 
 # Import libobs as main plugin dependency

@@ -6,47 +6,13 @@
 #include <obs-frontend-api.h>
 #include <util/util.hpp>
 
-/* yoinked from obs window-projector.cpp */
-OBSSource SourceItem::CreateLabel(char const* name, size_t h, float scale)
-{
-    OBSDataAutoRelease settings = obs_data_create();
-    OBSDataAutoRelease font = obs_data_create();
-
-    std::string text;
-    text += " ";
-    text += name;
-    text += " ";
-
-#if defined(_WIN32)
-    obs_data_set_string(font, "face", "Arial");
-#elif defined(__APPLE__)
-    obs_data_set_string(font, "face", "Helvetica");
-#else
-    obs_data_set_string(font, "face", "Monospace");
-#endif
-    obs_data_set_int(font, "flags", 1); // Bold text
-    obs_data_set_int(font, "size", int(h / 9.81) * scale);
-
-    obs_data_set_obj(settings, "font", font);
-    obs_data_set_string(settings, "text", text.c_str());
-    obs_data_set_bool(settings, "outline", false);
-
-#ifdef _WIN32
-    const char* text_source_id = "text_gdiplus";
-#else
-    const char* text_source_id = "text_ft2_source";
-#endif
-
-    OBSSourceAutoRelease txtSource = obs_source_create_private(text_source_id, name, settings);
-
-    return txtSource.Get();
-}
-
 void SourceItem::VolumeToggled(bool state)
 {
     if (state && m_src) {
         auto h = obs_source_get_height(m_src);
-        m_vol_meter = std::make_unique<VolumeMeter>(m_src, m_volume_meter_x, m_volume_meter_y, h / 2);
+        m_vol_meter = std::make_unique<MixerMeter>(m_src, m_volume_meter_x, m_volume_meter_y, h / 2);
+        m_vol_meter->set_type(OBS_FADER_LOG);
+        m_vol_meter->set_source(m_src);
     } else {
         if (m_vol_meter) {
             m_volume_meter_x = m_vol_meter->get_x();
@@ -166,7 +132,7 @@ void SourceItem::LoadConfigFromWidget(QWidget* w)
         m_toggle_volume->setChecked(custom->m_show_volume_meter->isChecked());
         if (src && custom->m_show_volume_meter->isChecked()) {
             auto h = obs_source_get_height(src);
-            m_vol_meter = std::make_unique<VolumeMeter>(src.Get(), 10, 10, int(h * m_volume_meter_height));
+            m_vol_meter = std::make_unique<MixerMeter>(src.Get(), 10, 10, int(h * m_volume_meter_height));
         }
         SetSource(src);
     }
@@ -223,7 +189,7 @@ void SourceItem::ReadFromJson(QJsonObject const& Obj)
 
     if (src.Get() && m_toggle_volume->isChecked()) {
         auto h = obs_source_get_height(src);
-        m_vol_meter = std::make_unique<VolumeMeter>(src.Get(), m_volume_meter_x, m_volume_meter_y, int(h * m_volume_meter_height));
+        m_vol_meter = std::make_unique<MixerMeter>(src.Get(), m_volume_meter_x, m_volume_meter_y, int(h * m_volume_meter_height));
     }
 }
 
@@ -282,7 +248,7 @@ void SourceItem::Render(DurchblickItemConfig const& cfg)
     gs_matrix_pop();
 
     if (m_vol_meter && obs_source_active(m_src))
-        m_vol_meter->render(cfg.scale, m_scale.x, m_scale.y);
+        m_vol_meter->Render(cfg.scale, m_scale.x, m_scale.y);
 
     // Label has to be scaled and translated regardless of
     // source/scene size because sources can have sizes different than the base canvas

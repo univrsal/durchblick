@@ -18,6 +18,7 @@
 
 #include "registry.hpp"
 #include "../util/util.h"
+#include "audio_mixer.hpp"
 #include "custom_item.hpp"
 #include "preview_program_item.hpp"
 #include "scene_item.hpp"
@@ -95,6 +96,7 @@ void RegisterDefaults()
     Registry::Register<PreviewProgramItem>(T_WIDGET_PREVIEW_PROGRAM);
     Registry::Register<SourceItem>(T_WIDGET_SOURCE);
     Registry::Register<SceneItem>(T_WIDGET_SCENE);
+    Registry::Register<AudioMixerItem>(T_WIDGET_AUDIO_MIXER);
 
     Registry::AddCallbacks<SourceItem>();
 }

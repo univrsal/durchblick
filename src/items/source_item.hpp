@@ -29,6 +29,42 @@
 #include <mutex>
 #include <obs.hpp>
 
+/* yoinked from obs window-projector.cpp */
+static inline OBSSource CreateLabel(char const* name, size_t h, float scale)
+{
+    OBSDataAutoRelease settings = obs_data_create();
+    OBSDataAutoRelease font = obs_data_create();
+
+    std::string text;
+    text += " ";
+    text += name;
+    text += " ";
+
+#if defined(_WIN32)
+    obs_data_set_string(font, "face", "Arial");
+#elif defined(__APPLE__)
+    obs_data_set_string(font, "face", "Helvetica");
+#else
+    obs_data_set_string(font, "face", "Monospace");
+#endif
+    obs_data_set_int(font, "flags", 1); // Bold text
+    obs_data_set_int(font, "size", int(h / 9.81) * scale);
+
+    obs_data_set_obj(settings, "font", font);
+    obs_data_set_string(settings, "text", text.c_str());
+    obs_data_set_bool(settings, "outline", false);
+
+#ifdef _WIN32
+    const char* text_source_id = "text_gdiplus";
+#else
+    const char* text_source_id = "text_ft2_source";
+#endif
+
+    OBSSourceAutoRelease txtSource = obs_source_create_private(text_source_id, name, settings);
+
+    return txtSource.Get();
+}
+
 class SourceItemWidget : public QWidget {
     Q_OBJECT
 public:
@@ -80,13 +116,12 @@ protected:
     QAction* m_toggle_safe_borders;
     QAction* m_toggle_label;
     QAction* m_toggle_volume;
-    std::unique_ptr<VolumeMeter> m_vol_meter {};
+    std::unique_ptr<MixerMeter> m_vol_meter {};
     float m_font_scale { 1 };
     float m_volume_meter_height { .5 };
     int m_volume_meter_x { 10 }, m_volume_meter_y { 10 };
     int m_channel_width { 2 };
     void RenderSafeMargins(int w, int h);
-    static OBSSource CreateLabel(const char* name, size_t h, float scale = 1.0);
     vec2 m_scale {};
 public slots:
 
