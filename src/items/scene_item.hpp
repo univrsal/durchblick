@@ -87,6 +87,8 @@ class SceneItem : public SourceItem {
         return 0;
     }
 
+    bool m_lmb_down {};
+
 public:
     SceneItem(Layout* parent, int x, int y, int w = 1, int h = 1)
         : SourceItem(parent, x, y, w, h)

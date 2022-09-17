@@ -61,14 +61,16 @@ void SceneItem::MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
         obs_frontend_get_global_config(), "BasicWindow", "TransitionOnDoubleClick");
     auto switchOnClick = config_get_bool(obs_frontend_get_global_config(), "BasicWindow",
         "MultiviewMouseSwitch");
-    if (e.buttons & Qt::LeftButton && Hovered()) {
-        if (e.double_click) {
+    if (Hovered()) {
+        auto islmb = e.buttons & Qt::LeftButton;
+        if (e.double_click && islmb) {
             if (!(obs_frontend_preview_program_mode_active() && transitionOnDoubleClick && switchOnClick))
                 return;
             OBSSourceAutoRelease src = obs_frontend_get_current_scene();
             if (src != m_src)
                 obs_frontend_set_current_scene(m_src);
-        } else {
+        } else if (e.type == QEvent::MouseButtonRelease && m_lmb_down) {
+            m_lmb_down = false;
             if (obs_frontend_preview_program_mode_active()) {
                 if (!switchOnClick)
                     return;
@@ -80,7 +82,11 @@ void SceneItem::MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
                 if (src != m_src)
                     obs_frontend_set_current_scene(m_src);
             }
+        } else if (e.type == QEvent::MouseButtonPress && islmb) {
+            m_lmb_down = true;
         }
+    } else {
+        m_lmb_down = false;
     }
 }
 
