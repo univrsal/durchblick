@@ -58,7 +58,7 @@ typedef void* (*DurchblickItemInitCb)(void* item);
  * This callback is required.
  * @return          The identifier of this widget
  */
-typedef const char* (*DurchblickItemId)();
+typedef const char* (*DurchblickItemIdCb)();
 
 /**
  * Returns the translated display name for this custom widget type
@@ -160,7 +160,7 @@ struct DurchblickCallbacks {
     DurchblickItemRenderCb Render;
     DurchblickItemFillColorCb GetFillColor;
     DurchblickItemUpdateCb Update;
-    DurchblickItemId GetId;
+    DurchblickItemIdCb GetId;
     DurchblickItemNameCb GetName;
 };
 }
