@@ -22,14 +22,25 @@
 #include "volume_meter.hpp"
 #include <vector>
 
+class AudioMixerRenderer;
+
 class MixerSlider : public MixerMeter {
     OBSSource m_label {};
     obs_fader_t* m_fader {};
     bool m_dragging_volume { false }, m_lmb_down { false };
     float m_db {}, m_fade { 1 };
+    AudioMixerRenderer* m_parent {};
+
+protected:
+    void on_source_name_changed() override;
+
+    void on_source_volume_changed() override
+    {
+        set_db(obs_fader_get_db(m_fader));
+    }
 
 public:
-    MixerSlider(OBSSource, int x = 10, int y = 10, int height = 100, int channel_width = 3);
+    MixerSlider(AudioMixerRenderer*, OBSSource, int x = 10, int y = 10, int height = 100, int channel_width = 3);
     ~MixerSlider();
 
     virtual void Render(float cell_scale, float source_scale_x, float source_scale_y) override;

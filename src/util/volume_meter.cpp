@@ -29,6 +29,12 @@
 #define INDICATOR_THICKNESS 3
 #define CLIP_FLASH_DURATION_MS 1000
 
+static void on_source_muted(void* data, calldata_t* calldata)
+{
+    MixerMeter* meter = static_cast<MixerMeter*>(data);
+    meter->set_muted(calldata_bool(calldata, "muted"));
+}
+
 static void volume_meter(void* data,
     const float magnitude[MAX_AUDIO_CHANNELS],
     const float peak[MAX_AUDIO_CHANNELS],
@@ -131,21 +137,31 @@ void MixerMeter::update(const float magnitude[], const float peak[], const float
     calculateBallistics(ts);
 }
 
-static void on_source_muted(void* data, calldata_t* calldata)
-{
-    MixerMeter* meter = static_cast<MixerMeter*>(data);
-    meter->set_muted(calldata_bool(calldata, "muted"));
-}
-
 void MixerMeter::set_source(OBSSource src)
 {
     m_source = src;
+    signal_handler_t* handler = obs_source_get_signal_handler(src);
+    mute_signal.Connect(
+        handler, "mute", [](void* d, calldata_t* cd) {
+            calldata_get_bool(cd, "muted", &static_cast<MixerMeter*>(d)->m_muted);
+        },
+        this);
+    vol_changed_signal.Connect(
+        handler, "volume", [](void* d, calldata_t*) {
+            static_cast<MixerMeter*>(d)->on_source_volume_changed();
+        },
+        this);
+    rename_signal.Connect(
+        handler, "rename", [](void* d, calldata_t*) {
+            static_cast<MixerMeter*>(d)->on_source_name_changed();
+        },
+        this);
+
     if (m_meter) {
 
         int currentNrAudioChannels = obs_volmeter_get_nr_channels(m_meter);
 
         m_muted = obs_source_muted(src);
-        signal_handler_connect(obs_source_get_signal_handler(src), "mute", on_source_muted, this);
         if (!currentNrAudioChannels) {
             struct obs_audio_info oai;
             obs_get_audio_info(&oai);

@@ -80,6 +80,15 @@ protected:
 
     inline void draw_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t color);
 
+    OBSSignal vol_changed_signal;
+    OBSSignal mixersSignal;
+    OBSSignal mute_signal;
+    OBSSignal deactivateSignal;
+    OBSSignal rename_signal;
+
+    virtual void on_source_name_changed() { }
+    virtual void on_source_volume_changed() { }
+
 public:
     MixerMeter(OBSSource, int x = 10, int y = 10, int height = 100, int channel_width = 3);
     ~MixerMeter();

@@ -26,8 +26,14 @@ static void fader_update(void* data, float db)
     static_cast<MixerSlider*>(data)->set_db(db);
 }
 
-MixerSlider::MixerSlider(OBSSource src, int x, int y, int height, int channel_width)
+void MixerSlider::on_source_name_changed()
+{
+    m_parent->QueueSourceUpdate();
+}
+
+MixerSlider::MixerSlider(AudioMixerRenderer* parent, OBSSource src, int x, int y, int height, int channel_width)
     : MixerMeter(src, x, y, height, channel_width)
+    , m_parent(parent)
 {
 }
 
