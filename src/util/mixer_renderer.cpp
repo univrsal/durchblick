@@ -148,25 +148,53 @@ AudioMixerRenderer::AudioMixerRenderer(AudioMixerItem* parent, int height, int c
 void AudioMixerRenderer::UpdateSources()
 {
     m_sliders.clear();
-    OBSSourceAutoRelease sc = obs_frontend_get_current_scene();
-    std::vector<OBSSource> active_audio_srcs;
+
+    /* We keep global audio sources in the front
+     * because I thought that that's what the mixer in obs does, but then
+     * i found out that it doesn't do that and i already wrote the code
+     */
+    struct data {
+        std::vector<OBSSource> active_audio_srcs;
+        std::vector<OBSSource> active_global_audio_srcs;
+        QString desktop_string = QApplication::translate("", "Basic.DesktopDevice1");
+        QString mic_string = QApplication::translate("", "Basic.AuxDevice1");
+    } d;
+
     obs_enum_sources(
         [](void* param, obs_source_t* src) {
             uint32_t flags = obs_source_get_output_flags(src);
 
             if ((flags & OBS_SOURCE_AUDIO) != 0 && obs_source_active(src)) {
-                auto* srcs = (std::vector<OBSSource>*)param;
-                if (obs_source_audio_active(src)) {
-                    srcs->emplace_back(src);
+                OBSDataAutoRelease priv_settings = obs_source_get_private_settings(src);
+                bool hidden = obs_data_get_bool(priv_settings, "mixer_hidden");
+
+                auto* d = static_cast<data*>(param);
+                if (obs_source_audio_active(src) && !hidden) {
+                    auto name = utf8_to_qt(obs_source_get_name(src));
+                    if (name.startsWith(d->desktop_string) || name.startsWith(d->mic_string)) {
+                        d->active_global_audio_srcs.emplace_back(src);
+                    } else {
+                        d->active_audio_srcs.emplace_back(src);
+                    }
                 }
             }
             return true;
         },
-        &active_audio_srcs);
+        &d);
+
+    std::sort(d.active_audio_srcs.begin(), d.active_audio_srcs.end(), [](auto const& a, auto const& b) {
+        return utf8_to_qt(obs_source_get_name(a)).toLower() < utf8_to_qt(obs_source_get_name(b)).toLower();
+    });
+    std::sort(d.active_global_audio_srcs.begin(), d.active_global_audio_srcs.end(), [](auto const& a, auto const& b) {
+        return utf8_to_qt(obs_source_get_name(a)).toLower() < utf8_to_qt(obs_source_get_name(b)).toLower();
+    });
 
     int x = 35;
-    for (auto& src : active_audio_srcs) {
-        auto* slider = new MixerSlider(src, x, 0, m_height, m_channel_width);
+
+    d.active_audio_srcs.insert(d.active_audio_srcs.begin(), d.active_global_audio_srcs.begin(), d.active_global_audio_srcs.end());
+
+    for (auto& src : d.active_audio_srcs) {
+        auto* slider = new MixerSlider(this, src, x, 0, m_height, m_channel_width);
         slider->set_type(OBS_FADER_LOG);
         slider->set_source(src);
         m_sliders.emplace_back(slider);
