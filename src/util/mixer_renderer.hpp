@@ -72,14 +72,18 @@ class AudioMixerItem;
 
 class AudioMixerRenderer {
     std::vector<std::unique_ptr<MixerSlider>> m_sliders;
-    int m_height {}, m_channel_width {};
+    int m_height {}, m_y {}, m_channel_width {};
     AudioMixerItem* m_parent {};
+    bool m_update_queued { false };
+
+    void RefreshSliderSizeAndPos();
 
 public:
     AudioMixerRenderer(AudioMixerItem* parent, int height = 100, int channel_width = 3);
     ~AudioMixerRenderer() = default;
 
     void UpdateSources();
+    void QueueSourceUpdate() { m_update_queued = true; }
     void Render(float cell_scale, float source_scale_x, float source_scale_y);
     void Update(DurchblickItemConfig const& cfg);
 

@@ -123,6 +123,14 @@ void MixerSlider::MouseEvent(const LayoutItem::MouseData& e, const DurchblickIte
     }
 }
 
+void AudioMixerRenderer::RefreshSliderSizeAndPos()
+{
+    for (auto& slider : m_sliders) {
+        slider->set_y(m_y);
+        slider->set_height(m_height);
+    }
+}
+
 AudioMixerRenderer::AudioMixerRenderer(AudioMixerItem* parent, int height, int channel_width)
     : m_height(height)
     , m_channel_width(channel_width)
@@ -164,16 +172,21 @@ void AudioMixerRenderer::Render(float cell_scale, float source_scale_x, float so
 {
     for (auto& slider : m_sliders)
         slider->Render(cell_scale, source_scale_x, source_scale_y);
+
+    if (m_update_queued) {
+        m_update_queued = false;
+        UpdateSources();
+        RefreshSliderSizeAndPos();
+    }
 }
 
 void AudioMixerRenderer::Update(const DurchblickItemConfig&)
 {
     auto h = m_parent->Height() * 0.8;
     auto y = (m_parent->Height() * .2) / 2;
-    for (auto& slider : m_sliders) {
-        slider->set_y(y);
-        slider->set_height(h);
-    }
+    m_height = h;
+    m_y = y;
+    RefreshSliderSizeAndPos();
 }
 
 void AudioMixerRenderer::MouseEvent(const LayoutItem::MouseData& e, const DurchblickItemConfig& cfg)
