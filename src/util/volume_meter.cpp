@@ -99,6 +99,8 @@ MixerMeter::MixerMeter(OBSSource src, int x, int y, int height, int channel_widt
 
 MixerMeter::~MixerMeter()
 {
+    if (m_source)
+        signal_handler_disconnect(obs_source_get_signal_handler(m_source), "mute", on_source_muted, this);
     obs_volmeter_remove_callback(m_meter, volume_meter, this);
     obs_volmeter_destroy(m_meter);
 }
