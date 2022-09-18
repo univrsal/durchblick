@@ -81,6 +81,7 @@ void MixerSlider::set_source(OBSSource src)
 
     obs_fader_detach_source(m_fader);
     obs_fader_attach_source(m_fader, m_source);
+    set_db(obs_fader_get_db(m_fader));
 }
 
 void MixerSlider::set_type(obs_fader_type t)
