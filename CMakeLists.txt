@@ -131,7 +131,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
 # Uncomment those lines if you want to use Qt in your plugin
 find_qt(COMPONENTS Widgets Core Gui)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt::Core Qt::Widgets Qt::Gui)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt::Core Qt::Widgets Qt::Gui Qt::GuiPrivate) # Gui private is for qpa/wayland stuff
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES AUTOMOC ON AUTOUIC ON AUTORCC ON)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${Qt6Gui_INCLUDES})
 

@@ -31,6 +31,9 @@
 #include <util/platform.h>
 #include <util/util.hpp>
 
+#if !defined(_WIN32) && !defined(__APPLE__)
+#    include <obs-nix-platform.h>
+#endif
 namespace Config {
 
 Durchblick* db = nullptr;
@@ -110,18 +113,23 @@ void Load()
     else
         db->setVisible(false);
 
-    if (!dbdock) {
-        const auto main_window = static_cast<QMainWindow*>(obs_frontend_get_main_window());
-        obs_frontend_push_ui_translation(obs_module_get_string);
-        dbdock = new DurchblickDock((QWidget*)main_window);
-        obs_frontend_add_dock(Config::dbdock);
-        obs_frontend_pop_ui_translation();
-    }
+#if !defined(_WIN32) && !defined(__APPLE__)
+    if (obs_get_nix_platform() > OBS_NIX_PLATFORM_X11_EGL)
+#endif
+    {
+        if (!dbdock) {
+            const auto main_window = static_cast<QMainWindow*>(obs_frontend_get_main_window());
+            obs_frontend_push_ui_translation(obs_module_get_string);
+            dbdock = new DurchblickDock((QWidget*)main_window);
+            obs_frontend_add_dock(Config::dbdock);
+            obs_frontend_pop_ui_translation();
+        }
 
-    if (layouts.size() > 1)
-        dbdock->GetDurchblick()->Load(layouts[1].toObject());
-    else
-        dbdock->setVisible(false);
+        if (layouts.size() > 1)
+            dbdock->GetDurchblick()->Load(layouts[1].toObject());
+        else
+            dbdock->setVisible(false);
+    }
 }
 
 void Save()

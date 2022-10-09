@@ -15,9 +15,9 @@
 #    include <obs-nix-platform.h>
 #endif
 
-//#ifdef ENABLE_WAYLAND
-//#    include <qpa/qplatformnativeinterface.h>
-//#endif
+#ifdef ENABLE_WAYLAND
+#    include <qpa/qplatformnativeinterface.h>
+#endif
 
 static inline QSize GetPixelSize(QWidget* widget)
 {
@@ -172,13 +172,13 @@ bool QTToGSWindow(QWindow* window, gs_window& gswindow)
         gswindow.id = window->winId();
         gswindow.display = obs_get_nix_platform_display();
         break;
-        //#    ifdef ENABLE_WAYLAND
-        //    case OBS_NIX_PLATFORM_WAYLAND:
-        //        QPlatformNativeInterface* native = QGuiApplication::platformNativeInterface();
-        //        gswindow.display = native->nativeResourceForWindow("surface", window);
-        //        success = gswindow.display != nullptr;
-        //        break;
-        //#    endif
+#    ifdef ENABLE_WAYLAND
+    case OBS_NIX_PLATFORM_WAYLAND:
+        QPlatformNativeInterface* native = QGuiApplication::platformNativeInterface();
+        gswindow.display = native->nativeResourceForWindow("surface", window);
+        success = gswindow.display != nullptr;
+        break;
+#    endif
     }
 #endif
     return success;
