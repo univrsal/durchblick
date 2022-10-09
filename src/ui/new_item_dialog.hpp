@@ -35,9 +35,9 @@ class NewItemDialog : public QDialog {
     QWidget *m_config_panel, *m_last_config_widget = nullptr;
     Layout* m_layout;
 private slots:
-    void ok_clicked();
-    void cancel_clicked();
-    void entry_selected(int);
+    void OKClicked();
+    void CancelClicked();
+    void EntrySelected(int);
 
 public:
     NewItemDialog(Durchblick* parent, Layout* layout);

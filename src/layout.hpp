@@ -22,7 +22,6 @@
 #include "items/registry.hpp"
 #include "ui/layout_config_dialog.hpp"
 #include "ui/new_item_dialog.hpp"
-#include "util/util.h"
 #include <QMouseEvent>
 #include <algorithm>
 #include <memory>
@@ -30,7 +29,7 @@
 #include <obs-module.h>
 #include <vector>
 
-inline void startRegion(int vX, int vY, int vCX, int vCY, float oL,
+inline void StartRegion(int vX, int vY, int vCX, int vCY, float oL,
     float oR, float oT, float oB)
 {
     gs_projection_push();
@@ -39,7 +38,7 @@ inline void startRegion(int vX, int vY, int vCX, int vCY, float oL,
     gs_ortho(oL, oR, oT, oB, -100.0f, 100.0f);
 }
 
-inline void endRegion()
+inline void EndRegion()
 {
     gs_viewport_pop();
     gs_projection_pop();

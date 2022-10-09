@@ -11,12 +11,12 @@ void SourceItem::VolumeToggled(bool state)
     if (state && m_src) {
         auto h = obs_source_get_height(m_src);
         m_vol_meter = std::make_unique<MixerMeter>(m_src, m_volume_meter_x, m_volume_meter_y, h / 2);
-        m_vol_meter->set_type(OBS_FADER_LOG);
-        m_vol_meter->set_source(m_src);
+        m_vol_meter->SetType(OBS_FADER_LOG);
+        m_vol_meter->SetSource(m_src);
     } else {
         if (m_vol_meter) {
-            m_volume_meter_x = m_vol_meter->get_x();
-            m_volume_meter_y = m_vol_meter->get_y();
+            m_volume_meter_x = m_vol_meter->GetX();
+            m_volume_meter_y = m_vol_meter->GetY();
         }
         m_vol_meter = nullptr;
     }
@@ -76,7 +76,7 @@ void SourceItem::OBSSourceRemoved(void* data, calldata_t*)
     SourceItem* window = reinterpret_cast<SourceItem*>(data);
     window->m_src = placeholder_source;
     if (window->m_vol_meter)
-        window->m_vol_meter->set_source(placeholder_source);
+        window->m_vol_meter->SetSource(placeholder_source);
 }
 
 SourceItem::SourceItem(Layout* parent, int x, int y, int w, int h)
@@ -146,7 +146,7 @@ void SourceItem::SetSource(obs_source_t* src)
     m_src = src;
     if (m_src) {
         if (m_vol_meter)
-            m_vol_meter->set_source(src);
+            m_vol_meter->SetSource(src);
         removedSignal = OBSSignal(obs_source_get_signal_handler(m_src), "remove",
             SourceItem::OBSSourceRemoved, this);
         obs_source_inc_showing(m_src);
@@ -206,8 +206,8 @@ void SourceItem::WriteToJson(QJsonObject& Obj)
     Obj["volume_meter_height"] = m_volume_meter_height;
 
     if (m_vol_meter) {
-        Obj["volume_meter_x"] = m_vol_meter->get_x();
-        Obj["volume_meter_y"] = m_vol_meter->get_y();
+        Obj["volume_meter_x"] = m_vol_meter->GetX();
+        Obj["volume_meter_y"] = m_vol_meter->GetY();
     } else {
         Obj["volume_meter_x"] = m_volume_meter_x;
         Obj["volume_meter_y"] = m_volume_meter_y;
@@ -287,18 +287,18 @@ void SourceItem::MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
     LayoutItem::MouseEvent(e, cfg);
     if (m_vol_meter) {
         if (e.buttons & Qt::LeftButton && m_mouse_over) {
-            if (m_vol_meter->mouse_over(m_mouse_x, m_mouse_y)) {
+            if (m_vol_meter->MouseOver(m_mouse_x, m_mouse_y)) {
                 if (!m_dragging_volume) {
                     m_dragging_volume = true;
-                    m_drag_start_x = m_mouse_x - m_vol_meter->get_x();
-                    m_drag_start_y = m_mouse_y - m_vol_meter->get_y();
+                    m_drag_start_x = m_mouse_x - m_vol_meter->GetX();
+                    m_drag_start_y = m_mouse_y - m_vol_meter->GetY();
                 }
             }
 
             if (m_dragging_volume) {
-                auto x = qBound(0, m_mouse_x - m_drag_start_x, qMax(int(m_width - m_vol_meter->get_width() * m_scale.x), 1));
-                auto y = qBound(0, m_mouse_y - m_drag_start_y, qMax(int(m_height - m_vol_meter->get_height() * m_scale.y), 1));
-                m_vol_meter->set_pos(x, y);
+                auto x = qBound(0, m_mouse_x - m_drag_start_x, qMax(int(m_width - m_vol_meter->GetWidth() * m_scale.x), 1));
+                auto y = qBound(0, m_mouse_y - m_drag_start_y, qMax(int(m_height - m_vol_meter->GetHeight() * m_scale.y), 1));
+                m_vol_meter->SetPos(x, y);
             }
         } else {
             m_dragging_volume = false;

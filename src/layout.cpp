@@ -303,13 +303,13 @@ void Layout::SetRegion(float bx, float by, float cx, float cy)
     float oT = by;
     float oR = (bx + cx);
     float oB = (by + cy);
-    startRegion(vX, vY, vCX, vCY, oL, oR, oT, oB);
+    StartRegion(vX, vY, vCX, vCY, oL, oR, oT, oB);
 }
 
 void Layout::Render(int, int, uint32_t, uint32_t)
 {
     // Define the whole usable region for the multiview
-    startRegion(m_cfg.x, m_cfg.y, m_cfg.cx * m_cfg.scale, m_cfg.cy * m_cfg.scale, 0.0f, m_cfg.cx,
+    StartRegion(m_cfg.x, m_cfg.y, m_cfg.cx * m_cfg.scale, m_cfg.cy * m_cfg.scale, 0.0f, m_cfg.cx,
         0.0f, m_cfg.cy);
     LayoutItem::DrawBox(m_cfg.cx, m_cfg.cy, COLOR_BORDER_GRAY);
 
@@ -323,14 +323,14 @@ void Layout::Render(int, int, uint32_t, uint32_t)
 
         LayoutItem::DrawBox(0, 0, m_cfg.cell_width * Item->m_width, m_cfg.cell_height * Item->m_height, Item->GetFillColor());
 
-        endRegion();
+        EndRegion();
         gs_matrix_pop();
 
         gs_matrix_push();
         gs_matrix_translate3f(Item->m_rel_left + m_cfg.border, Item->m_rel_top + m_cfg.border, 0);
         SetRegion(Item->m_rel_left + m_cfg.border, Item->m_rel_top + m_cfg.border, Item->m_inner_width, Item->m_inner_height);
         Item->Render(m_cfg);
-        endRegion();
+        EndRegion();
         gs_matrix_pop();
     }
     m_layout_mutex.unlock();
@@ -352,7 +352,7 @@ void Layout::Render(int, int, uint32_t, uint32_t)
         // Right
         LayoutItem::DrawBox((tx + cx) * m_cfg.cell_width - m_cfg.border - 2, ty * m_cfg.cell_height, m_cfg.border + 1, cy * m_cfg.cell_height - 1, COLOR_SELECTION_CYAN);
     }
-    endRegion();
+    EndRegion();
 }
 
 void Layout::Resize(int target_cx, int target_cy, int cx, int cy)

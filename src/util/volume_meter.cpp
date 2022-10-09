@@ -32,7 +32,7 @@
 static void on_source_muted(void* data, calldata_t* calldata)
 {
     MixerMeter* meter = static_cast<MixerMeter*>(data);
-    meter->set_muted(calldata_bool(calldata, "muted"));
+    meter->SetMuted(calldata_bool(calldata, "muted"));
 }
 
 static void volume_meter(void* data,
@@ -40,7 +40,7 @@ static void volume_meter(void* data,
     const float peak[MAX_AUDIO_CHANNELS],
     const float inputPeak[MAX_AUDIO_CHANNELS])
 {
-    static_cast<MixerMeter*>(data)->update(magnitude, peak, inputPeak);
+    static_cast<MixerMeter*>(data)->Update(magnitude, peak, inputPeak);
 }
 
 void MixerMeter::draw_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t c)
@@ -105,7 +105,7 @@ MixerMeter::~MixerMeter()
     obs_volmeter_destroy(m_meter);
 }
 
-void MixerMeter::set_type(obs_fader_type t)
+void MixerMeter::SetType(obs_fader_type t)
 {
     obs_volmeter_remove_callback(m_meter, volume_meter, this);
     obs_volmeter_destroy(m_meter);
@@ -114,7 +114,7 @@ void MixerMeter::set_type(obs_fader_type t)
     m_channels = obs_volmeter_get_nr_channels(m_meter);
 }
 
-void MixerMeter::update(const float magnitude[], const float peak[], const float inputPeak[])
+void MixerMeter::Update(const float magnitude[], const float peak[], const float inputPeak[])
 {
     uint64_t ts = os_gettime_ns();
     QMutexLocker locker(&m_data_mutex);
@@ -136,10 +136,10 @@ void MixerMeter::update(const float magnitude[], const float peak[], const float
     // In case there are more updates then redraws we must make sure
     // that the ballistics of peak and hold are recalculated.
     locker.unlock();
-    calculateBallistics(ts);
+    CalculateBallistics(ts);
 }
 
-void MixerMeter::set_source(OBSSource src)
+void MixerMeter::SetSource(OBSSource src)
 {
     m_source = src;
     signal_handler_t* handler = obs_source_get_signal_handler(src);
@@ -150,12 +150,12 @@ void MixerMeter::set_source(OBSSource src)
         this);
     vol_changed_signal.Connect(
         handler, "volume", [](void* d, calldata_t*) {
-            static_cast<MixerMeter*>(d)->on_source_volume_changed();
+            static_cast<MixerMeter*>(d)->OnSourceVolumeChanged();
         },
         this);
     rename_signal.Connect(
         handler, "rename", [](void* d, calldata_t*) {
-            static_cast<MixerMeter*>(d)->on_source_name_changed();
+            static_cast<MixerMeter*>(d)->OnSourceNameChanged();
         },
         this);
 
@@ -177,7 +177,7 @@ void MixerMeter::set_source(OBSSource src)
 }
 
 inline void
-MixerMeter::calculateBallisticsForChannel(int channelNr, uint64_t ts,
+MixerMeter::CalculateBallisticsForChannel(int channelNr, uint64_t ts,
     qreal timeSinceLastRedraw)
 {
     if (m_current_peak[channelNr] >= m_display_peak[channelNr] || isnan(m_display_peak[channelNr])) {
@@ -239,8 +239,8 @@ void MixerMeter::Render(float cell_scale, float, float src_scale_y)
 {
     uint64_t ts = os_gettime_ns();
     qreal timeSinceLastRedraw = (ts - m_last_redraw_time) * 0.000000001;
-    calculateBallistics(ts, timeSinceLastRedraw);
-    bool idle = detect_idle(ts);
+    CalculateBallistics(ts, timeSinceLastRedraw);
+    bool idle = DetectIdle(ts);
 
     auto h = m_height * src_scale_y;
     for (int i = 0; i < m_channels; i++) {
@@ -384,12 +384,12 @@ void MixerMeter::Render(float cell_scale, float, float src_scale_y)
     m_last_redraw_time = ts;
 }
 
-inline void MixerMeter::calculateBallistics(uint64_t ts,
+inline void MixerMeter::CalculateBallistics(uint64_t ts,
     qreal timeSinceLastRedraw)
 {
     QMutexLocker locker(&m_data_mutex);
 
     for (int channelNr = 0; channelNr < MAX_AUDIO_CHANNELS; channelNr++)
-        calculateBallisticsForChannel(channelNr, ts,
+        CalculateBallisticsForChannel(channelNr, ts,
             timeSinceLastRedraw);
 }

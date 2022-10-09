@@ -38,8 +38,8 @@ class LayoutConfigDialog : public QDialog {
     Layout* m_layout {};
     Durchblick* m_durchblick {};
 private slots:
-    void ok_clicked();
-    void cancel_clicked();
+    void OKClicked();
+    void CancelClicked();
 
 public:
     LayoutConfigDialog(Durchblick* parent, Layout* layout);

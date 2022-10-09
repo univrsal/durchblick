@@ -86,33 +86,33 @@ protected:
     OBSSignal deactivateSignal;
     OBSSignal rename_signal;
 
-    virtual void on_source_name_changed() { }
-    virtual void on_source_volume_changed() { }
+    virtual void OnSourceNameChanged() { }
+    virtual void OnSourceVolumeChanged() { }
 
 public:
     MixerMeter(OBSSource, int x = 10, int y = 10, int height = 100, int channel_width = 3);
     ~MixerMeter();
 
-    bool detect_idle(uint64_t ts)
+    bool DetectIdle(uint64_t ts)
     {
         double timeSinceLastUpdate = (ts - m_current_last_update_time) * 0.000000001;
         if (timeSinceLastUpdate > 0.5) {
-            reset_levels();
+            ResetLevels();
             return true;
         } else {
             return false;
         }
     }
 
-    virtual void set_type(obs_fader_type t);
+    virtual void SetType(obs_fader_type t);
 
-    void set_muted(bool m) { m_muted = m; }
+    void SetMuted(bool m) { m_muted = m; }
 
-    void update(const float magnitude[MAX_AUDIO_CHANNELS],
+    void Update(const float magnitude[MAX_AUDIO_CHANNELS],
         const float peak[MAX_AUDIO_CHANNELS],
         const float inputPeak[MAX_AUDIO_CHANNELS]);
 
-    void reset_levels()
+    void ResetLevels()
     {
         m_current_last_update_time = 0;
         for (int channelNr = 0; channelNr < MAX_AUDIO_CHANNELS; channelNr++) {
@@ -129,28 +129,28 @@ public:
         }
     }
 
-    int get_x() const { return m_x; }
-    int get_y() const { return m_y; }
-    int get_height() const { return m_height; }
-    int get_width() const { return (m_channel_thickness + 2) * m_channels; }
-    void set_pos(int x, int y)
+    int GetX() const { return m_x; }
+    int GetY() const { return m_y; }
+    int GetHeight() const { return m_height; }
+    int GetWidth() const { return (m_channel_thickness + 2) * m_channels; }
+    void SetPos(int x, int y)
     {
         m_x = x;
         m_y = y;
     }
 
-    bool mouse_over(int x, int y)
+    bool MouseOver(int x, int y)
     {
-        return x >= m_x && x <= m_x + get_width() && y >= m_y && y <= m_y + m_height;
+        return x >= m_x && x <= m_x + GetWidth() && y >= m_y && y <= m_y + m_height;
     }
 
-    virtual void set_source(OBSSource);
+    virtual void SetSource(OBSSource);
 
     virtual void Render(float cell_scale, float source_scale_x, float source_scale_y);
 
-    void calculateBallistics(uint64_t ts,
+    void CalculateBallistics(uint64_t ts,
         qreal timeSinceLastRedraw = 0.0);
 
-    void calculateBallisticsForChannel(int channelNr, uint64_t ts,
+    void CalculateBallisticsForChannel(int channelNr, uint64_t ts,
         qreal timeSinceLastRedraw = 0.0);
 };

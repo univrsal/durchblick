@@ -26,7 +26,7 @@
 #include <QSizePolicy>
 #include <QSpacerItem>
 
-void NewItemDialog::ok_clicked()
+void NewItemDialog::OKClicked()
 {
     auto index = m_select_type->currentData().toInt();
     if (index >= 0 && index < Registry::ItemRegistry::Entries.size())
@@ -34,12 +34,12 @@ void NewItemDialog::ok_clicked()
     hide();
 }
 
-void NewItemDialog::cancel_clicked()
+void NewItemDialog::CancelClicked()
 {
     hide();
 }
 
-void NewItemDialog::entry_selected(int)
+void NewItemDialog::EntrySelected(int)
 {
     auto i = m_select_type->currentData().toInt();
     auto* Item = Registry::ItemRegistry::Entries[i].construct(nullptr, 0, 0, 0, 0);
@@ -78,7 +78,7 @@ NewItemDialog::NewItemDialog(Durchblick* parent, Layout* layout)
         m_select_type->addItem(Registry::ItemRegistry::Entries[i].name, i);
     }
 
-    entry_selected(0);
+    EntrySelected(0);
     m_vboxlayout->addWidget(m_select_type);
     m_vboxlayout->addWidget(m_config_panel);
     m_vboxlayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));

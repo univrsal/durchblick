@@ -23,7 +23,7 @@
 #include <QHBoxLayout>
 #include <QPushButton>
 
-void LayoutConfigDialog::ok_clicked()
+void LayoutConfigDialog::OKClicked()
 {
     m_layout->m_cols = m_cols->value();
     m_layout->m_rows = m_rows->value();
@@ -37,7 +37,7 @@ void LayoutConfigDialog::ok_clicked()
     hide();
 }
 
-void LayoutConfigDialog::cancel_clicked()
+void LayoutConfigDialog::CancelClicked()
 {
     hide();
 }

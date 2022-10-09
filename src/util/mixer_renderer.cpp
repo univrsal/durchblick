@@ -23,10 +23,10 @@
 
 static void fader_update(void* data, float db)
 {
-    static_cast<MixerSlider*>(data)->set_db(db);
+    static_cast<MixerSlider*>(data)->SetDb(db);
 }
 
-void MixerSlider::on_source_name_changed()
+void MixerSlider::OnSourceNameChanged()
 {
     m_parent->QueueSourceUpdate();
 }
@@ -56,19 +56,19 @@ void MixerSlider::Render(float cell_scale, float source_scale_x, float source_sc
     const int handle_width = 24;
     const int handle_height = 8;
     const int slider_width = m_channel_width * 1.5;
-    const int mute_dim = get_width();
-    const int on_length = (m_height - handle_height) * slider_position();
+    const int mute_dim = GetWidth();
+    const int on_length = (m_height - handle_height) * GetSliderPosition();
 
     // Slider line
     gs_matrix_push();
-    gs_matrix_translate3f(m_x + get_width() + 15 - slider_width / 2, m_y, 0.0f);
+    gs_matrix_translate3f(m_x + GetWidth() + 15 - slider_width / 2, m_y, 0.0f);
     draw_rectangle(0, on_length, slider_width, m_height - on_length, ARGB32(255, 42, 130, 218));
     draw_rectangle(0, 0, slider_width, on_length, ARGB32(255, 100, 100, 100));
     gs_matrix_pop();
 
     // Slider position
     gs_matrix_push();
-    gs_matrix_translate3f(m_x + get_width() + 15 - handle_width / 2, m_y + on_length, 0.0f);
+    gs_matrix_translate3f(m_x + GetWidth() + 15 - handle_width / 2, m_y + on_length, 0.0f);
     draw_rectangle(0, 0, handle_width, handle_height, ARGB32(255, 210, 210, 210));
     gs_matrix_pop();
 
@@ -76,9 +76,9 @@ void MixerSlider::Render(float cell_scale, float source_scale_x, float source_sc
     draw_rectangle(m_x, m_y + m_height + mute_dim, mute_dim, mute_dim, m_muted ? ARGB32(255, 100, 100, 100) : m_foreground_nominal_color);
 }
 
-void MixerSlider::set_source(OBSSource src)
+void MixerSlider::SetSource(OBSSource src)
 {
-    MixerMeter::set_source(src);
+    MixerMeter::SetSource(src);
     auto name = std::string(obs_source_get_name(src));
 
     if (name.length() > 30)
@@ -87,12 +87,12 @@ void MixerSlider::set_source(OBSSource src)
 
     obs_fader_detach_source(m_fader);
     obs_fader_attach_source(m_fader, m_source);
-    set_db(obs_fader_get_db(m_fader));
+    SetDb(obs_fader_get_db(m_fader));
 }
 
-void MixerSlider::set_type(obs_fader_type t)
+void MixerSlider::SetType(obs_fader_type t)
 {
-    MixerMeter::set_type(t);
+    MixerMeter::SetType(t);
 
     obs_fader_remove_callback(m_fader, fader_update, this);
     obs_fader_destroy(m_fader);
@@ -103,7 +103,7 @@ void MixerSlider::set_type(obs_fader_type t)
 void MixerSlider::MouseEvent(const LayoutItem::MouseData& e, const DurchblickItemConfig&, uint32_t mx, uint32_t my)
 {
     if (e.buttons & Qt::LeftButton) {
-        if (mouse_over_slider(mx, my)) {
+        if (MouseOverSlider(mx, my)) {
             if (!m_dragging_volume)
                 m_dragging_volume = true;
         }
@@ -111,15 +111,15 @@ void MixerSlider::MouseEvent(const LayoutItem::MouseData& e, const DurchblickIte
         if (m_dragging_volume) {
             auto fade = qBound(0.f, float(qMax(m_y, int(my)) - m_y) / m_height, 1.f);
             obs_fader_set_deflection(m_fader, 1 - fade);
-            set_db(obs_fader_get_db(m_fader));
+            SetDb(obs_fader_get_db(m_fader));
         }
 
-        if (mouse_over_mute_area(mx, my) && e.type == QEvent::MouseButtonPress)
+        if (MouseOverMuteArea(mx, my) && e.type == QEvent::MouseButtonPress)
             m_lmb_down = true;
 
     } else {
         m_dragging_volume = false;
-        if (!mouse_over_mute_area(mx, my))
+        if (!MouseOverMuteArea(mx, my))
             m_lmb_down = false;
     }
 
@@ -132,8 +132,8 @@ void MixerSlider::MouseEvent(const LayoutItem::MouseData& e, const DurchblickIte
 void AudioMixerRenderer::RefreshSliderSizeAndPos()
 {
     for (auto& slider : m_sliders) {
-        slider->set_y(m_y);
-        slider->set_height(m_height);
+        slider->SetY(m_y);
+        slider->SetHeight(m_height);
     }
 }
 
@@ -195,10 +195,10 @@ void AudioMixerRenderer::UpdateSources()
 
     for (auto& src : d.active_audio_srcs) {
         auto* slider = new MixerSlider(this, src, x, 0, m_height, m_channel_width);
-        slider->set_type(OBS_FADER_LOG);
-        slider->set_source(src);
+        slider->SetType(OBS_FADER_LOG);
+        slider->SetSource(src);
         m_sliders.emplace_back(slider);
-        x += (m_channel_width * slider->get_width()) * 2.5;
+        x += (m_channel_width * slider->GetWidth()) * 2.5;
     }
 }
 

@@ -32,11 +32,11 @@ class MixerSlider : public MixerMeter {
     AudioMixerRenderer* m_parent {};
 
 protected:
-    void on_source_name_changed() override;
+    void OnSourceNameChanged() override;
 
-    void on_source_volume_changed() override
+    void OnSourceVolumeChanged() override
     {
-        set_db(obs_fader_get_db(m_fader));
+        SetDb(obs_fader_get_db(m_fader));
     }
 
 public:
@@ -45,34 +45,34 @@ public:
 
     virtual void Render(float cell_scale, float source_scale_x, float source_scale_y) override;
 
-    void set_height(int h) { m_height = h; }
-    void set_y(int y) { m_y = y; }
+    void SetHeight(int h) { m_height = h; }
+    void SetY(int y) { m_y = y; }
 
-    float slider_position()
+    float GetSliderPosition()
     {
         return 1 - m_fade;
     }
 
-    void set_source(OBSSource) override;
+    void SetSource(OBSSource) override;
 
-    void set_type(obs_fader_type) override;
+    void SetType(obs_fader_type) override;
 
-    void set_db(float db)
+    void SetDb(float db)
     {
         m_db = db;
         m_fade = obs_fader_get_deflection(m_fader);
     }
 
-    bool mouse_over_mute_area(int x, int y)
+    bool MouseOverMuteArea(int x, int y)
     {
-        return x >= m_x - 2 && x <= m_x + get_width() + 2 && y >= m_y + m_height + get_width() - 2 && y <= m_y + m_height + get_width() * 2 + 2;
+        return x >= m_x - 2 && x <= m_x + GetWidth() + 2 && y >= m_y + m_height + GetWidth() - 2 && y <= m_y + m_height + GetWidth() * 2 + 2;
     }
 
-    bool mouse_over_slider(int x, int y)
+    bool MouseOverSlider(int x, int y)
     {
         const int slider_width = m_channel_width * 1.5;
-        const int left = m_x + get_width() + 2;
-        const int right = m_x + get_width() + 20 + slider_width;
+        const int left = m_x + GetWidth() + 2;
+        const int right = m_x + GetWidth() + 20 + slider_width;
         return x >= left && x <= right && y >= m_y && y <= m_y + m_height;
     }
 
