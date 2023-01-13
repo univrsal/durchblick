@@ -115,7 +115,6 @@ void Load()
         db->GetLayout()->CreateDefaultLayout();
     }
 
-
 #if !defined(_WIN32) && !defined(__APPLE__)
     if (obs_get_nix_platform() > OBS_NIX_PLATFORM_X11_EGL)
 #endif

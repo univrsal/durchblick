@@ -32,17 +32,15 @@ OBS_MODULE_USE_DEFAULT_LOCALE("durchblick", "en-US")
 
 bool obs_module_load()
 {
-    binfo("Loading v%s build time %s", PLUGIN_VERSION, BUILD_TIME);
 
-    // Speeds up loading
-    std::thread reg([] { Registry::RegisterDefaults(); });
-    reg.detach();
+    binfo("Loading v%s build time %s", PLUGIN_VERSION, BUILD_TIME);
 
     Registry::RegisterCustomWidgetProcedure();
 
     QAction::connect(static_cast<QAction*>(obs_frontend_add_tools_menu_qaction(T_MENU_OPTION)),
         &QAction::triggered, [] {
             auto layouts = Config::LoadLayoutsForCurrentSceneCollection();
+
             Config::db->CreateDisplay(true);
             if (layouts.size() > 0)
                 Config::db->Load(layouts[0].toObject());
@@ -51,13 +49,18 @@ bool obs_module_load()
             Config::db->show();
         });
 
-    Config::RegisterCallbacks();
-    Config::Load();
     return true;
 }
 
 void obs_module_post_load()
 {
+
+    // Speeds up loading
+    std::thread reg([] { Registry::RegisterDefaults(); });
+
+    reg.detach();
+    Config::RegisterCallbacks();
+    Config::Load();
 }
 
 void obs_module_unload()
