@@ -97,7 +97,7 @@ void RegisterDefaults()
     Registry::Register<SourceItem>(T_WIDGET_SOURCE);
     Registry::Register<AudioMixerItem>(T_WIDGET_AUDIO_MIXER);
     Registry::Register<SceneItem>(T_WIDGET_SCENE);
-    
+
     Registry::AddCallbacks<SourceItem>();
 }
 
