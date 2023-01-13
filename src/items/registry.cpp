@@ -95,9 +95,9 @@ void RegisterDefaults()
     // Last one shows up first in the combobox
     Registry::Register<PreviewProgramItem>(T_WIDGET_PREVIEW_PROGRAM);
     Registry::Register<SourceItem>(T_WIDGET_SOURCE);
-    Registry::Register<SceneItem>(T_WIDGET_SCENE);
     Registry::Register<AudioMixerItem>(T_WIDGET_AUDIO_MIXER);
-
+    Registry::Register<SceneItem>(T_WIDGET_SCENE);
+    
     Registry::AddCallbacks<SourceItem>();
 }
 
