@@ -460,9 +460,9 @@ void Layout::Load(QJsonObject const& obj)
     Clear();
 
     m_layout_mutex.lock();
-    m_cols = obj["cols"].toInt();
-    m_rows = obj["rows"].toInt();
-    m_locked = obj["locked"].toBool();
+    m_cols = obj["cols"].toInt(4);
+    m_rows = obj["rows"].toInt(4);
+    m_locked = obj["locked"].toBool(false);
     auto items = obj["items"].toArray();
 
     for (auto const& item : qAsConst(items)) {
