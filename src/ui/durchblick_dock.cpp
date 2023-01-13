@@ -34,7 +34,7 @@ void DurchblickDock::showEvent(QShowEvent* e)
 
 DurchblickDock::DurchblickDock(QWidget* parent)
     : QDockWidget(parent)
-    , db(new Durchblick(this))
+    , db(new Durchblick(this, Qt::Widget))
 {
     setFeatures(DockWidgetMovable | DockWidgetFloatable);
     setWindowTitle("Durchblick");
@@ -44,7 +44,7 @@ DurchblickDock::DurchblickDock(QWidget* parent)
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->addWidget(db);
 
-    auto* dockWidgetContents = new QWidget;
+    auto* dockWidgetContents = new QWidget(this);
     dockWidgetContents->setLayout(mainLayout);
     setWidget(dockWidgetContents);
 }

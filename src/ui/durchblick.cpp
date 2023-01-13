@@ -19,6 +19,7 @@
 #include "durchblick.hpp"
 #include "../config.hpp"
 #include "../util/platform_util.hpp"
+#include "durchblick_dock.hpp"
 #include "obs.hpp"
 #include <QApplication>
 #include <QIcon>
@@ -215,12 +216,12 @@ void Durchblick::showEvent(QShowEvent* e)
         SetMonitor(m_current_monitor);
 }
 
-Durchblick::Durchblick(QWidget* widget)
-    : OBSQTDisplay(widget, Qt::Window)
+Durchblick::Durchblick(QWidget* widget, Qt::WindowType t)
+    : OBSQTDisplay(widget, t)
     , m_layout(this)
 {
     setWindowTitle("Durchblick");
-    setVisible(false);
+    SetWidgetVisibility(false);
 
 #ifdef __APPLE__
     setWindowIcon(
@@ -347,6 +348,7 @@ void Durchblick::Load(QJsonObject const& obj)
         berr("Layout object was null");
         m_layout.Clear();
         m_layout.CreateDefaultLayout();
+        SetWidgetVisibility(false);
         return;
     }
     m_cached_layout = obj;
@@ -368,8 +370,8 @@ void Durchblick::Load(QJsonObject const& obj)
         SetMonitor(obj["monitor"].toInt(-1));
 
     SetHideCursor(obj["hide_cursor"].toBool(false));
+    SetWidgetVisibility(obj["visible"].toBool(false));
 
-    setVisible(obj["visible"].toBool(false));
     SetIsAlwaysOnTop(obj["always_on_top"].toBool(false), false);
 
     SetHideFromDisplayCapture(obj["hide_from_display_capture"].toBool(false));
@@ -402,4 +404,12 @@ void Durchblick::SetHideFromDisplayCapture(bool hide_from_display_capture)
 #else
     UNUSED_PARAMETER(hide_from_display_capture);
 #endif
+}
+
+void Durchblick::SetWidgetVisibility(bool v)
+{
+    if (parent()) // The docked version has a window a parent which we want to hide instead
+        ((DurchblickDock*)parent())->setVisible(v);
+    else
+        setVisible(v);
 }

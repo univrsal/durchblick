@@ -79,7 +79,7 @@ protected:
     //    void dropEvent(QDropEvent* event) override;
 
 public:
-    Durchblick(QWidget* widget = nullptr);
+    Durchblick(QWidget* widget = nullptr, Qt::WindowType t = Qt::Window);
     ~Durchblick();
 
     void OnClose();
@@ -115,4 +115,6 @@ public:
     bool GetIsCursorHidden() const { return m_hide_cursor; }
 
     Layout* GetLayout() { return &m_layout; }
+
+    void SetWidgetVisibility(bool v);
 };
