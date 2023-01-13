@@ -65,6 +65,7 @@
 #define T_WIDGET_SCENE                  T_("Widget.SceneDisplay")
 #define T_WIDGET_AUDIO_MIXER            T_("Widget.AudioMixer")
 #define T_WIDGET_PREVIEW_PROGRAM        T_("Widget.PreviewProgramDisplay")
+#define T_LABEL_CHANNEL_WIDTH           T_("Label.ChannelWidth")
 
 #define T_DRAW_SAFE_BORDERS             U_("Basic.Settings.General.Multiview.DrawSafeAreas")
 #define T_RESIZE_WINDOW_CONTENT         U_("ResizeProjectorWindowToContent")

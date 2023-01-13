@@ -55,8 +55,9 @@ void MixerSlider::Render(float cell_scale, float source_scale_x, float source_sc
 
     const int handle_width = 24;
     const int handle_height = 8;
-    const int slider_width = m_channel_width * 1.5;
-    const int mute_dim = GetWidth();
+    const int slider_width = 3 * 1.5;
+    m_mute_width = GetWidth();
+    m_mute_height = m_channel_width / cell_scale;
     const int on_length = (m_height - handle_height) * GetSliderPosition();
 
     // Slider line
@@ -73,7 +74,7 @@ void MixerSlider::Render(float cell_scale, float source_scale_x, float source_sc
     gs_matrix_pop();
 
     // mute/unmute
-    draw_rectangle(m_x, m_y + m_height + mute_dim, mute_dim, mute_dim, m_muted ? ARGB32(255, 100, 100, 100) : m_foreground_nominal_color);
+    draw_rectangle(m_x, m_y + m_height - m_mute_height, m_mute_width, m_mute_height, m_muted ? ARGB32(255, 100, 100, 100) : m_foreground_nominal_color);
 }
 
 void MixerSlider::SetSource(OBSSource src)

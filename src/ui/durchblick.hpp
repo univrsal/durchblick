@@ -47,7 +47,7 @@ class Durchblick : public OBSQTDisplay {
 
 public:
     QRect m_previous_geometry;
-    bool m_ready { false };
+    bool m_ready { false }, m_has_size { false };
     QScreen* m_screen { nullptr };
     int m_current_monitor { -1 };
     Layout m_layout;
@@ -113,6 +113,7 @@ public:
     }
 
     bool GetIsCursorHidden() const { return m_hide_cursor; }
+    bool HasSize() const { return m_has_size; }
 
     Layout* GetLayout() { return &m_layout; }
 

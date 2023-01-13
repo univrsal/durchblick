@@ -313,6 +313,7 @@ void Durchblick::Update()
     m_fw = ovi.base_width;
     m_fh = ovi.base_height;
     m_ratio = m_fw / m_fh;
+    m_has_size = m_fw > 0 && m_fh > 0;
 }
 
 void Durchblick::Save(QJsonObject& obj)

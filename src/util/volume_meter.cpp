@@ -74,8 +74,6 @@ MixerMeter::MixerMeter(OBSSource src, int x, int y, int height, int channel_widt
     m_magnitude_integration_time = 0.3; //  99% in 300 ms
     m_peak_hold_duration = 20.0;        //  20 seconds
     m_input_peak_hold_duration = 1.0;   //  1 second
-    m_channel_thickness = 3;            // Bar thickness in pixels
-                                        // channels = (int)audio_output_get_channels(obs_get_audio());
 
     m_background_nominal_color = ARGB32(0xff, 0x26, 0x7f, 0x26); // Dark green
     m_background_warning_color = ARGB32(0xff, 0x7f, 0x7f, 0x26); // Dark yellow
@@ -242,7 +240,8 @@ void MixerMeter::Render(float cell_scale, float, float src_scale_y)
     CalculateBallistics(ts, timeSinceLastRedraw);
     bool idle = DetectIdle(ts);
 
-    auto h = m_height * src_scale_y;
+    const auto bottom_indicator_size = m_channel_width / cell_scale;
+    auto h = (m_height - bottom_indicator_size * 2) * src_scale_y; // do not include indicator and mute button in height
     for (int i = 0; i < m_channels; i++) {
         auto magnitude = m_display_magnitude[i];
         auto peak = m_display_peak[i];

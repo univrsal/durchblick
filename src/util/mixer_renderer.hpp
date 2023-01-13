@@ -30,6 +30,8 @@ class MixerSlider : public MixerMeter {
     bool m_dragging_volume { false }, m_lmb_down { false };
     float m_db {}, m_fade { 1 };
     AudioMixerRenderer* m_parent {};
+    int m_mute_width;
+    int m_mute_height;
 
 protected:
     void OnSourceNameChanged() override;
@@ -65,7 +67,7 @@ public:
 
     bool MouseOverMuteArea(int x, int y)
     {
-        return x >= m_x - 2 && x <= m_x + GetWidth() + 2 && y >= m_y + m_height + GetWidth() - 2 && y <= m_y + m_height + GetWidth() * 2 + 2;
+        return x >= m_x - 2 && x <= m_x + m_mute_width + 2 && y >= m_y + m_height - m_mute_height - 2 && y <= m_y + m_height + 2;
     }
 
     bool MouseOverSlider(int x, int y)
@@ -99,4 +101,10 @@ public:
     void Update(DurchblickItemConfig const& cfg);
 
     void MouseEvent(const LayoutItem::MouseData& e, const DurchblickItemConfig& cfg);
+    void SetChannelWidth(int w)
+    {
+        m_channel_width = w;
+        for (auto& slider : m_sliders)
+            slider->SetChannelWidth(w);
+    }
 };

@@ -47,7 +47,6 @@ protected:
     float m_display_input_peak_hold[MAX_AUDIO_CHANNELS];
     uint64_t m_display_input_peak_hold_last_upate_time[MAX_AUDIO_CHANNELS];
 
-    int m_channel_thickness;
     qreal m_minimum_level;
     qreal m_warning_level;
     qreal m_error_level;
@@ -132,7 +131,7 @@ public:
     int GetX() const { return m_x; }
     int GetY() const { return m_y; }
     int GetHeight() const { return m_height; }
-    int GetWidth() const { return (m_channel_thickness + 2) * m_channels; }
+    int GetWidth() const { return (m_channel_width + 2) * m_channels; }
     void SetPos(int x, int y)
     {
         m_x = x;
@@ -153,4 +152,9 @@ public:
 
     void CalculateBallisticsForChannel(int channelNr, uint64_t ts,
         qreal timeSinceLastRedraw = 0.0);
+
+    void SetChannelWidth(int w)
+    {
+        m_channel_width = w;
+    }
 };
