@@ -69,7 +69,7 @@
 
 #define T_DRAW_SAFE_BORDERS             U_("Basic.Settings.General.Multiview.DrawSafeAreas")
 #define T_RESIZE_WINDOW_CONTENT         U_("ResizeProjectorWindowToContent")
-#define T_ALWAYS_ON_TOP                 U_("Basic.MainMenu.AlwaysOnTop")
+#define T_ALWAYS_ON_TOP                 U_("Basic.MainMenu.View.AlwaysOnTop")
 #define T_PREVIEW                       U_("StudioMode.Preview")
 #define T_PROGRAM                       U_("StudioMode.Program")
 #define T_FULLSCREEN                    U_("Fullscreen")
