@@ -85,9 +85,9 @@ NewItemDialog::NewItemDialog(Durchblick* parent, Layout* layout)
     m_vboxlayout->addWidget(m_button_box);
     setLayout(m_vboxlayout);
 
-    connect(m_button_box->button(QDialogButtonBox::Ok), SIGNAL(pressed()), this, SLOT(ok_clicked()));
-    connect(m_button_box->button(QDialogButtonBox::Cancel), SIGNAL(pressed()), this, SLOT(cancel_clicked()));
-    connect(m_select_type, SIGNAL(currentIndexChanged(int)), this, SLOT(entry_selected(int)));
+    connect(m_button_box->button(QDialogButtonBox::Ok), SIGNAL(pressed()), this, SLOT(OKClicked()));
+    connect(m_button_box->button(QDialogButtonBox::Cancel), SIGNAL(pressed()), this, SLOT(CancelClicked()));
+    connect(m_select_type, SIGNAL(currentIndexChanged(int)), this, SLOT(EntrySelected(int)));
 
     setWindowTitle(T_SELECT_TYPE_DIALOG);
     resize(minimumSizeHint());

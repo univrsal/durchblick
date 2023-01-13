@@ -308,6 +308,8 @@ void Layout::SetRegion(float bx, float by, float cx, float cy)
 
 void Layout::Render(int, int, uint32_t, uint32_t)
 {
+    if (!m_durchblick->HasSize()) // We need at least one refresh/resize to be sure that we have all necessary data for rendering
+        return;
     // Define the whole usable region for the multiview
     StartRegion(m_cfg.x, m_cfg.y, m_cfg.cx * m_cfg.scale, m_cfg.cy * m_cfg.scale, 0.0f, m_cfg.cx,
         0.0f, m_cfg.cy);
@@ -426,6 +428,8 @@ void Layout::CreateDefaultLayout()
     preview->Update(m_cfg);
     m_layout_items.emplace_back(preview);
     m_layout_items.emplace_back(program);
+    m_cols = 4;
+    m_rows = 4;
 
     struct obs_frontend_source_list scenes = {};
 

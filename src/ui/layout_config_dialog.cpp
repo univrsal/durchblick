@@ -82,8 +82,8 @@ LayoutConfigDialog::LayoutConfigDialog(Durchblick* parent, Layout* layout)
     m_vboxlayout->addWidget(m_button_box);
     setLayout(m_vboxlayout);
 
-    connect(m_button_box->button(QDialogButtonBox::Ok), SIGNAL(pressed()), this, SLOT(ok_clicked()));
-    connect(m_button_box->button(QDialogButtonBox::Cancel), SIGNAL(pressed()), this, SLOT(cancel_clicked()));
+    connect(m_button_box->button(QDialogButtonBox::Ok), SIGNAL(pressed()), this, SLOT(OKClicked()));
+    connect(m_button_box->button(QDialogButtonBox::Cancel), SIGNAL(pressed()), this, SLOT(CancelClicked()));
 
     setWindowTitle(T_CONFIGURATION_TITLE);
 

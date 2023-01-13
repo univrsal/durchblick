@@ -130,7 +130,7 @@ public:
     void CreateDefaultLayout();
     void Load(QJsonObject const& obj);
     void Save(QJsonObject& obj);
-    bool IsEmpty() const { return m_layout_items.empty(); }
+    bool IsEmpty() const { return m_layout_items.empty() || m_cols <= 0 || m_rows <= 0; }
     bool IsLocked() const { return m_locked; }
     void DeleteLayout();
     void ResetHover();

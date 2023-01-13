@@ -23,8 +23,10 @@ QWidget* AudioMixerItem::GetConfigWidget()
     return new MixerItemWidget();
 }
 
-void AudioMixerItem::LoadConfigFromWidget(QWidget*)
+void AudioMixerItem::LoadConfigFromWidget(QWidget* w)
 {
+    auto* cfg = (MixerItemWidget*)w;
+    m_mixer->SetChannelWidth(cfg->m_channel_width->value());
 }
 
 void AudioMixerItem::Render(const DurchblickItemConfig& cfg)
