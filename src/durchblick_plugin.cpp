@@ -44,7 +44,10 @@ bool obs_module_load()
         &QAction::triggered, [] {
             auto layouts = Config::LoadLayoutsForCurrentSceneCollection();
             Config::db->CreateDisplay(true);
-            Config::db->Load(layouts[0].toObject());
+            if (layouts.size() > 0)
+                Config::db->Load(layouts[0].toObject());
+            else
+                Config::db->GetLayout()->CreateDefaultLayout();
             Config::db->show();
         });
 

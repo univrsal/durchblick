@@ -108,10 +108,13 @@ void Load()
     if (!db)
         db = new Durchblick;
 
-    if (layouts.size() > 0)
+    if (layouts.size() > 0) {
         db->Load(layouts[0].toObject());
-    else
+    } else {
         db->setVisible(false);
+        db->GetLayout()->CreateDefaultLayout();
+    }
+
 
 #if !defined(_WIN32) && !defined(__APPLE__)
     if (obs_get_nix_platform() > OBS_NIX_PLATFORM_X11_EGL)
@@ -125,10 +128,12 @@ void Load()
             obs_frontend_pop_ui_translation();
         }
 
-        if (layouts.size() > 1)
+        if (layouts.size() > 1) {
             dbdock->GetDurchblick()->Load(layouts[1].toObject());
-        else
+        } else {
             dbdock->setVisible(false);
+            dbdock->GetDurchblick()->GetLayout()->CreateDefaultLayout();
+        }
     }
 }
 
