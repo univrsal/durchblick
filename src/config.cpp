@@ -94,8 +94,7 @@ void RegisterCallbacks()
             Save(); // Save current layout
             db->GetLayout()->Clear();
         } else if (event == OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGED) {
-            auto layouts = LoadLayoutsForCurrentSceneCollection();
-            db->Load(layouts[0].toObject());
+            Load();
         }
     },
         nullptr);
