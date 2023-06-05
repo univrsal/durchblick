@@ -166,6 +166,14 @@ void Layout::MouseMoved(QMouseEvent* e)
         e->buttons(),
         e->type());
 
+    auto* screen = m_durchblick->windowHandle()->screen();
+    binfo("screen: 0x%X", screen);
+    if (screen) {
+        d.x *= screen->devicePixelRatio();
+        d.y *= screen->devicePixelRatio();
+        binfo("Ratio: %.2f", screen->devicePixelRatio());
+    }
+
     LayoutItem::Cell pos;
     bool anything_hovered = false;
     for (auto& Item : m_layout_items) {
