@@ -56,7 +56,7 @@
       },
       "generator": "Visual Studio 17 2022",
       "architecture": "x64",
-      "warnings": {"dev": true, "deprecated": true},
+      "warnings": {"dev": false, "deprecated": false},
       "cacheVariables": {
         "CMAKE_SYSTEM_VERSION": "10.0.18363.657"
       }
@@ -82,7 +82,7 @@
         "rhs": "Linux"
       },
       "generator": "Ninja",
-      "warnings": {"dev": true, "deprecated": true},
+      "warnings": {"dev": false, "deprecated": false},
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }

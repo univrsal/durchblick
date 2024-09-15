@@ -83,5 +83,5 @@ set(_obs_clang_cxx_options
     -Wrange-loop-analysis)
 
 if(NOT DEFINED CMAKE_COMPILE_WARNING_AS_ERROR)
-  set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+  set(CMAKE_COMPILE_WARNING_AS_ERROR OFF)
 endif()

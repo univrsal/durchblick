@@ -18,7 +18,6 @@
 
 #include "config.hpp"
 #include "items/registry.hpp"
-#include "plugin-macros.generated.h"
 #include "ui/durchblick.hpp"
 #include "util/util.h"
 #include <QAction>
@@ -32,9 +31,8 @@ OBS_MODULE_USE_DEFAULT_LOCALE("durchblick", "en-US")
 
 bool obs_module_load()
 {
-
-    binfo("Loading v%s build time %s", PLUGIN_VERSION, BUILD_TIME);
-
+    binfo("Loading v%s-%s (%s) build time %s", PLUGIN_VERSION, GIT_BRANCH, GIT_COMMIT_HASH, BUILD_TIME);
+   
     Registry::RegisterCustomWidgetProcedure();
 
     QAction::connect(static_cast<QAction*>(obs_frontend_add_tools_menu_qaction(T_MENU_OPTION)),

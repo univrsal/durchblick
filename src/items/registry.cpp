@@ -108,7 +108,7 @@ LayoutItem* MakeItem(Layout* l, QJsonObject const& obj)
     if (id == "CustomItem")
         id = obj["custom_id"].toString();
 
-    for (auto const& Entry : qAsConst(ItemRegistry::Entries)) {
+    for (auto const& Entry : std::as_const(ItemRegistry::Entries)) {
         if (Entry.id == id) {
             auto* item = Entry.construct(l, 0, 0, 0, 0);
             item->ReadFromJson(obj);
@@ -148,7 +148,7 @@ void RegisterCustomWidgetProcedure()
 
 const ItemRegistry::Entry* GetEntryById(const QString& id)
 {
-    for (auto const& Entry : qAsConst(ItemRegistry::Entries)) {
+    for (auto const& Entry : std::as_const(ItemRegistry::Entries)) {
         if (Entry.id == id)
             return &Entry;
     }

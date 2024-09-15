@@ -34,18 +34,21 @@ public:
 
     struct Entry {
         Constructor construct {};
-        QString name, id;
-        DurchblickCallbacks cbs;
+        QString name {}, id {};
+        DurchblickCallbacks cbs {};
 
         Entry(Constructor const& c, const char* _id, const char* _name)
             : construct(c)
             , name(utf8_to_qt(_name))
             , id(utf8_to_qt(_id))
+            , cbs({})
         {
         }
+
         Entry(const char* _id, const char* _name)
             : name(utf8_to_qt(_name))
             , id(utf8_to_qt(_id))
+            , cbs({})
         {
         }
     };

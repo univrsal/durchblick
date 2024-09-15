@@ -13,8 +13,37 @@ include(helpers)
 
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 
+string(TIMESTAMP TODAY "%Y.%m.%d %H:%M")
+
+# Get the current working branch
+execute_process(
+    COMMAND git rev-parse --abbrev-ref HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_BRANCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+# Get the latest commit hash
+execute_process(
+    COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+    GIT_BRANCH="${GIT_BRANCH}"
+    GIT_COMMIT_HASH="${GIT_COMMIT_HASH}"
+    PLUGIN_VERSION="${_version}"
+    BUILD_TIME="${TODAY}"
+)
+
+if(MSVC)
+  set(CMAKE_EXE_LINKER_FLAGS
+      "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB")
+endif()
+
 find_package(libobs REQUIRED)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
+find_package(jansson REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs jansson::jansson)
 
 if(ENABLE_FRONTEND_API)
   find_package(obs-frontend-api REQUIRED)
@@ -32,6 +61,13 @@ if(ENABLE_QT)
     PROPERTIES AUTOMOC ON
                AUTOUIC ON
                AUTORCC ON)
+endif()
+
+if (MSVC)
+    target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+        ./src/util/windows_helper.cpp
+        ./src/util/windows_helper.hpp
+    )
 endif()
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
@@ -72,5 +108,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ./src/items/audio_mixer.cpp
     ./src/items/audio_mixer.hpp
 )
+
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})

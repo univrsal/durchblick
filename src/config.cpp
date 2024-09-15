@@ -122,7 +122,7 @@ void Load()
             const auto main_window = static_cast<QMainWindow*>(obs_frontend_get_main_window());
             obs_frontend_push_ui_translation(obs_module_get_string);
             dbdock = new DurchblickDock((QWidget*)main_window);
-            obs_frontend_add_dock(Config::dbdock);
+            obs_frontend_add_dock_by_id("durchblick", "Durchblick", Config::dbdock);
             obs_frontend_pop_ui_translation();
         }
 

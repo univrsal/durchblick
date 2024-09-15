@@ -477,7 +477,7 @@ void Layout::Load(QJsonObject const& obj)
     m_locked = obj["locked"].toBool(false);
     auto items = obj["items"].toArray();
 
-    for (auto const& item : qAsConst(items)) {
+    for (auto const& item : std::as_const(items)) {
         auto* new_item = Registry::MakeItem(this, item.toObject());
         if (new_item) {
             new_item->Update(m_cfg);

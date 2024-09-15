@@ -5,7 +5,7 @@
 
 class Durchblick;
 
-class DurchblickDock : public QDockWidget {
+class DurchblickDock : public QWidget {
     Q_OBJECT
 
 private:

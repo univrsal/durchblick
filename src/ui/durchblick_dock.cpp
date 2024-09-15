@@ -1,5 +1,5 @@
 #include "durchblick_dock.hpp"
-#include "config.hpp"
+#include "../config.hpp"
 #include "durchblick.hpp"
 #include <QShowEvent>
 #include <QVBoxLayout>
@@ -33,20 +33,17 @@ void DurchblickDock::showEvent(QShowEvent* e)
 }
 
 DurchblickDock::DurchblickDock(QWidget* parent)
-    : QDockWidget(parent)
+    : QWidget(parent)
     , db(new Durchblick(this, Qt::Widget))
 {
-    setFeatures(DockWidgetMovable | DockWidgetFloatable);
     setWindowTitle("Durchblick");
     setObjectName("DurchblickDock");
-    setFloating(true);
-
+    
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->addWidget(db);
 
     auto* dockWidgetContents = new QWidget(this);
     dockWidgetContents->setLayout(mainLayout);
-    setWidget(dockWidgetContents);
 }
 
 DurchblickDock::~DurchblickDock()
