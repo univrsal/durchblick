@@ -1,9 +1,26 @@
-creds.txt
-*.autosave
+# Exclude everything
+/*
+
+# Except for default project files
+!/.github
+!/build-aux
+!/cmake
+!/data
+!/src
+!.clang-format
+!.cmake-format.json
+!.gitignore
+!buildspec.json
+!CMakeLists.txt
+!CMakePresets.json
+!LICENSE
+!README.md
+
+# Exclude lock files
+*.lock.json
+
+# Exclude macOS legacy resource forks
 .DS_Store
-*.user
-build-durchblick*/
-package/*.txt
-package/*.iss
-package/*.pkgproj
-src/*.generated.h
+
+# Exclude CMake build number cache
+/cmake/.CMakeBuildNumber
