@@ -178,10 +178,14 @@ void Save()
 
 void Cleanup()
 {
-    db->deleteLater();
-    db = nullptr;
-    dbdock->deleteLater();
-    dbdock = nullptr;
+    if (db) {
+        db->deleteLater();
+        db = nullptr;
+    }
+    if (dbdock) {
+        dbdock->deleteLater();
+        dbdock = nullptr;
+    }
 }
 
 }
