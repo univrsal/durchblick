@@ -4,8 +4,8 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/common/bootstrap.cmake" NO_POLICY_SCO
 
 project(${_name} VERSION ${_version})
 
-option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" OFF)
-option(ENABLE_QT "Use Qt functionality" OFF)
+option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" ON)
+option(ENABLE_QT "Use Qt functionality" ON)
 
 include(compilerconfig)
 include(defaults)
@@ -40,10 +40,10 @@ if(MSVC)
   set(CMAKE_EXE_LINKER_FLAGS
       "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB")
 endif()
-
+add_subdirectory(deps/jansson)
 find_package(libobs REQUIRED)
-find_package(jansson REQUIRED)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs jansson::jansson)
+
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs jansson)
 
 if(ENABLE_FRONTEND_API)
   find_package(obs-frontend-api REQUIRED)
