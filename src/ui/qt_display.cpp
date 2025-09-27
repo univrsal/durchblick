@@ -16,8 +16,12 @@
 #endif
 
 #ifdef ENABLE_WAYLAND
-#    include <qpa/qplatformnativeinterface.h>
+#include <QApplication>
+#if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
+#include <qpa/qplatformnativeinterface.h>
 #endif
+#endif
+
 
 static inline QSize GetPixelSize(QWidget* widget)
 {
@@ -158,7 +162,7 @@ void OBSQTDisplay::UpdateDisplayBackgroundColor()
     obs_display_set_background_color(display, backgroundColor);
 }
 
-bool QTToGSWindow(QWindow* window, gs_window& gswindow)
+static bool QTToGSWindow(QWindow *window, gs_window &gswindow)
 {
     bool success = true;
 
@@ -172,13 +176,21 @@ bool QTToGSWindow(QWindow* window, gs_window& gswindow)
         gswindow.id = window->winId();
         gswindow.display = obs_get_nix_platform_display();
         break;
-#    ifdef ENABLE_WAYLAND
-    case OBS_NIX_PLATFORM_WAYLAND:
-        QPlatformNativeInterface* native = QGuiApplication::platformNativeInterface();
+#ifdef ENABLE_WAYLAND
+    case OBS_NIX_PLATFORM_WAYLAND: {
+#if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
+        QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
         gswindow.display = native->nativeResourceForWindow("surface", window);
+#else
+        gswindow.display = (void *)window->winId();
+#endif
         success = gswindow.display != nullptr;
         break;
-#    endif
+    }
+#endif
+    default:
+        success = false;
+        break;
     }
 #endif
     return success;
