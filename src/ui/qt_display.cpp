@@ -15,7 +15,9 @@
 #    include <obs-nix-platform.h>
 #endif
 
-#ifdef ENABLE_WAYLAND
+#include <QPlatformNativeInterface>
+
+# ifdef ENABLE_WAYLAND
 #include <QApplication>
 #endif
 
