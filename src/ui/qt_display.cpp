@@ -17,9 +17,6 @@
 
 #ifdef ENABLE_WAYLAND
 #include <QApplication>
-#if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
-#include <qpa/qplatformnativeinterface.h>
-#endif
 #endif
 
 
