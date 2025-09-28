@@ -41,6 +41,7 @@ add_subdirectory(deps/jansson)
 find_package(libobs REQUIRED)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs jansson)
+include_directories(${CMAKE_BINARY_DIR}/deps/jansson/include)
 
 if(ENABLE_FRONTEND_API)
   find_package(obs-frontend-api REQUIRED)
