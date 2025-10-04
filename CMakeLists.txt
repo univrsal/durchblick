@@ -37,7 +37,9 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
 )
 
 add_subdirectory(deps/jansson)
-set_property(TARGET jansson PROPERTY COMPILE_OPTIONS "/W0")
+if(MSVC)
+  target_compile_options(jansson PRIVATE /wd4267)
+endif()
 
 find_package(libobs REQUIRED)
 
