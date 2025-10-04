@@ -41,6 +41,7 @@ if(MSVC)
   target_compile_options(jansson PRIVATE /wd4267)
   target_compile_options(jansson PRIVATE /wd4244) 
   target_compile_options(jansson PRIVATE /wd4146) 
+  target_compile_options(jansson PRIVATE /wd4334) 
 endif()
 
 find_package(libobs REQUIRED)
