@@ -39,6 +39,8 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
 add_subdirectory(deps/jansson)
 if(MSVC)
   target_compile_options(jansson PRIVATE /wd4267)
+  target_compile_options(jansson PRIVATE /wd4244) 
+  target_compile_options(jansson PRIVATE /wd4146) 
 endif()
 
 find_package(libobs REQUIRED)
