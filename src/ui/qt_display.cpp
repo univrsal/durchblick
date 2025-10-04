@@ -15,7 +15,9 @@
 #    include <obs-nix-platform.h>
 #endif
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QPlatformNativeInterface>
+#endif
 
 # ifdef ENABLE_WAYLAND
 #include <QApplication>
@@ -177,7 +179,7 @@ static bool QTToGSWindow(QWindow *window, gs_window &gswindow)
         break;
 #ifdef ENABLE_WAYLAND
     case OBS_NIX_PLATFORM_WAYLAND: {
-#if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
         gswindow.display = native->nativeResourceForWindow("surface", window);
 #else
