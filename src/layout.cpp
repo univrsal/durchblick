@@ -167,11 +167,9 @@ void Layout::MouseMoved(QMouseEvent* e)
         e->type());
 
     auto* screen = m_durchblick->windowHandle()->screen();
-    binfo("screen: 0x%X", screen);
     if (screen) {
         d.x *= screen->devicePixelRatio();
         d.y *= screen->devicePixelRatio();
-        binfo("Ratio: %.2f", screen->devicePixelRatio());
     }
 
     LayoutItem::Cell pos;
@@ -458,7 +456,7 @@ void Layout::CreateDefaultLayout()
     m_layout_mutex.unlock();
     obs_frontend_source_list_free(&scenes);
 
-    auto cfg = obs_frontend_get_global_config();
+    auto cfg = obs_frontend_get_app_config();
 
     // Automatically set settings to user default
     m_durchblick->SetHideFromDisplayCapture(config_get_bool(cfg, "BasicWindow", "HideOBSWindowsFromCapture"));
