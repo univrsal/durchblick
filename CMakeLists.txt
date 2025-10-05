@@ -29,12 +29,39 @@ execute_process(
     OUTPUT_VARIABLE GIT_COMMIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+
+
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     GIT_BRANCH="${GIT_BRANCH}"
     GIT_COMMIT_HASH="${GIT_COMMIT_HASH}"
     PLUGIN_VERSION="${_version}"
     BUILD_TIME="${TODAY}"
 )
+
+if(OBS_BUILD_DIR)
+
+  if (WIN32)
+    add_custom_command(
+      TARGET ${CMAKE_PROJECT_NAME}
+      POST_BUILD
+      COMMAND "${CMAKE_COMMAND}" -E make_directory "${OBS_BUILD_DIR}/obs-plugins/64bit"
+      COMMAND
+        "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>"
+        "$<$<CONFIG:Debug,RelWithDebInfo,Release>:$<TARGET_PDB_FILE:${CMAKE_PROJECT_NAME}>>" "${OBS_BUILD_DIR}/obs-plugins/64bit"
+      COMMENT "Copy ${CMAKE_PROJECT_NAME} to obs-studio directory ${OBS_BUILD_DIR}"
+      VERBATIM)
+  elseif (UNIX AND NOT APPLE)
+    add_custom_command(
+            TARGET ${CMAKE_PROJECT_NAME}
+            POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${OBS_BUILD_DIR}/lib/obs-plugins"
+            COMMAND
+            "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>"
+            "${OBS_BUILD_DIR}/lib/obs-plugins"
+            COMMENT "Copy ${CMAKE_PROJECT_NAME} to obs-studio directory ${OBS_BUILD_DIR}"
+            VERBATIM)
+  endif()
+endif()
 
 add_subdirectory(deps/jansson)
 
