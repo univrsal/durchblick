@@ -3,7 +3,7 @@ param(
     [ValidateSet('x64')]
     [string] $Target = 'x64',
     [ValidateSet('Debug', 'RelWithDebInfo', 'Release', 'MinSizeRel')]
-    [string] $Configuration = 'RelWithDebInfo'
+    [string] $Configuration = 'RelWithDebInfo',
     [switch] $BuildInstaller = $false
 )
 
