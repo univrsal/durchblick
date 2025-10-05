@@ -58,8 +58,8 @@ void SceneItem::MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
 {
     SourceItem::MouseEvent(e, cfg);
     auto transitionOnDoubleClick = config_get_bool(
-        obs_frontend_get_global_config(), "BasicWindow", "TransitionOnDoubleClick");
-    auto switchOnClick = config_get_bool(obs_frontend_get_global_config(), "BasicWindow",
+        obs_frontend_get_app_config(), "BasicWindow", "TransitionOnDoubleClick");
+    auto switchOnClick = config_get_bool(obs_frontend_get_app_config(), "BasicWindow",
         "MultiviewMouseSwitch");
     if (Hovered()) {
         auto islmb = e.buttons & Qt::LeftButton;
