@@ -77,7 +77,7 @@ protected:
     uint32_t m_major_tick_color;
     uint32_t m_minor_tick_color;
 
-    inline void draw_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t color);
+    void draw_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t color);
 
     OBSSignal vol_changed_signal;
     OBSSignal mixersSignal;
