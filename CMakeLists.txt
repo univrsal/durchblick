@@ -36,7 +36,10 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
     BUILD_TIME="${TODAY}"
 )
 
+set(CMAKE_SKIP_INSTALL_RULES ON CACHE INTERNAL "" FORCE)
 add_subdirectory(deps/jansson)
+set(CMAKE_SKIP_INSTALL_RULES OFF CACHE INTERNAL "" FORCE)
+
 if(MSVC)
   target_compile_options(jansson PRIVATE /wd4267)
   target_compile_options(jansson PRIVATE /wd4244) 
