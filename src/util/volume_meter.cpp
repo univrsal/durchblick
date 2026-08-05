@@ -29,6 +29,30 @@
 #define INDICATOR_THICKNESS 3
 #define CLIP_FLASH_DURATION_MS 1000
 
+static gs_effect_t* volume_effect {};
+
+void MixerMeter::Init()
+{
+    obs_enter_graphics();
+    BPtr<char> path = obs_module_file("volume.effect");
+    char* errors = nullptr;
+    volume_effect = gs_effect_create_from_file(path, &errors);
+    if (errors) {
+        bwarn("Volume meter shader: %s", errors);
+        bfree(errors);
+    }
+    obs_leave_graphics();
+}
+
+void MixerMeter::Deinit()
+{
+    obs_enter_graphics();
+    if (volume_effect)
+        gs_effect_destroy(volume_effect);
+    volume_effect = nullptr;
+    obs_leave_graphics();
+}
+
 static void on_source_muted(void* data, calldata_t* calldata)
 {
     MixerMeter* meter = static_cast<MixerMeter*>(data);
@@ -58,6 +82,41 @@ void MixerMeter::draw_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h, 
     while (gs_effect_loop(m_solid_effect, "Solid"))
         gs_draw_sprite(nullptr, 0, (uint32_t)w, (uint32_t)h);
     gs_matrix_pop();
+}
+
+bool MixerMeter::draw_meter(uint32_t x, uint32_t y, uint32_t w,
+    uint32_t h, float level, bool muted)
+{
+    if (!volume_effect || !w || !h)
+        return false;
+
+    gs_effect_set_float(gs_effect_get_param_by_name(volume_effect, "volume"),
+        qBound(0.0f, level, 1.0f));
+    gs_effect_set_color(gs_effect_get_param_by_name(volume_effect,
+                            "background_nominal"),
+        muted ? m_background_nominal_color_disabled : m_background_nominal_color);
+    gs_effect_set_color(gs_effect_get_param_by_name(volume_effect,
+                            "background_warning"),
+        muted ? m_background_warning_color_disabled : m_background_warning_color);
+    gs_effect_set_color(gs_effect_get_param_by_name(volume_effect,
+                            "background_error"),
+        muted ? m_background_error_color_disabled : m_background_error_color);
+    gs_effect_set_color(gs_effect_get_param_by_name(volume_effect,
+                            "foreground_nominal"),
+        muted ? m_foreground_nominal_color_disabled : m_foreground_nominal_color);
+    gs_effect_set_color(gs_effect_get_param_by_name(volume_effect,
+                            "foreground_warning"),
+        muted ? m_foreground_warning_color_disabled : m_foreground_warning_color);
+    gs_effect_set_color(gs_effect_get_param_by_name(volume_effect,
+                            "foreground_error"),
+        muted ? m_foreground_error_color_disabled : m_foreground_error_color);
+
+    gs_matrix_push();
+    gs_matrix_translate3f(x, y, 0);
+    while (gs_effect_loop(volume_effect, "Solid"))
+        gs_draw_sprite(nullptr, 0, w, h);
+    gs_matrix_pop();
+    return true;
 }
 
 MixerMeter::MixerMeter(OBSSource src, int x, int y, int height, int channel_width)
@@ -298,87 +357,29 @@ void MixerMeter::Render(float cell_scale, float, float src_scale_y)
         int nominal_position = int(upper_limit + (m_warning_level * scale));
         int warning_position = int(upper_limit + (m_error_level * scale));
         int magnitude_position = int(lower_limit - (h - (magnitude * scale)));
-        int nominal_ength = lower_limit - nominal_position;
-        int warning_length = nominal_position - warning_position;
-        int error_length = warning_position - upper_limit;
-        int error_position = 0;
-
         auto w = m_channel_width / cell_scale;
         auto x = m_x + (w + 2) * i;
 
-        if (clipping)
-            peak_position = 0;
-
-        if (peak_position > lower_limit) { // Peak is below the meter -> no peak visible
-            draw_rectangle(x, nominal_position, w, nominal_ength,
-                muted ? m_background_nominal_color_disabled
-                        : m_background_nominal_color);
-            draw_rectangle(x, warning_position, w, warning_length,
-                muted ? m_background_warning_color_disabled
-                        : m_background_warning_color);
-            draw_rectangle(x, upper_limit, w, error_length,
-                muted ? m_background_error_color_disabled
-                        : m_background_error_color);
-        } else if (peak_position > nominal_position) {
-            // Nominal (green + background)
-            draw_rectangle(x, peak_position, w,
-                lower_limit - peak_position,
-                muted ? m_foreground_nominal_color_disabled
-                        : m_foreground_nominal_color);
-            draw_rectangle(x, nominal_position, w,
-                peak_position - nominal_position,
-                muted ? m_background_nominal_color_disabled
-                        : m_background_nominal_color);
-
-            // Warning (yellow) and error (red)
-            draw_rectangle(x, warning_position, w, warning_length,
-                muted ? m_background_warning_color_disabled
-                        : m_background_warning_color);
-            draw_rectangle(x, upper_limit, w, error_length,
-                muted ? m_background_error_color_disabled
-                        : m_background_error_color);
-        } else if (peak_position > warning_position) {
-            draw_rectangle(x, nominal_position, w, nominal_ength,
-                muted ? m_foreground_nominal_color_disabled
-                        : m_foreground_nominal_color);
-
-            // Warning (yellow + background)
-            draw_rectangle(x, peak_position, w,
-                nominal_position - peak_position,
-                muted ? m_foreground_warning_color_disabled
-                        : m_foreground_warning_color);
-            draw_rectangle(x, warning_position, w,
-                peak_position - warning_position,
-                muted ? m_background_warning_color_disabled
-                        : m_background_warning_color);
-
-            draw_rectangle(x, upper_limit, w, error_length,
-                muted ? m_background_error_color_disabled
-                        : m_background_error_color);
-        } else if (peak_position > error_position && peak_position > upper_limit) {
-            draw_rectangle(x, peak_position, w, warning_position - peak_position,
-                muted ? m_foreground_error_color_disabled
-                        : m_foreground_error_color);
-            draw_rectangle(x, upper_limit, w, peak_position - upper_limit,
-                muted ? m_background_error_color_disabled
-                        : m_background_error_color);
-
-            draw_rectangle(x, nominal_position, w, nominal_ength,
-                muted ? m_foreground_nominal_color_disabled
-                        : m_foreground_nominal_color);
-            draw_rectangle(x, warning_position, w, warning_length,
-                muted ? m_foreground_warning_color_disabled
-                        : m_foreground_warning_color);
-        } else {
+        if (peak_position <= upper_limit) {
             if (!clipping) {
                 clip_begin_time = ts;
                 clipping = true;
             }
-            int end = error_length + warning_length + nominal_ength;
+        }
 
-            draw_rectangle(x, upper_limit, w, end,
+        if (clipping) {
+            draw_rectangle(x, upper_limit, w, h,
                 muted ? m_foreground_error_color_disabled
-                        : m_foreground_error_color);
+                      : m_foreground_error_color);
+        } else {
+            const float level = isfinite(peak)
+                ? float((peak - m_minimum_level) / -m_minimum_level)
+                : 0.0f;
+            if (!draw_meter(x, upper_limit, w, h, level, muted)) {
+                draw_rectangle(x, upper_limit, w, h,
+                    muted ? m_background_nominal_color_disabled
+                          : m_background_nominal_color);
+            }
         }
 
         auto size = 3 / cell_scale;
@@ -387,15 +388,15 @@ void MixerMeter::Render(float cell_scale, float, float src_scale_y)
         else if (peak_hold_position - size / 2 > nominal_position)
             draw_rectangle(x, peak_hold_position, w, size,
                 muted ? m_foreground_nominal_color_disabled
-                        : m_foreground_nominal_color);
+                      : m_foreground_nominal_color);
         else if (peak_hold_position - size / 2 > warning_position)
             draw_rectangle(x, peak_hold_position, w, size,
                 muted ? m_foreground_warning_color_disabled
-                        : m_foreground_warning_color);
+                      : m_foreground_warning_color);
         else if (peak_hold_position - size / 2 > upper_limit)
             draw_rectangle(x, peak_hold_position, w, size,
                 muted ? m_foreground_error_color_disabled
-                        : m_foreground_error_color);
+                      : m_foreground_error_color);
 
         if (magnitude_position - size / 2 >= upper_limit) {
             draw_rectangle(x, magnitude_position - size / 2, w, size,

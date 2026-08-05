@@ -18,6 +18,7 @@
 
 #include "durchblick.hpp"
 #include "../config.hpp"
+#include "../util/performance_stats.hpp"
 #include "../util/platform_util.hpp"
 #include "durchblick_dock.hpp"
 #include "obs.hpp"
@@ -25,6 +26,7 @@
 #include <QIcon>
 #include <QWindow>
 #include <obs-module.h>
+#include <util/platform.h>
 
 #ifdef _WIN32
 #    include "../util/windows_helper.hpp"
@@ -267,6 +269,12 @@ Durchblick::~Durchblick()
     m_screen = nullptr;
     m_ready = false;
     m_layout.DeleteLayout();
+    if (m_render_target) {
+        obs_enter_graphics();
+        gs_texrender_destroy(m_render_target);
+        obs_leave_graphics();
+        m_render_target = nullptr;
+    }
     deleteLater();
 }
 
@@ -280,7 +288,73 @@ void Durchblick::RenderLayout(void* data, uint32_t cx, uint32_t cy)
     auto* w = (Durchblick*)data;
     if (!w->m_ready || !w->isVisible())
         return;
-    w->m_layout.Render(w->m_fw, w->m_fh, cx, cy);
+
+    const uint64_t start_time = os_gettime_ns();
+    if (!w->m_render_limit_width || !w->m_render_limit_height || (cx <= w->m_render_limit_width && cy <= w->m_render_limit_height)) {
+        w->m_layout.Render(w->m_fw, w->m_fh, cx, cy);
+        PerformanceStats::Frame(uint64_t(cx) * cy, uint64_t(cx) * cy,
+            os_gettime_ns() - start_time);
+        return;
+    }
+
+    const float scale = qMin(
+        float(w->m_render_limit_width) / cx,
+        float(w->m_render_limit_height) / cy);
+    const uint32_t render_cx = qMax(1U, uint32_t(cx * scale));
+    const uint32_t render_cy = qMax(1U, uint32_t(cy * scale));
+
+    const gs_color_space color_space = gs_get_color_space();
+    const gs_color_format color_format = gs_get_format_from_space(color_space);
+    if (w->m_render_target && w->m_render_target_format != color_format) {
+        gs_texrender_destroy(w->m_render_target);
+        w->m_render_target = nullptr;
+    }
+    if (!w->m_render_target) {
+        w->m_render_target = gs_texrender_create(color_format, GS_ZS_NONE);
+        w->m_render_target_format = color_format;
+    }
+    if (!w->m_render_target) {
+        w->m_layout.Render(w->m_fw, w->m_fh, cx, cy);
+        PerformanceStats::Frame(uint64_t(cx) * cy, uint64_t(cx) * cy,
+            os_gettime_ns() - start_time);
+        return;
+    }
+
+    gs_texrender_reset(w->m_render_target);
+    if (!gs_texrender_begin_with_color_space(w->m_render_target, render_cx,
+            render_cy, color_space)) {
+        w->m_layout.Render(w->m_fw, w->m_fh, cx, cy);
+        PerformanceStats::Frame(uint64_t(cx) * cy, uint64_t(cx) * cy,
+            os_gettime_ns() - start_time);
+        return;
+    }
+
+    vec4 clear_color;
+    vec4_zero(&clear_color);
+    gs_clear(GS_CLEAR_COLOR, &clear_color, 0.0f, 0);
+    const auto render_cfg = w->m_layout.RenderConfigForSize(render_cx, render_cy);
+    w->m_layout.Render(w->m_fw, w->m_fh, render_cx, render_cy,
+        &render_cfg);
+    gs_texrender_end(w->m_render_target);
+
+    gs_texture_t* texture = gs_texrender_get_texture(w->m_render_target);
+    if (!texture) {
+        w->m_layout.Render(w->m_fw, w->m_fh, cx, cy);
+        PerformanceStats::Frame(uint64_t(cx) * cy, uint64_t(cx) * cy,
+            os_gettime_ns() - start_time);
+        return;
+    }
+
+    StartRegion(0, 0, cx, cy, 0.0f, float(render_cx), 0.0f,
+        float(render_cy));
+    gs_effect_t* effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+    gs_eparam_t* image = gs_effect_get_param_by_name(effect, "image");
+    gs_effect_set_texture(image, texture);
+    while (gs_effect_loop(effect, "Draw"))
+        gs_draw_sprite(texture, 0, render_cx, render_cy);
+    EndRegion();
+    PerformanceStats::Frame(uint64_t(cx) * cy,
+        uint64_t(render_cx) * render_cy, os_gettime_ns() - start_time);
 }
 
 void Durchblick::SetMonitor(int monitor)
@@ -331,6 +405,8 @@ void Durchblick::Save(QJsonObject& obj)
         obj["hide_from_display_capture"] = GetHideFromDisplayCapture();
         obj["hide_cursor"] = m_hide_cursor;
         obj["always_on_top"] = m_always_on_top;
+        obj["render_limit_width"] = int(m_render_limit_width);
+        obj["render_limit_height"] = int(m_render_limit_height);
         m_layout.Save(obj);
         m_cached_layout = obj;
     } else {
@@ -376,6 +452,9 @@ void Durchblick::Load(QJsonObject const& obj)
     SetIsAlwaysOnTop(obj["always_on_top"].toBool(false), false);
 
     SetHideFromDisplayCapture(obj["hide_from_display_capture"].toBool(false));
+    SetRenderLimit(
+        uint32_t(qMax(0, obj["render_limit_width"].toInt(1920))),
+        uint32_t(qMax(0, obj["render_limit_height"].toInt(1080))));
     m_layout.Load(obj);
 }
 

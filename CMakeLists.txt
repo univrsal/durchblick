@@ -111,6 +111,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ./src/util/util.h
     ./src/util/callbacks.h
     ./src/util/platform_util.hpp
+    ./src/util/performance_stats.cpp
+    ./src/util/performance_stats.hpp
     ./src/util/display_helpers.hpp
     ./src/util/volume_meter.cpp
     ./src/util/volume_meter.hpp

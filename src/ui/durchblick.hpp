@@ -44,6 +44,10 @@ class Durchblick : public OBSQTDisplay {
     bool m_always_on_top { false };
 
     QJsonObject m_cached_layout {};
+    gs_texrender_t* m_render_target {};
+    gs_color_format m_render_target_format { GS_UNKNOWN };
+    uint32_t m_render_limit_width { 1920 };
+    uint32_t m_render_limit_height { 1080 };
 
 public:
     QRect m_previous_geometry;
@@ -91,6 +95,13 @@ public:
     bool IsAlwaysOnTop() const;
     void SetIsAlwaysOnTop(bool isAlwaysOnTop, bool reshow = true);
     void Update();
+    void SetRenderLimit(uint32_t width, uint32_t height)
+    {
+        m_render_limit_width = width;
+        m_render_limit_height = height;
+    }
+    uint32_t GetRenderLimitWidth() const { return m_render_limit_width; }
+    uint32_t GetRenderLimitHeight() const { return m_render_limit_height; }
 
     void Save(QJsonObject& obj);
     /// Will either load fromt he JSON object or create the default layout

@@ -89,6 +89,7 @@ protected:
     int m_channel_width { 2 };
     void RenderSafeMargins(int w, int h);
     vec2 m_scale {};
+    bool m_use_render_cache {};
     int m_source_width {}, m_source_height {};
     int m_source_offset_x {}, m_source_offset_y {};
     int m_label_width {}, m_label_height {};
@@ -127,6 +128,9 @@ public:
     }
 
     OBSSource GetSource() { return m_src; }
+    virtual obs_source_t* CacheableRenderSource() const { return m_src; }
+    static bool HasDuplicateRenderSource(obs_source_t* source);
+    void SetRenderCacheEnabled(bool enabled) { m_use_render_cache = enabled; }
 
     virtual void ReadFromJson(QJsonObject const& Obj) override;
     virtual void WriteToJson(QJsonObject& Obj) override;

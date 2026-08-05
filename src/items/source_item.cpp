@@ -1,18 +1,102 @@
 #include "source_item.hpp"
 #include "../layout.hpp"
 #include "../util/display_helpers.hpp"
+#include "../util/performance_stats.hpp"
 #include <QApplication>
 #include <QMainWindow>
-#include <obs-frontend-api.h>
+#include <cmath>
 #include <map>
 #include <mutex>
+#include <obs-frontend-api.h>
 #include <tuple>
+#include <unordered_map>
 #include <util/util.hpp>
 
 namespace {
 using LabelKey = std::tuple<std::string, size_t, int>;
 std::mutex label_cache_mutex;
 std::map<LabelKey, OBSSource> label_cache;
+std::mutex source_count_mutex;
+std::unordered_map<obs_source_t*, size_t> source_counts;
+
+void AddSourceInstance(obs_source_t* source)
+{
+    if (!source)
+        return;
+    std::lock_guard<std::mutex> lock(source_count_mutex);
+    ++source_counts[source];
+}
+
+void RemoveSourceInstance(obs_source_t* source)
+{
+    if (!source)
+        return;
+    std::lock_guard<std::mutex> lock(source_count_mutex);
+    auto it = source_counts.find(source);
+    if (it != source_counts.end() && --it->second == 0)
+        source_counts.erase(it);
+}
+
+using RenderCacheKey = std::tuple<obs_source_t*, uint32_t, uint32_t,
+    gs_color_format>;
+struct RenderCacheEntry {
+    gs_texrender_t* target {};
+    uint64_t frame_time {};
+    uint64_t last_used {};
+};
+std::map<RenderCacheKey, RenderCacheEntry> source_render_cache;
+uint64_t render_cache_last_cleanup {};
+
+gs_texture_t* RenderSourceCached(obs_source_t* source, uint32_t source_width,
+    uint32_t source_height, uint32_t target_width, uint32_t target_height)
+{
+    const gs_color_space color_space = gs_get_color_space();
+    const gs_color_format color_format = gs_get_format_from_space(color_space);
+    RenderCacheKey key { source, target_width, target_height, color_format };
+    const uint64_t frame_time = obs_get_video_frame_time();
+    if (frame_time - render_cache_last_cleanup > 5000000000ULL) {
+        for (auto it = source_render_cache.begin();
+            it != source_render_cache.end();) {
+            if (frame_time - it->second.last_used > 10000000000ULL) {
+                if (it->second.target)
+                    gs_texrender_destroy(it->second.target);
+                it = source_render_cache.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        render_cache_last_cleanup = frame_time;
+    }
+
+    auto& entry = source_render_cache[key];
+    entry.last_used = frame_time;
+    if (entry.target && entry.frame_time == frame_time) {
+        PerformanceStats::SourceCacheHit();
+        return gs_texrender_get_texture(entry.target);
+    }
+    PerformanceStats::SourceCacheMiss();
+
+    if (!entry.target)
+        entry.target = gs_texrender_create(color_format, GS_ZS_NONE);
+    gs_texrender_reset(entry.target);
+    if (!gs_texrender_begin_with_color_space(entry.target, target_width,
+            target_height, color_space))
+        return nullptr;
+
+    vec4 clear_color;
+    vec4_zero(&clear_color);
+    gs_clear(GS_CLEAR_COLOR, &clear_color, 0.0f, 0);
+    gs_matrix_push();
+    gs_matrix_identity();
+    StartRegion(0, 0, target_width, target_height, 0.0f,
+        float(source_width), 0.0f, float(source_height));
+    obs_source_video_render(source);
+    EndRegion();
+    gs_matrix_pop();
+    gs_texrender_end(entry.target);
+    entry.frame_time = frame_time;
+    return gs_texrender_get_texture(entry.target);
+}
 }
 
 OBSSource CreateLabel(char const* name, size_t h, float scale)
@@ -85,6 +169,7 @@ void SourceItem::RenderSafeMargins(int w, int h)
 
 void SourceItem::Init()
 {
+    MixerMeter::Init();
     OBSDataAutoRelease settings = obs_data_create();
     BPtr<char> placeholder_path = obs_module_file("placeholder.png");
     obs_data_set_string(settings, "file", placeholder_path);
@@ -100,11 +185,18 @@ void SourceItem::Init()
 
 void SourceItem::Deinit()
 {
+    MixerMeter::Deinit();
+    obs_enter_graphics();
     {
         std::lock_guard<std::mutex> lock(label_cache_mutex);
         label_cache.clear();
+        for (auto& [key, entry] : source_render_cache) {
+            UNUSED_PARAMETER(key);
+            if (entry.target)
+                gs_texrender_destroy(entry.target);
+        }
+        source_render_cache.clear();
     }
-    obs_enter_graphics();
     gs_vertexbuffer_destroy(safe_margin.action);
     gs_vertexbuffer_destroy(safe_margin.graphics);
     gs_vertexbuffer_destroy(safe_margin.four_by_three);
@@ -118,7 +210,9 @@ void SourceItem::Deinit()
 void SourceItem::OBSSourceRemoved(void* data, calldata_t*)
 {
     SourceItem* window = reinterpret_cast<SourceItem*>(data);
+    RemoveSourceInstance(window->m_src);
     window->m_src = placeholder_source;
+    AddSourceInstance(window->m_src);
     if (window->m_vol_meter)
         window->m_vol_meter->SetSource(placeholder_source);
 }
@@ -142,6 +236,7 @@ SourceItem::SourceItem(Layout* parent, int x, int y, int w, int h)
 
 SourceItem::~SourceItem()
 {
+    RemoveSourceInstance(m_src);
     if (m_src)
         obs_source_dec_showing(m_src);
 }
@@ -186,10 +281,13 @@ void SourceItem::LoadConfigFromWidget(QWidget* w)
 
 void SourceItem::SetSource(obs_source_t* src)
 {
-    if (m_src)
+    if (m_src) {
+        RemoveSourceInstance(m_src);
         obs_source_dec_showing(m_src);
+    }
 
     m_src = src;
+    AddSourceInstance(m_src);
     m_transform_dirty = true;
     if (m_src) {
         if (m_vol_meter)
@@ -205,6 +303,13 @@ void SourceItem::SetSource(obs_source_t* src)
             m_label = CreateLabel(obs_source_get_name(m_src), h / 1.5, m_font_scale);
         }
     }
+}
+
+bool SourceItem::HasDuplicateRenderSource(obs_source_t* source)
+{
+    std::lock_guard<std::mutex> lock(source_count_mutex);
+    const auto it = source_counts.find(source);
+    return it != source_counts.end() && it->second > 1;
 }
 
 void SourceItem::Update(DurchblickItemConfig const& cfg)
@@ -308,7 +413,23 @@ void SourceItem::Render(DurchblickItemConfig const& cfg)
     gs_matrix_push();
     gs_matrix_translate3f(m_source_offset_x, m_source_offset_y, 0);
     gs_matrix_scale3f(m_scale.x, m_scale.y, 1);
-    obs_source_video_render(m_src);
+    if (m_use_render_cache) {
+        const uint32_t target_width = qMax(
+            1U, uint32_t(std::ceil(w * m_scale.x * cfg.scale)));
+        const uint32_t target_height = qMax(
+            1U, uint32_t(std::ceil(h * m_scale.y * cfg.scale)));
+        gs_texture_t* texture = RenderSourceCached(m_src, w, h,
+            target_width, target_height);
+        if (texture) {
+            gs_effect_t* effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+            gs_eparam_t* image = gs_effect_get_param_by_name(effect, "image");
+            gs_effect_set_texture(image, texture);
+            while (gs_effect_loop(effect, "Draw"))
+                gs_draw_sprite(texture, 0, w, h);
+        }
+    } else {
+        obs_source_video_render(m_src);
+    }
     if (m_toggle_safe_borders->isChecked())
         RenderSafeMargins(w, h);
     gs_matrix_pop();
