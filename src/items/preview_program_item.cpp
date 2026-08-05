@@ -26,20 +26,11 @@ QWidget* PreviewProgramItem::GetConfigWidget()
     return new PreviewProgramItemWidget;
 }
 
-void PreviewProgramItem::SetIsProgram(bool program)
-{
-    m_program = program;
-    if (m_program && !m_output_meter)
-        m_output_meter = std::make_unique<OutputMeter>();
-    else if (!m_program)
-        m_output_meter.reset();
-}
-
 void PreviewProgramItem::LoadConfigFromWidget(QWidget* w)
 {
     auto* custom = dynamic_cast<PreviewProgramItemWidget*>(w);
     if (custom) {
-        SetIsProgram(!custom->m_preview->isChecked());
+        m_program = !custom->m_preview->isChecked();
         m_font_scale = custom->m_font_size->value() / 100.f;
     }
 
@@ -71,7 +62,6 @@ void PreviewProgramItem::Render(DurchblickItemConfig const& cfg)
         return;
     auto w = cfg.canvas_width;
     auto h = cfg.canvas_height;
-    gs_matrix_push();
     if (m_toggle_stretch->isChecked()) {
         gs_matrix_scale3f(m_inner_width / float(w), m_inner_height / float(h), 1);
     } else {
@@ -104,21 +94,6 @@ void PreviewProgramItem::Render(DurchblickItemConfig const& cfg)
     }
     if (m_toggle_safe_borders->isChecked())
         RenderSafeMargins(w, h);
-    gs_matrix_pop();
-
-    if (m_output_meter) {
-        const float cell_scale = qMax(0.001f, cfg.scale);
-        const int meter_margin = qMax(1, int(8.0f / cell_scale));
-        const int meter_width = m_output_meter->GetRenderWidth(cell_scale);
-        const int meter_height = qMax(1, int(m_inner_height) - meter_margin * 2);
-        m_output_meter->SetHeight(meter_height);
-        m_output_meter->SetPos(
-            qMax(0, int(m_inner_width) - meter_width - meter_margin),
-            meter_margin);
-        DrawBox(m_output_meter->GetX() - 3, meter_margin - 3,
-            meter_width + 6, meter_height + 6, 0xB0000000);
-        m_output_meter->Render(cell_scale, 1.0f, 1.0f);
-    }
 }
 
 void PreviewProgramItem::WriteToJson(QJsonObject& Obj)
@@ -130,7 +105,7 @@ void PreviewProgramItem::WriteToJson(QJsonObject& Obj)
 void PreviewProgramItem::ReadFromJson(QJsonObject const& Obj)
 {
     SourceItem::ReadFromJson(Obj);
-    SetIsProgram(Obj["is_program"].toBool());
+    m_program = Obj["is_program"].toBool();
     if (m_toggle_label->isChecked())
         CreateLabel();
 }
