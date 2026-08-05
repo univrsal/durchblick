@@ -29,41 +29,7 @@
 #include <mutex>
 #include <obs.hpp>
 
-/* yoinked from obs window-projector.cpp */
-static inline OBSSource CreateLabel(char const* name, size_t h, float scale)
-{
-    OBSDataAutoRelease settings = obs_data_create();
-    OBSDataAutoRelease font = obs_data_create();
-
-    std::string text;
-    text += " ";
-    text += name;
-    text += " ";
-
-#if defined(_WIN32)
-    obs_data_set_string(font, "face", "Arial");
-#elif defined(__APPLE__)
-    obs_data_set_string(font, "face", "Helvetica");
-#else
-    obs_data_set_string(font, "face", "Monospace");
-#endif
-    obs_data_set_int(font, "flags", 1); // Bold text
-    obs_data_set_int(font, "size", int(h / 9.81) * scale);
-
-    obs_data_set_obj(settings, "font", font);
-    obs_data_set_string(settings, "text", text.c_str());
-    obs_data_set_bool(settings, "outline", false);
-
-#ifdef _WIN32
-    const char* text_source_id = "text_gdiplus";
-#else
-    const char* text_source_id = "text_ft2_source";
-#endif
-
-    OBSSourceAutoRelease txtSource = obs_source_create_private(text_source_id, name, settings);
-
-    return txtSource.Get();
-}
+OBSSource CreateLabel(char const* name, size_t h, float scale);
 
 class SourceItemWidget : public QWidget {
     Q_OBJECT
@@ -123,6 +89,11 @@ protected:
     int m_channel_width { 2 };
     void RenderSafeMargins(int w, int h);
     vec2 m_scale {};
+    int m_source_width {}, m_source_height {};
+    int m_source_offset_x {}, m_source_offset_y {};
+    int m_label_width {}, m_label_height {};
+    float m_label_scale { 1.0f };
+    bool m_transform_dirty { true };
 public slots:
 
     void VolumeToggled(bool);
@@ -138,6 +109,7 @@ public:
     void LoadConfigFromWidget(QWidget*) override;
 
     void SetSource(obs_source_t* src);
+    void Update(DurchblickItemConfig const& cfg) override;
 
     void SetLabel(bool b)
     {

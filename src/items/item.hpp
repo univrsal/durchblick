@@ -137,6 +137,8 @@ public:
         m.addAction(m_toggle_stretch);
     }
 
+    virtual bool IsPlaceholder() const { return false; }
+
     virtual void Render(DurchblickItemConfig const&)
     {
         DrawBox(0, 0, m_inner_width, m_inner_height, COLOR_BLACK);
@@ -218,4 +220,5 @@ public:
     {
     }
     void ContextMenu(QMenu&) override { }
+    bool IsPlaceholder() const override { return true; }
 };

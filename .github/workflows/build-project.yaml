@@ -1,6 +1,17 @@
 name: Build Project
 on:
   workflow_call:
+    inputs:
+      config:
+        description: CMake build configuration
+        required: false
+        type: string
+        default: RelWithDebInfo
+      package:
+        description: Create native installer packages
+        required: false
+        type: boolean
+        default: false
     outputs:
       pluginName:
         description: Project name detected by parsing build spec file
@@ -48,7 +59,7 @@ jobs:
               fi
               ;;
             workflow_dispatch)
-              config_data=('codesign:true' 'notarize:false' 'package:false' 'config:RelWithDebInfo')
+              config_data=('codesign:false' 'notarize:false' 'package:${{ inputs.package }}' 'config:${{ inputs.config }}')
               ;;
             schedule)
               config_data=('codesign:true' 'notarize:false' 'package:true' 'config:RelWithDebInfo')

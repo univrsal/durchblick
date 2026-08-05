@@ -4,15 +4,55 @@
 #include <QApplication>
 #include <QMainWindow>
 #include <obs-frontend-api.h>
+#include <map>
+#include <mutex>
+#include <tuple>
 #include <util/util.hpp>
+
+namespace {
+using LabelKey = std::tuple<std::string, size_t, int>;
+std::mutex label_cache_mutex;
+std::map<LabelKey, OBSSource> label_cache;
+}
+
+OBSSource CreateLabel(char const* name, size_t h, float scale)
+{
+    const int font_size = int(h / 9.81) * scale;
+    LabelKey key { name ? name : "", h, font_size };
+    std::lock_guard<std::mutex> lock(label_cache_mutex);
+    if (auto it = label_cache.find(key); it != label_cache.end())
+        return it->second;
+
+    OBSDataAutoRelease settings = obs_data_create();
+    OBSDataAutoRelease font = obs_data_create();
+    std::string text = " " + std::get<0>(key) + " ";
+#if defined(_WIN32)
+    obs_data_set_string(font, "face", "Arial");
+    const char* text_source_id = "text_gdiplus";
+#elif defined(__APPLE__)
+    obs_data_set_string(font, "face", "Helvetica");
+    const char* text_source_id = "text_ft2_source";
+#else
+    obs_data_set_string(font, "face", "Monospace");
+    const char* text_source_id = "text_ft2_source";
+#endif
+    obs_data_set_int(font, "flags", 1);
+    obs_data_set_int(font, "size", font_size);
+    obs_data_set_obj(settings, "font", font);
+    obs_data_set_string(settings, "text", text.c_str());
+    obs_data_set_bool(settings, "outline", false);
+
+    OBSSourceAutoRelease source = obs_source_create_private(text_source_id, name, settings);
+    OBSSource shared = source.Get();
+    label_cache.emplace(std::move(key), shared);
+    return shared;
+}
 
 void SourceItem::VolumeToggled(bool state)
 {
     if (state && m_src) {
         auto h = obs_source_get_height(m_src);
         m_vol_meter = std::make_unique<MixerMeter>(m_src, m_volume_meter_x, m_volume_meter_y, h / 2);
-        m_vol_meter->SetType(OBS_FADER_LOG);
-        m_vol_meter->SetSource(m_src);
     } else {
         if (m_vol_meter) {
             m_volume_meter_x = m_vol_meter->GetX();
@@ -60,6 +100,10 @@ void SourceItem::Init()
 
 void SourceItem::Deinit()
 {
+    {
+        std::lock_guard<std::mutex> lock(label_cache_mutex);
+        label_cache.clear();
+    }
     obs_enter_graphics();
     gs_vertexbuffer_destroy(safe_margin.action);
     gs_vertexbuffer_destroy(safe_margin.graphics);
@@ -91,6 +135,8 @@ SourceItem::SourceItem(Layout* parent, int x, int y, int w, int h)
     m_toggle_volume->setCheckable(true);
     SetSource(placeholder_source);
     m_toggle_label->setChecked(true);
+    connect(m_toggle_stretch, &QAction::toggled, this,
+        [this] { m_transform_dirty = true; });
     connect(m_toggle_volume, SIGNAL(toggled(bool)), this, SLOT(VolumeToggled(bool)));
 }
 
@@ -144,6 +190,7 @@ void SourceItem::SetSource(obs_source_t* src)
         obs_source_dec_showing(m_src);
 
     m_src = src;
+    m_transform_dirty = true;
     if (m_src) {
         if (m_vol_meter)
             m_vol_meter->SetSource(src);
@@ -158,6 +205,12 @@ void SourceItem::SetSource(obs_source_t* src)
             m_label = CreateLabel(obs_source_get_name(m_src), h / 1.5, m_font_scale);
         }
     }
+}
+
+void SourceItem::Update(DurchblickItemConfig const& cfg)
+{
+    LayoutItem::Update(cfg);
+    m_transform_dirty = true;
 }
 
 void SourceItem::ReadFromJson(QJsonObject const& Obj)
@@ -223,20 +276,37 @@ void SourceItem::Render(DurchblickItemConfig const& cfg)
     if (!m_src)
         return;
 
-    auto w = obs_source_get_width(m_src);
-    auto h = obs_source_get_height(m_src);
-    int offset_x {}, offset_y {};
+    const int w = obs_source_get_width(m_src);
+    const int h = obs_source_get_height(m_src);
+    if (w <= 0 || h <= 0)
+        return;
 
-    if (m_toggle_stretch->isChecked()) {
-        m_scale.x = m_inner_width / float(w);
-        m_scale.y = m_inner_height / float(h);
-    } else {
-        GetScaleAndCenterPos(w, h, m_inner_width, m_inner_height, offset_x, offset_y, m_scale.x);
-        m_scale.y = m_scale.x;
+    if (m_transform_dirty || w != m_source_width || h != m_source_height) {
+        m_source_width = w;
+        m_source_height = h;
+        m_source_offset_x = 0;
+        m_source_offset_y = 0;
+        if (m_toggle_stretch->isChecked()) {
+            m_scale.x = m_inner_width / float(w);
+            m_scale.y = m_inner_height / float(h);
+        } else {
+            GetScaleAndCenterPos(w, h, m_inner_width, m_inner_height,
+                m_source_offset_x, m_source_offset_y, m_scale.x);
+            m_scale.y = m_scale.x;
+        }
+        if (m_label) {
+            m_label_width = obs_source_get_width(m_label);
+            m_label_height = obs_source_get_height(m_label);
+            int unused_x {}, unused_y {};
+            GetScaleAndCenterPos(cfg.canvas_width, cfg.canvas_height,
+                m_inner_width, m_inner_height, unused_x, unused_y,
+                m_label_scale);
+        }
+        m_transform_dirty = false;
     }
 
     gs_matrix_push();
-    gs_matrix_translate3f(offset_x, offset_y, 0);
+    gs_matrix_translate3f(m_source_offset_x, m_source_offset_y, 0);
     gs_matrix_scale3f(m_scale.x, m_scale.y, 1);
     obs_source_video_render(m_src);
     if (m_toggle_safe_borders->isChecked())
@@ -249,23 +319,19 @@ void SourceItem::Render(DurchblickItemConfig const& cfg)
     // Label has to be scaled and translated regardless of
     // source/scene size because sources can have sizes different than the base canvas
     if (m_toggle_label->isChecked() && m_label) {
-        float label_scale = 1;
-        int tmp_x {}, tmp_y {};
-        auto lw = obs_source_get_width(m_label);
-        auto lh = obs_source_get_height(m_label);
+        const auto lw = m_label_width;
+        const auto lh = m_label_height;
 
         if (lw == 0 || lh == 0)
             return;
-
-        GetScaleAndCenterPos(cfg.canvas_width, cfg.canvas_height, m_inner_width, m_inner_height, tmp_x, tmp_y, label_scale);
 
         gs_matrix_push();
         // This is very convoluted, but I don't have a better way of doing this
         // Basically puts the label horziontally centered at the bottom of the source/scene with an offset from the bottom of 1.5 times the height of the label
         // The scale is the same as with the builtin multiview and uses the scale that a rectangle with the base canvas aspect ratio would need
         // this prevents the labels from getting too big/small (usually)
-        gs_matrix_translate3f((m_inner_width - lw * label_scale) / 2, offset_y + h * m_scale.y - lh * label_scale * 1.5, 0);
-        gs_matrix_scale3f(label_scale, label_scale, 1);
+        gs_matrix_translate3f((m_inner_width - lw * m_label_scale) / 2, m_source_offset_y + h * m_scale.y - lh * m_label_scale * 1.5, 0);
+        gs_matrix_scale3f(m_label_scale, m_label_scale, 1);
         DrawBox(lw, lh, labelColor);
         gs_matrix_translate3f(0, -(lh * 0.08), 0.0f);
         obs_source_video_render(m_label);

@@ -9,10 +9,31 @@ on:
         type: choice
         options:
           - build
+      config:
+        description: Build configuration
+        required: true
+        default: RelWithDebInfo
+        type: choice
+        options:
+          - RelWithDebInfo
+          - Release
+          - Debug
+          - MinSizeRel
+      package:
+        description: Create native installer packages
+        required: true
+        default: false
+        type: boolean
 permissions:
-  contents: write
+  contents: read
+concurrency:
+  group: manual-build-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   check-and-build:
     if: inputs.job == 'build'
     uses: ./.github/workflows/build-project.yaml
+    with:
+      config: ${{ inputs.config }}
+      package: ${{ inputs.package }}
     secrets: inherit

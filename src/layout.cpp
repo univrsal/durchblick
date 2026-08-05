@@ -30,30 +30,32 @@
 
 void Layout::FillEmptyCells()
 {
-    // Make sure that every cell has a placeholder
-    std::vector<LayoutItem::Cell> empty;
-    for (int x = 0; x < m_cols; x++) {
-        for (int y = 0; y < m_rows; y++) {
-            LayoutItem::Cell c;
-            c.col = x;
-            c.row = y;
-            bool isFree = true;
-            for (auto const& item : m_layout_items) {
-                if (c.Overlaps(item->m_cell)) {
-                    isFree = false;
-                    break;
-                }
-            }
+    if (m_cols <= 0 || m_rows <= 0)
+        return;
 
-            if (isFree)
-                empty.emplace_back(c);
+    // Build occupancy once instead of scanning every item for every cell.
+    std::vector<bool> occupied(size_t(m_cols * m_rows), false);
+    for (auto const& item : m_layout_items) {
+        if (!item)
+            continue;
+        const int left = qMax(0, item->m_cell.left());
+        const int top = qMax(0, item->m_cell.top());
+        const int right = qMin(m_cols, item->m_cell.right());
+        const int bottom = qMin(m_rows, item->m_cell.bottom());
+        for (int y = top; y < bottom; ++y) {
+            for (int x = left; x < right; ++x)
+                occupied[size_t(y * m_cols + x)] = true;
         }
     }
 
-    for (auto const& c : empty) {
-        auto* Item = new PlaceholderItem(this, c.col, c.row);
-        Item->Update(m_cfg);
-        m_layout_items.emplace_back(Item);
+    for (int y = 0; y < m_rows; ++y) {
+        for (int x = 0; x < m_cols; ++x) {
+            if (occupied[size_t(y * m_cols + x)])
+                continue;
+            auto* item = new PlaceholderItem(this, x, y);
+            item->Update(m_cfg);
+            m_layout_items.emplace_back(item);
+        }
     }
 }
 
@@ -323,6 +325,14 @@ void Layout::Render(int, int, uint32_t, uint32_t)
 
     m_layout_mutex.lock();
     for (auto& Item : m_layout_items) {
+        // Empty cells only need their black inset. Drawing it in the layout's
+        // existing projection avoids two viewport/projection changes per cell.
+        if (Item->IsPlaceholder()) {
+            LayoutItem::DrawBox(Item->m_rel_left + m_cfg.border,
+                Item->m_rel_top + m_cfg.border, Item->m_inner_width,
+                Item->m_inner_height, COLOR_BLACK);
+            continue;
+        }
         // Change region to item dimensions
         gs_matrix_push();
         gs_matrix_translate3f(Item->m_rel_left, Item->m_rel_top, 0);

@@ -31,8 +31,8 @@ void MixerSlider::OnSourceNameChanged()
     m_parent->QueueSourceUpdate();
 }
 
-MixerSlider::MixerSlider(AudioMixerRenderer* parent, OBSSource src, int x, int y, int height, int channel_width)
-    : MixerMeter(src, x, y, height, channel_width)
+MixerSlider::MixerSlider(AudioMixerRenderer* parent, OBSSource, int x, int y, int height, int channel_width)
+    : MixerMeter(nullptr, x, y, height, channel_width)
     , m_parent(parent)
 {
 }

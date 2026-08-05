@@ -57,6 +57,9 @@ protected:
     qreal m_peak_hold_duration;
     qreal m_input_peak_hold_duration;
     QMutex m_data_mutex;
+    void CalculateBallisticsLocked(uint64_t ts, qreal timeSinceLastRedraw);
+    gs_effect_t* m_solid_effect {};
+    gs_eparam_t* m_color_param {};
 
     uint32_t m_background_nominal_color;
     uint32_t m_background_warning_color;
@@ -105,7 +108,7 @@ public:
 
     virtual void SetType(obs_fader_type t);
 
-    void SetMuted(bool m) { m_muted = m; }
+    void SetMuted(bool m);
 
     void Update(const float magnitude[MAX_AUDIO_CHANNELS],
         const float peak[MAX_AUDIO_CHANNELS],
