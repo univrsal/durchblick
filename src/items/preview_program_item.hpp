@@ -19,6 +19,7 @@
 #pragma once
 
 #include "../util/util.h"
+#include "../util/output_meter.hpp"
 #include "source_item.hpp"
 #include <QApplication>
 #include <QHBoxLayout>
@@ -60,6 +61,7 @@ public:
 class PreviewProgramItem : public SourceItem {
     Q_OBJECT
     bool m_program { false };
+    std::unique_ptr<OutputMeter> m_output_meter;
 
 public:
     PreviewProgramItem(Layout* parent, int x, int y, int w = 1, int h = 1)
@@ -68,7 +70,7 @@ public:
     }
 
     ~PreviewProgramItem() = default;
-    void SetIsProgram(bool b) { m_program = b; }
+    void SetIsProgram(bool b);
     QWidget* GetConfigWidget() override;
     void LoadConfigFromWidget(QWidget*) override;
     void CreateLabel();

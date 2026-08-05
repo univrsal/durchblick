@@ -92,8 +92,9 @@ protected:
     virtual void OnSourceVolumeChanged() { }
 
 public:
-    MixerMeter(OBSSource, int x = 10, int y = 10, int height = 100, int channel_width = 3);
-    ~MixerMeter();
+    MixerMeter(OBSSource, int x = 10, int y = 10, int height = 100,
+        int channel_width = 3, bool create_volmeter = true);
+    virtual ~MixerMeter();
 
     bool DetectIdle(uint64_t ts)
     {
@@ -135,11 +136,16 @@ public:
     int GetY() const { return m_y; }
     int GetHeight() const { return m_height; }
     int GetWidth() const { return (m_channel_width + 2) * m_channels; }
+    int GetRenderWidth(float cell_scale) const
+    {
+        return int((m_channel_width / cell_scale + 2) * m_channels);
+    }
     void SetPos(int x, int y)
     {
         m_x = x;
         m_y = y;
     }
+    void SetHeight(int height) { m_height = height; }
 
     bool MouseOver(int x, int y)
     {

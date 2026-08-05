@@ -60,7 +60,8 @@ void MixerMeter::draw_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h, 
     gs_matrix_pop();
 }
 
-MixerMeter::MixerMeter(OBSSource src, int x, int y, int height, int channel_width)
+MixerMeter::MixerMeter(OBSSource src, int x, int y, int height,
+    int channel_width, bool create_volmeter)
     : m_source(src)
     , m_x(x)
     , m_y(y)
@@ -95,10 +96,13 @@ MixerMeter::MixerMeter(OBSSource src, int x, int y, int height, int channel_widt
     m_magnitude_color = ARGB32(0xff, 0x1f, 0x1e, 0x1f);  // Dark gray
     m_major_tick_color = ARGB32(0xff, 0xff, 0xff, 0xff); // Black
     m_minor_tick_color = ARGB32(0xff, 0xcc, 0xcc, 0xcc); // Black
+    ResetLevels();
 
-    SetType(OBS_FADER_LOG);
-    if (src)
-        SetSource(src);
+    if (create_volmeter) {
+        SetType(OBS_FADER_LOG);
+        if (src)
+            SetSource(src);
+    }
 }
 
 MixerMeter::~MixerMeter()
