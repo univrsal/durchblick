@@ -84,6 +84,7 @@ void Free()
 {
     for (auto& Callback : ItemRegistry::DeinitCallbacks)
         Callback();
+    ItemRegistry::DeinitCallbacks.clear();
 }
 
 void RegisterDefaults()

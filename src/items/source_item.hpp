@@ -77,7 +77,11 @@ protected:
     bool m_dragging_volume {};
     int m_drag_start_x {}, m_drag_start_y {};
     OBSSource m_src;
-    OBSSourceAutoRelease m_label;
+    // Labels are shared with label_cache, so each consumer must hold a
+    // reference-counted handle. AutoRelease would adopt the cache's pointer
+    // without incrementing its reference count and eventually double-release
+    // the private FreeType source.
+    OBSSource m_label;
     OBSSignal removedSignal;
     QAction* m_toggle_safe_borders;
     QAction* m_toggle_label;

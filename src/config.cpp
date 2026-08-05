@@ -17,6 +17,7 @@
  *************************************************************************/
 
 #include "config.hpp"
+#include "items/registry.hpp"
 #include "ui/durchblick.hpp"
 #include "ui/durchblick_dock.hpp"
 #include "util/util.h"
@@ -40,6 +41,50 @@ Durchblick* db = nullptr;
 DurchblickDock* dbdock = nullptr;
 
 QJsonObject Cfg;
+
+namespace {
+bool callbacks_registered = false;
+bool shutting_down = false;
+
+void SaveCallback(obs_data_t*, bool, void*)
+{
+    if (db)
+        db->SetHideFromDisplayCapture(db->GetHideFromDisplayCapture());
+}
+
+void Shutdown()
+{
+    if (shutting_down)
+        return;
+
+    shutting_down = true;
+    // OBS clears frontend callbacks as part of shutdown. Mark them gone so
+    // obs_module_unload() does not try to remove them from an empty list.
+    callbacks_registered = false;
+    Save();
+    Cleanup();
+
+    // Release the private FreeType label sources before OBS starts unloading
+    // source modules. Their destruction is deferred to an OBS worker thread.
+    Registry::Free();
+}
+
+void EventCallback(enum obs_frontend_event event, void*)
+{
+    if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING) {
+        Load();
+    } else if (event == OBS_FRONTEND_EVENT_EXIT ||
+               event == OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN) {
+        Shutdown();
+    } else if (event == OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGING) {
+        Save();
+        if (db)
+            db->GetLayout()->Clear();
+    } else if (event == OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGED) {
+        Load();
+    }
+}
+}
 
 QJsonArray LoadLayoutsForCurrentSceneCollection()
 {
@@ -73,31 +118,22 @@ QJsonArray LoadLayoutsForCurrentSceneCollection()
 
 void RegisterCallbacks()
 {
-    obs_frontend_add_save_callback([](obs_data_t*, bool, void*) {
-        // Refresh this flag because if the user changed the "Hide OBS window from display capture setting"
-        // durchblick would otherwise suddenly show up again
-        if (db)
-            db->SetHideFromDisplayCapture(db->GetHideFromDisplayCapture());
-    },
-        nullptr);
+    if (callbacks_registered)
+        return;
 
-    obs_frontend_add_event_callback([](enum obs_frontend_event event, void*) {
-        if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING) {
-            Load();
-        } else if (event == OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN) {
-            // I couldn't find another event that was on exit and
-            // before source/scene data was cleared
+    obs_frontend_add_save_callback(SaveCallback, nullptr);
+    obs_frontend_add_event_callback(EventCallback, nullptr);
+    callbacks_registered = true;
+}
 
-            Save();
-            Cleanup();
-        } else if (event == OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGING) {
-            Save(); // Save current layout
-            db->GetLayout()->Clear();
-        } else if (event == OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGED) {
-            Load();
-        }
-    },
-        nullptr);
+void UnregisterCallbacks()
+{
+    if (!callbacks_registered)
+        return;
+
+    obs_frontend_remove_save_callback(SaveCallback, nullptr);
+    obs_frontend_remove_event_callback(EventCallback, nullptr);
+    callbacks_registered = false;
 }
 
 void Load()
@@ -178,13 +214,13 @@ void Save()
 
 void Cleanup()
 {
-    if (db) {
-        db->deleteLater();
-        db = nullptr;
-    }
     if (dbdock) {
-        dbdock->deleteLater();
+        delete dbdock;
         dbdock = nullptr;
+    }
+    if (db) {
+        delete db;
+        db = nullptr;
     }
 }
 

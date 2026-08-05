@@ -30,6 +30,8 @@ extern DurchblickDock* dbdock;
 
 extern void RegisterCallbacks();
 
+extern void UnregisterCallbacks();
+
 extern void Load();
 
 extern void Save();

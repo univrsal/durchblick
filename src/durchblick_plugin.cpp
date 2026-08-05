@@ -59,5 +59,7 @@ void obs_module_post_load()
 
 void obs_module_unload()
 {
+    Config::Cleanup();
+    Config::UnregisterCallbacks();
     Registry::Free();
 }

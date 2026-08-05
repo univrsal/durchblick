@@ -275,7 +275,6 @@ Durchblick::~Durchblick()
         obs_leave_graphics();
         m_render_target = nullptr;
     }
-    deleteLater();
 }
 
 void Durchblick::OnClose()
@@ -349,9 +348,14 @@ void Durchblick::RenderLayout(void* data, uint32_t cx, uint32_t cy)
         float(render_cy));
     gs_effect_t* effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
     gs_eparam_t* image = gs_effect_get_param_by_name(effect, "image");
-    gs_effect_set_texture(image, texture);
+    const bool previous_linear_srgb = gs_set_linear_srgb(true);
+    const bool previous_framebuffer_srgb = gs_framebuffer_srgb_enabled();
+    gs_enable_framebuffer_srgb(true);
+    gs_effect_set_texture_srgb(image, texture);
     while (gs_effect_loop(effect, "Draw"))
         gs_draw_sprite(texture, 0, render_cx, render_cy);
+    gs_enable_framebuffer_srgb(previous_framebuffer_srgb);
+    gs_set_linear_srgb(previous_linear_srgb);
     EndRegion();
     PerformanceStats::Frame(uint64_t(cx) * cy,
         uint64_t(render_cx) * render_cy, os_gettime_ns() - start_time);
