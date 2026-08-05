@@ -11,5 +11,5 @@ universal binary in parallel. Choose `RelWithDebInfo` for normal testing or
 `Release` for distribution. Finished archives are available in the workflow's
 **Artifacts** section.
 
-Pull requests targeting `main` or `master` are built automatically. Pushes to
-either branch and `release/**` branches also build all supported platforms.
+Pull requests targeting `main` or `master` are built automatically. Every
+branch push also builds all supported platforms.
