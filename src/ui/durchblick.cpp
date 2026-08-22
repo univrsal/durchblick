@@ -19,7 +19,6 @@
 #include "durchblick.hpp"
 #include "../config.hpp"
 #include "../util/platform_util.hpp"
-#include "durchblick_dock.hpp"
 #include "obs.hpp"
 #include <QApplication>
 #include <QIcon>
@@ -75,7 +74,10 @@ static void AddProjectorMenuMonitors(QMenu* parent, QObject* target, const char*
 
 void Durchblick::EscapeTriggered()
 {
-    hide();
+    // For the docked version the visibility is handled by OBS
+    // so we only hide the standalone window
+    if (!parent())
+        hide();
 }
 
 void Durchblick::OpenFullScreenProjector()
@@ -210,6 +212,8 @@ void Durchblick::closeEvent(QCloseEvent* e)
 void Durchblick::showEvent(QShowEvent* e)
 {
     QWidget::showEvent(e);
+    if (parent()) // Docked version: window state and monitor are handled by OBS
+        return;
     if (m_saved_state == WindowState::Maximized)
         setWindowState(windowState() | Qt::WindowMaximized);
     else if (m_current_monitor >= 0)
@@ -355,27 +359,35 @@ void Durchblick::Load(QJsonObject const& obj)
     m_cached_layout = obj;
     m_saved_state = (WindowState)obj["state"].toInt(WindowState::None);
 
-    // Restore geometry if this view wasn't in fullscreen
-    if (m_current_monitor < 0 && obj.contains("geometry") && obj["geometry"].isObject()) {
-        auto geo = obj["geometry"].toObject();
-        if (geo.contains("x") && geo.contains("y") && geo.contains("w") && geo.contains("h")) {
-            QRect geometry(geo["x"].toInt(), geo["y"].toInt(), geo["w"].toInt(480), geo["h"].toInt(270));
-            setGeometry(geometry);
+    if (!parent()) {
+        // Restore geometry if this view wasn't in fullscreen
+        // These only make sense for the standalone window, the docked
+        // version is embedded in the OBS main window and its geometry,
+        // monitor and always on top state are managed by the dock itself
+        if (m_current_monitor < 0 && obj.contains("geometry") && obj["geometry"].isObject()) {
+            auto geo = obj["geometry"].toObject();
+            if (geo.contains("x") && geo.contains("y") && geo.contains("w") && geo.contains("h")) {
+                QRect geometry(geo["x"].toInt(), geo["y"].toInt(), geo["w"].toInt(480), geo["h"].toInt(270));
+                setGeometry(geometry);
+            }
         }
+
+        if (m_saved_state == WindowState::Maximized)
+            setWindowState(windowState() | Qt::WindowMaximized);
+
+        if (obj.contains("monitor"))
+            SetMonitor(obj["monitor"].toInt(-1));
+
+        SetIsAlwaysOnTop(obj["always_on_top"].toBool(false), false);
+        SetHideFromDisplayCapture(obj["hide_from_display_capture"].toBool(false));
+    } else {
+        // The docked version is always frameless and visible within its dock
+        m_always_on_top = false;
     }
-
-    if (m_saved_state == WindowState::Maximized)
-        setWindowState(windowState() | Qt::WindowMaximized);
-
-    if (obj.contains("monitor"))
-        SetMonitor(obj["monitor"].toInt(-1));
 
     SetHideCursor(obj["hide_cursor"].toBool(false));
     SetWidgetVisibility(obj["visible"].toBool(false));
 
-    SetIsAlwaysOnTop(obj["always_on_top"].toBool(false), false);
-
-    SetHideFromDisplayCapture(obj["hide_from_display_capture"].toBool(false));
     m_layout.Load(obj);
 }
 
@@ -409,8 +421,12 @@ void Durchblick::SetHideFromDisplayCapture(bool hide_from_display_capture)
 
 void Durchblick::SetWidgetVisibility(bool v)
 {
-    if (parent()) // The docked version has a window a parent which we want to hide instead
-        ((DurchblickDock*)parent())->setVisible(v);
-    else
-        setVisible(v);
+    if (parent()) {
+        // The docked version is embedded inside an OBS dock whose visibility
+        // is managed by the docks menu/user config. Hiding ourselves here
+        // would leave a blank panel, so ignore the saved visibility flag.
+        UNUSED_PARAMETER(v);
+        return;
+    }
+    setVisible(v);
 }
