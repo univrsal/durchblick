@@ -38,12 +38,12 @@ DurchblickDock::DurchblickDock(QWidget* parent)
 {
     setWindowTitle("Durchblick");
     setObjectName("DurchblickDock");
-    
-    auto* mainLayout = new QVBoxLayout(this);
-    mainLayout->addWidget(db);
 
-    auto* dockWidgetContents = new QWidget(this);
-    dockWidgetContents->setLayout(mainLayout);
+    // This widget is directly embedded in the OBS dock created by
+    // obs_frontend_add_dock_by_id, so it manages its own content
+    auto* mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->addWidget(db);
 }
 
 DurchblickDock::~DurchblickDock()
