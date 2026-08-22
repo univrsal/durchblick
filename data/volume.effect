@@ -1,5 +1,11 @@
 uniform float4x4 ViewProj;
 uniform float volume;
+uniform float4 background_nominal;
+uniform float4 background_warning;
+uniform float4 background_error;
+uniform float4 foreground_nominal;
+uniform float4 foreground_warning;
+uniform float4 foreground_error;
 
 struct VertData {
 	float4 pos : POSITION;
@@ -16,18 +22,15 @@ VertData VSVolume(VertData vd)
 
 float4 PSVolume(VertData vd) : TARGET
 {
-    const float green_area = 0.6659090909090909;
-    const float yellow_area = green_area + 0.18409090909090908;
-    const float red_area = 0.15;
+    const float error_end = 0.15;
+    const float warning_end = 0.3333333333;
+    bool active = vd.uv.y >= 1.0 - volume;
 
-    bool active = vd.uv.y <= volume;
-
-    if (vd.uv.y <= green_area) {
-        return active ? float4(.298, 1.0, .298, 1.0) : float4(.149, .498, .149, 1.0);
-    } else if (vd.uv.y <= yellow_area) {
-        return active ? float4(1.0, 1.0, .298, 1.0) : float4(.498, .498, .149, 1.0);
-    }
-    return active ? float4(1.0, .298, .298, 1.0) : float4(.498, .149, .149, 1.0);
+    if (vd.uv.y < error_end)
+        return active ? foreground_error : background_error;
+    if (vd.uv.y < warning_end)
+        return active ? foreground_warning : background_warning;
+    return active ? foreground_nominal : background_nominal;
 }
 
 technique Solid

@@ -102,6 +102,7 @@ static inline QColor rgba_to_color(uint32_t rgba)
 OBSQTDisplay::OBSQTDisplay(QWidget* parent, Qt::WindowFlags flags)
     : QWidget(parent, flags)
 {
+    setAttribute(Qt::WA_PaintOnScreen);
     setAttribute(Qt::WA_StaticContents);
     setAttribute(Qt::WA_NoSystemBackground);
     setAttribute(Qt::WA_OpaquePaintEvent);
@@ -110,6 +111,8 @@ OBSQTDisplay::OBSQTDisplay(QWidget* parent, Qt::WindowFlags flags)
 
     auto windowVisible = [this](bool visible) {
         if (!visible) {
+            if (display)
+                obs_display_set_enabled(display, false);
 #ifdef ENABLE_WAYLAND
             if (obs_get_nix_platform() == OBS_NIX_PLATFORM_WAYLAND)
                 display = nullptr;
@@ -120,6 +123,7 @@ OBSQTDisplay::OBSQTDisplay(QWidget* parent, Qt::WindowFlags flags)
         if (!display) {
             CreateDisplay();
         } else {
+            obs_display_set_enabled(display, true);
             QSize size = GetPixelSize(this);
             obs_display_resize(display, size.width(),
                 size.height());

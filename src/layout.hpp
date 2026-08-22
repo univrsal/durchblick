@@ -77,6 +77,8 @@ class Layout : public QObject {
     LayoutItem::Cell m_hovered_cell {}, m_selection_start {}, m_selection_end {};
     bool m_dragging {}, m_locked {};
     std::mutex m_layout_mutex;
+    gs_vertbuffer_t* m_placeholder_batch {};
+    bool m_placeholder_batch_dirty { true };
     Q_OBJECT
 
     void GetSelection(int& tx, int& ty, int& cx, int& cy)
@@ -88,6 +90,7 @@ class Layout : public QObject {
     }
 
     void FillEmptyCells();
+    void RebuildPlaceholderBatch();
 
     LayoutItem::Cell GetSelectedArea();
 private slots:
@@ -122,8 +125,11 @@ public:
     void FreeSpace(LayoutItem::Cell const& c);
     void AddWidget(Registry::ItemRegistry::Entry const& entry, LayoutItem::Cell const& c, QWidget* custom_widget);
     void AddWidget(Registry::ItemRegistry::Entry const& entry, QWidget* custom_widget);
-    void SetRegion(float bx, float by, float cx, float cy);
-    void Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy);
+    void SetRegion(DurchblickItemConfig const& cfg, float bx, float by,
+        float cx, float cy);
+    void Render(int target_cx, int target_cy, uint32_t cx, uint32_t cy,
+        DurchblickItemConfig const* render_cfg = nullptr);
+    DurchblickItemConfig RenderConfigForSize(int cx, int cy) const;
     void Resize(int target_cx, int target_cy, int cx, int cy);
     void RefreshGrid();
 
@@ -138,6 +144,7 @@ public:
     {
         std::lock_guard<std::mutex> lock(m_layout_mutex);
         m_layout_items.clear();
+        m_placeholder_batch_dirty = true;
     }
 
     int Columns() const { return m_cols; }

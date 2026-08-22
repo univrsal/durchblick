@@ -77,4 +77,5 @@ public:
     void WriteToJson(QJsonObject& Obj) override;
     void ReadFromJson(QJsonObject const& Obj) override;
     bool EnableVolumeMeter() const override { return false; }
+    obs_source_t* CacheableRenderSource() const override { return nullptr; }
 };

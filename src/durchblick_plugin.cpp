@@ -23,7 +23,6 @@
 #include <QAction>
 #include <obs-frontend-api.h>
 #include <obs-module.h>
-#include <thread>
 #include <util/util.hpp>
 
 OBS_DECLARE_MODULE()
@@ -52,16 +51,15 @@ bool obs_module_load()
 
 void obs_module_post_load()
 {
-
-    // Speeds up loading
-    std::thread reg([] { Registry::RegisterDefaults(); });
-
-    reg.detach();
+    // Registration is tiny and must finish before layouts can read the registry.
+    Registry::RegisterDefaults();
     Config::RegisterCallbacks();
     Config::Load();
 }
 
 void obs_module_unload()
 {
+    Config::Cleanup();
+    Config::UnregisterCallbacks();
     Registry::Free();
 }

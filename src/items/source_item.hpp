@@ -29,41 +29,7 @@
 #include <mutex>
 #include <obs.hpp>
 
-/* yoinked from obs window-projector.cpp */
-static inline OBSSource CreateLabel(char const* name, size_t h, float scale)
-{
-    OBSDataAutoRelease settings = obs_data_create();
-    OBSDataAutoRelease font = obs_data_create();
-
-    std::string text;
-    text += " ";
-    text += name;
-    text += " ";
-
-#if defined(_WIN32)
-    obs_data_set_string(font, "face", "Arial");
-#elif defined(__APPLE__)
-    obs_data_set_string(font, "face", "Helvetica");
-#else
-    obs_data_set_string(font, "face", "Monospace");
-#endif
-    obs_data_set_int(font, "flags", 1); // Bold text
-    obs_data_set_int(font, "size", int(h / 9.81) * scale);
-
-    obs_data_set_obj(settings, "font", font);
-    obs_data_set_string(settings, "text", text.c_str());
-    obs_data_set_bool(settings, "outline", false);
-
-#ifdef _WIN32
-    const char* text_source_id = "text_gdiplus";
-#else
-    const char* text_source_id = "text_ft2_source";
-#endif
-
-    OBSSourceAutoRelease txtSource = obs_source_create_private(text_source_id, name, settings);
-
-    return txtSource.Get();
-}
+OBSSource CreateLabel(char const* name, size_t h, float scale);
 
 class SourceItemWidget : public QWidget {
     Q_OBJECT
@@ -111,7 +77,11 @@ protected:
     bool m_dragging_volume {};
     int m_drag_start_x {}, m_drag_start_y {};
     OBSSource m_src;
-    OBSSourceAutoRelease m_label;
+    // Labels are shared with label_cache, so each consumer must hold a
+    // reference-counted handle. AutoRelease would adopt the cache's pointer
+    // without incrementing its reference count and eventually double-release
+    // the private FreeType source.
+    OBSSource m_label;
     OBSSignal removedSignal;
     QAction* m_toggle_safe_borders;
     QAction* m_toggle_label;
@@ -123,6 +93,12 @@ protected:
     int m_channel_width { 2 };
     void RenderSafeMargins(int w, int h);
     vec2 m_scale {};
+    bool m_use_render_cache {};
+    int m_source_width {}, m_source_height {};
+    int m_source_offset_x {}, m_source_offset_y {};
+    int m_label_width {}, m_label_height {};
+    float m_label_scale { 1.0f };
+    bool m_transform_dirty { true };
 public slots:
 
     void VolumeToggled(bool);
@@ -138,6 +114,7 @@ public:
     void LoadConfigFromWidget(QWidget*) override;
 
     void SetSource(obs_source_t* src);
+    void Update(DurchblickItemConfig const& cfg) override;
 
     void SetLabel(bool b)
     {
@@ -155,6 +132,9 @@ public:
     }
 
     OBSSource GetSource() { return m_src; }
+    virtual obs_source_t* CacheableRenderSource() const { return m_src; }
+    static bool HasDuplicateRenderSource(obs_source_t* source);
+    void SetRenderCacheEnabled(bool enabled) { m_use_render_cache = enabled; }
 
     virtual void ReadFromJson(QJsonObject const& Obj) override;
     virtual void WriteToJson(QJsonObject& Obj) override;

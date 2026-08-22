@@ -29,6 +29,9 @@ void LayoutConfigDialog::OKClicked()
     m_layout->m_rows = m_rows->value();
     m_layout->RefreshGrid();
 
+    const QSize render_limit = m_render_resolution->currentData().toSize();
+    m_durchblick->SetRenderLimit(render_limit.width(), render_limit.height());
+
 #if defined(_WIN32)
     m_durchblick->SetHideFromDisplayCapture(m_hide_from_display_capture->isChecked());
 #endif
@@ -67,6 +70,20 @@ LayoutConfigDialog::LayoutConfigDialog(Durchblick* parent, Layout* layout)
     hlayout->addWidget(m_rows);
     hlayout->setContentsMargins(0, 0, 0, 0);
     m_vboxlayout->addLayout(hlayout);
+
+    m_render_resolution = new QComboBox(this);
+    m_render_resolution->addItem("1280x720", QSize(1280, 720));
+    m_render_resolution->addItem("1920x1080", QSize(1920, 1080));
+    m_render_resolution->addItem("2560x1440", QSize(2560, 1440));
+    m_render_resolution->addItem(T_RENDER_RESOLUTION_NATIVE, QSize(0, 0));
+    int resolution_index = m_render_resolution->findData(QSize(
+        int(m_durchblick->GetRenderLimitWidth()),
+        int(m_durchblick->GetRenderLimitHeight())));
+    if (resolution_index < 0)
+        resolution_index = 1;
+    m_render_resolution->setCurrentIndex(resolution_index);
+    m_vboxlayout->addWidget(new QLabel(T_LABEL_RENDER_RESOLUTION, this));
+    m_vboxlayout->addWidget(m_render_resolution);
 
 #if defined(_WIN32)
     m_hide_from_display_capture = new QCheckBox(T_LABEL_DISPLAY_CAPTURE, this);

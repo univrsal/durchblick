@@ -29,6 +29,30 @@
 #define INDICATOR_THICKNESS 3
 #define CLIP_FLASH_DURATION_MS 1000
 
+static gs_effect_t* volume_effect {};
+
+void MixerMeter::Init()
+{
+    obs_enter_graphics();
+    BPtr<char> path = obs_module_file("volume.effect");
+    char* errors = nullptr;
+    volume_effect = gs_effect_create_from_file(path, &errors);
+    if (errors) {
+        bwarn("Volume meter shader: %s", errors);
+        bfree(errors);
+    }
+    obs_leave_graphics();
+}
+
+void MixerMeter::Deinit()
+{
+    obs_enter_graphics();
+    if (volume_effect)
+        gs_effect_destroy(volume_effect);
+    volume_effect = nullptr;
+    obs_leave_graphics();
+}
+
 static void on_source_muted(void* data, calldata_t* calldata)
 {
     MixerMeter* meter = static_cast<MixerMeter*>(data);
@@ -47,15 +71,52 @@ void MixerMeter::draw_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h, 
 {
     if (!(w > 0 && h > 0))
         return;
-    gs_effect_t* solid = obs_get_base_effect(OBS_EFFECT_SOLID);
-    gs_eparam_t* color = gs_effect_get_param_by_name(solid, "color");
+    if (!m_solid_effect) {
+        m_solid_effect = obs_get_base_effect(OBS_EFFECT_SOLID);
+        m_color_param = gs_effect_get_param_by_name(m_solid_effect, "color");
+    }
 
     gs_matrix_push();
     gs_matrix_translate3f(x, y, 0);
-    gs_effect_set_color(color, c);
-    while (gs_effect_loop(solid, "Solid"))
+    gs_effect_set_color(m_color_param, c);
+    while (gs_effect_loop(m_solid_effect, "Solid"))
         gs_draw_sprite(nullptr, 0, (uint32_t)w, (uint32_t)h);
     gs_matrix_pop();
+}
+
+bool MixerMeter::draw_meter(uint32_t x, uint32_t y, uint32_t w,
+    uint32_t h, float level, bool muted)
+{
+    if (!volume_effect || !w || !h)
+        return false;
+
+    gs_effect_set_float(gs_effect_get_param_by_name(volume_effect, "volume"),
+        qBound(0.0f, level, 1.0f));
+    gs_effect_set_color(gs_effect_get_param_by_name(volume_effect,
+                            "background_nominal"),
+        muted ? m_background_nominal_color_disabled : m_background_nominal_color);
+    gs_effect_set_color(gs_effect_get_param_by_name(volume_effect,
+                            "background_warning"),
+        muted ? m_background_warning_color_disabled : m_background_warning_color);
+    gs_effect_set_color(gs_effect_get_param_by_name(volume_effect,
+                            "background_error"),
+        muted ? m_background_error_color_disabled : m_background_error_color);
+    gs_effect_set_color(gs_effect_get_param_by_name(volume_effect,
+                            "foreground_nominal"),
+        muted ? m_foreground_nominal_color_disabled : m_foreground_nominal_color);
+    gs_effect_set_color(gs_effect_get_param_by_name(volume_effect,
+                            "foreground_warning"),
+        muted ? m_foreground_warning_color_disabled : m_foreground_warning_color);
+    gs_effect_set_color(gs_effect_get_param_by_name(volume_effect,
+                            "foreground_error"),
+        muted ? m_foreground_error_color_disabled : m_foreground_error_color);
+
+    gs_matrix_push();
+    gs_matrix_translate3f(x, y, 0);
+    while (gs_effect_loop(volume_effect, "Solid"))
+        gs_draw_sprite(nullptr, 0, w, h);
+    gs_matrix_pop();
+    return true;
 }
 
 MixerMeter::MixerMeter(OBSSource src, int x, int y, int height, int channel_width)
@@ -93,20 +154,28 @@ MixerMeter::MixerMeter(OBSSource src, int x, int y, int height, int channel_widt
     m_magnitude_color = ARGB32(0xff, 0x1f, 0x1e, 0x1f);  // Dark gray
     m_major_tick_color = ARGB32(0xff, 0xff, 0xff, 0xff); // Black
     m_minor_tick_color = ARGB32(0xff, 0xcc, 0xcc, 0xcc); // Black
+
+    SetType(OBS_FADER_LOG);
+    if (src)
+        SetSource(src);
 }
 
 MixerMeter::~MixerMeter()
 {
     if (m_source)
         signal_handler_disconnect(obs_source_get_signal_handler(m_source), "mute", on_source_muted, this);
-    obs_volmeter_remove_callback(m_meter, volume_meter, this);
-    obs_volmeter_destroy(m_meter);
+    if (m_meter) {
+        obs_volmeter_remove_callback(m_meter, volume_meter, this);
+        obs_volmeter_destroy(m_meter);
+    }
 }
 
 void MixerMeter::SetType(obs_fader_type t)
 {
-    obs_volmeter_remove_callback(m_meter, volume_meter, this);
-    obs_volmeter_destroy(m_meter);
+    if (m_meter) {
+        obs_volmeter_remove_callback(m_meter, volume_meter, this);
+        obs_volmeter_destroy(m_meter);
+    }
     m_meter = obs_volmeter_create(t);
     obs_volmeter_add_callback(m_meter, volume_meter, this);
     m_channels = obs_volmeter_get_nr_channels(m_meter);
@@ -125,16 +194,16 @@ void MixerMeter::Update(const float magnitude[], const float peak[], const float
         }
     }
 
-    for (int channelNr = 0; channelNr < MAX_AUDIO_CHANNELS; channelNr++) {
+    const int channels = qBound(0, m_channels, MAX_AUDIO_CHANNELS);
+    for (int channelNr = 0; channelNr < channels; channelNr++) {
         m_current_magnitude[channelNr] = magnitude[channelNr];
         m_current_peak[channelNr] = peak[channelNr];
         m_current_input_peak[channelNr] = inputPeak[channelNr];
     }
 
-    // In case there are more updates then redraws we must make sure
-    // that the ballistics of peak and hold are recalculated.
-    locker.unlock();
-    CalculateBallistics(ts);
+    // Preserve peaks between redraws without dropping and reacquiring the
+    // audio/video mutex.
+    CalculateBallisticsLocked(ts, 0.0);
 }
 
 void MixerMeter::SetSource(OBSSource src)
@@ -143,7 +212,9 @@ void MixerMeter::SetSource(OBSSource src)
     signal_handler_t* handler = obs_source_get_signal_handler(src);
     mute_signal.Connect(
         handler, "mute", [](void* d, calldata_t* cd) {
-            calldata_get_bool(cd, "muted", &static_cast<MixerMeter*>(d)->m_muted);
+            bool muted = false;
+            calldata_get_bool(cd, "muted", &muted);
+            static_cast<MixerMeter*>(d)->SetMuted(muted);
         },
         this);
     vol_changed_signal.Connect(
@@ -172,6 +243,12 @@ void MixerMeter::SetSource(OBSSource src)
         obs_volmeter_detach_source(m_meter);
         obs_volmeter_attach_source(m_meter, m_source);
     }
+}
+
+void MixerMeter::SetMuted(bool muted)
+{
+    QMutexLocker locker(&m_data_mutex);
+    m_muted = muted;
 }
 
 inline void
@@ -237,18 +314,41 @@ void MixerMeter::Render(float cell_scale, float, float src_scale_y)
 {
     uint64_t ts = os_gettime_ns();
     qreal timeSinceLastRedraw = (ts - m_last_redraw_time) * 0.000000001;
-    CalculateBallistics(ts, timeSinceLastRedraw);
-    bool idle = DetectIdle(ts);
+    float display_magnitude[MAX_AUDIO_CHANNELS];
+    float display_peak[MAX_AUDIO_CHANNELS];
+    float display_peak_hold[MAX_AUDIO_CHANNELS];
+    float display_input_peak_hold[MAX_AUDIO_CHANNELS];
+    bool clipping;
+    uint64_t clip_begin_time;
+    bool muted;
+    int channels;
+    bool idle;
+    {
+        QMutexLocker locker(&m_data_mutex);
+        CalculateBallisticsLocked(ts, timeSinceLastRedraw);
+        idle = (ts - m_current_last_update_time) * 0.000000001 > 0.5;
+        if (idle)
+            ResetLevels();
+        channels = qBound(0, m_channels, MAX_AUDIO_CHANNELS);
+        clipping = m_clipping;
+        clip_begin_time = m_clip_begin_time;
+        muted = m_muted;
+        for (int i = 0; i < channels; ++i) {
+            display_magnitude[i] = m_display_magnitude[i];
+            display_peak[i] = m_display_peak[i];
+            display_peak_hold[i] = m_display_peak_hold[i];
+            display_input_peak_hold[i] = m_display_input_peak_hold[i];
+        }
+    }
 
     const auto bottom_indicator_size = m_channel_width / cell_scale;
     auto h = (m_height - bottom_indicator_size * 2) * src_scale_y; // do not include indicator and mute button in height
-    for (int i = 0; i < m_channels; i++) {
-        auto magnitude = m_display_magnitude[i];
-        auto peak = m_display_peak[i];
-        auto peak_hold = m_display_peak_hold[i];
+    for (int i = 0; i < channels; i++) {
+        auto magnitude = display_magnitude[i];
+        auto peak = display_peak[i];
+        auto peak_hold = display_peak_hold[i];
         qreal scale = h / m_minimum_level;
 
-        QMutexLocker locker(&m_data_mutex);
         int lower_limit = m_y + h;
         int upper_limit = m_y;
         //        int magnitude_position = int(lower_limit - (magnitude * scale));
@@ -257,88 +357,29 @@ void MixerMeter::Render(float cell_scale, float, float src_scale_y)
         int nominal_position = int(upper_limit + (m_warning_level * scale));
         int warning_position = int(upper_limit + (m_error_level * scale));
         int magnitude_position = int(lower_limit - (h - (magnitude * scale)));
-        int nominal_ength = lower_limit - nominal_position;
-        int warning_length = nominal_position - warning_position;
-        int error_length = warning_position - upper_limit;
-        int error_position = 0;
-
-        locker.unlock();
         auto w = m_channel_width / cell_scale;
         auto x = m_x + (w + 2) * i;
 
-        if (m_clipping)
-            peak_position = 0;
-
-        if (peak_position > lower_limit) { // Peak is below the meter -> no peak visible
-            draw_rectangle(x, nominal_position, w, nominal_ength,
-                m_muted ? m_background_nominal_color_disabled
-                        : m_background_nominal_color);
-            draw_rectangle(x, warning_position, w, warning_length,
-                m_muted ? m_background_warning_color_disabled
-                        : m_background_warning_color);
-            draw_rectangle(x, upper_limit, w, error_length,
-                m_muted ? m_background_error_color_disabled
-                        : m_background_error_color);
-        } else if (peak_position > nominal_position) {
-            // Nominal (green + background)
-            draw_rectangle(x, peak_position, w,
-                lower_limit - peak_position,
-                m_muted ? m_foreground_nominal_color_disabled
-                        : m_foreground_nominal_color);
-            draw_rectangle(x, nominal_position, w,
-                peak_position - nominal_position,
-                m_muted ? m_background_nominal_color_disabled
-                        : m_background_nominal_color);
-
-            // Warning (yellow) and error (red)
-            draw_rectangle(x, warning_position, w, warning_length,
-                m_muted ? m_background_warning_color_disabled
-                        : m_background_warning_color);
-            draw_rectangle(x, upper_limit, w, error_length,
-                m_muted ? m_background_error_color_disabled
-                        : m_background_error_color);
-        } else if (peak_position > warning_position) {
-            draw_rectangle(x, nominal_position, w, nominal_ength,
-                m_muted ? m_foreground_nominal_color_disabled
-                        : m_foreground_nominal_color);
-
-            // Warning (yellow + background)
-            draw_rectangle(x, peak_position, w,
-                nominal_position - peak_position,
-                m_muted ? m_foreground_warning_color_disabled
-                        : m_foreground_warning_color);
-            draw_rectangle(x, warning_position, w,
-                peak_position - warning_position,
-                m_muted ? m_background_warning_color_disabled
-                        : m_background_warning_color);
-
-            draw_rectangle(x, upper_limit, w, error_length,
-                m_muted ? m_background_error_color_disabled
-                        : m_background_error_color);
-        } else if (peak_position > error_position && peak_position > upper_limit) {
-            draw_rectangle(x, peak_position, w, warning_position - peak_position,
-                m_muted ? m_foreground_error_color_disabled
-                        : m_foreground_error_color);
-            draw_rectangle(x, upper_limit, w, peak_position - upper_limit,
-                m_muted ? m_background_error_color_disabled
-                        : m_background_error_color);
-
-            draw_rectangle(x, nominal_position, w, nominal_ength,
-                m_muted ? m_foreground_nominal_color_disabled
-                        : m_foreground_nominal_color);
-            draw_rectangle(x, warning_position, w, warning_length,
-                m_muted ? m_foreground_warning_color_disabled
-                        : m_foreground_warning_color);
-        } else {
-            if (!m_clipping) {
-                m_clip_begin_time = os_gettime_ns();
-                m_clipping = true;
+        if (peak_position <= upper_limit) {
+            if (!clipping) {
+                clip_begin_time = ts;
+                clipping = true;
             }
-            int end = error_length + warning_length + nominal_ength;
+        }
 
-            draw_rectangle(x, upper_limit, w, end,
-                m_muted ? m_foreground_error_color_disabled
-                        : m_foreground_error_color);
+        if (clipping) {
+            draw_rectangle(x, upper_limit, w, h,
+                muted ? m_foreground_error_color_disabled
+                      : m_foreground_error_color);
+        } else {
+            const float level = isfinite(peak)
+                ? float((peak - m_minimum_level) / -m_minimum_level)
+                : 0.0f;
+            if (!draw_meter(x, upper_limit, w, h, level, muted)) {
+                draw_rectangle(x, upper_limit, w, h,
+                    muted ? m_background_nominal_color_disabled
+                          : m_background_nominal_color);
+            }
         }
 
         auto size = 3 / cell_scale;
@@ -346,16 +387,16 @@ void MixerMeter::Render(float cell_scale, float, float src_scale_y)
             ;
         else if (peak_hold_position - size / 2 > nominal_position)
             draw_rectangle(x, peak_hold_position, w, size,
-                m_muted ? m_foreground_nominal_color_disabled
-                        : m_foreground_nominal_color);
+                muted ? m_foreground_nominal_color_disabled
+                      : m_foreground_nominal_color);
         else if (peak_hold_position - size / 2 > warning_position)
             draw_rectangle(x, peak_hold_position, w, size,
-                m_muted ? m_foreground_warning_color_disabled
-                        : m_foreground_warning_color);
+                muted ? m_foreground_warning_color_disabled
+                      : m_foreground_warning_color);
         else if (peak_hold_position - size / 2 > upper_limit)
             draw_rectangle(x, peak_hold_position, w, size,
-                m_muted ? m_foreground_error_color_disabled
-                        : m_foreground_error_color);
+                muted ? m_foreground_error_color_disabled
+                      : m_foreground_error_color);
 
         if (magnitude_position - size / 2 >= upper_limit) {
             draw_rectangle(x, magnitude_position - size / 2, w, size,
@@ -365,7 +406,7 @@ void MixerMeter::Render(float cell_scale, float, float src_scale_y)
         if (idle)
             continue;
 
-        auto input_peak_hold = m_display_input_peak_hold[i];
+        auto input_peak_hold = display_input_peak_hold[i];
         uint32_t color;
         if (input_peak_hold < m_minimum_input_level)
             color = m_background_nominal_color;
@@ -380,6 +421,11 @@ void MixerMeter::Render(float cell_scale, float, float src_scale_y)
 
         draw_rectangle(x, lower_limit + 1 / cell_scale, w, w, color);
     }
+    {
+        QMutexLocker locker(&m_data_mutex);
+        m_clipping = clipping;
+        m_clip_begin_time = clip_begin_time;
+    }
     m_last_redraw_time = ts;
 }
 
@@ -388,7 +434,15 @@ inline void MixerMeter::CalculateBallistics(uint64_t ts,
 {
     QMutexLocker locker(&m_data_mutex);
 
-    for (int channelNr = 0; channelNr < MAX_AUDIO_CHANNELS; channelNr++)
+    CalculateBallisticsLocked(ts, timeSinceLastRedraw);
+}
+
+void MixerMeter::CalculateBallisticsLocked(uint64_t ts,
+    qreal timeSinceLastRedraw)
+{
+
+    const int channels = qBound(0, m_channels, MAX_AUDIO_CHANNELS);
+    for (int channelNr = 0; channelNr < channels; channelNr++)
         CalculateBallisticsForChannel(channelNr, ts,
             timeSinceLastRedraw);
 }

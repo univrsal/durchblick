@@ -57,6 +57,9 @@ protected:
     qreal m_peak_hold_duration;
     qreal m_input_peak_hold_duration;
     QMutex m_data_mutex;
+    void CalculateBallisticsLocked(uint64_t ts, qreal timeSinceLastRedraw);
+    gs_effect_t* m_solid_effect {};
+    gs_eparam_t* m_color_param {};
 
     uint32_t m_background_nominal_color;
     uint32_t m_background_warning_color;
@@ -78,6 +81,8 @@ protected:
     uint32_t m_minor_tick_color;
 
     void draw_rectangle(uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t color);
+    bool draw_meter(uint32_t x, uint32_t y, uint32_t w, uint32_t h,
+        float level, bool muted);
 
     OBSSignal vol_changed_signal;
     OBSSignal mixersSignal;
@@ -89,6 +94,8 @@ protected:
     virtual void OnSourceVolumeChanged() { }
 
 public:
+    static void Init();
+    static void Deinit();
     MixerMeter(OBSSource, int x = 10, int y = 10, int height = 100, int channel_width = 3);
     ~MixerMeter();
 
@@ -105,7 +112,7 @@ public:
 
     virtual void SetType(obs_fader_type t);
 
-    void SetMuted(bool m) { m_muted = m; }
+    void SetMuted(bool m);
 
     void Update(const float magnitude[MAX_AUDIO_CHANNELS],
         const float peak[MAX_AUDIO_CHANNELS],

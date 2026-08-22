@@ -21,40 +21,77 @@
 #include "items/preview_program_item.hpp"
 #include "items/scene_item.hpp"
 #include "ui/durchblick.hpp"
+#include "util/performance_stats.hpp"
 #include "util/util.h"
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <obs-frontend-api.h>
+#include <unordered_map>
 #include <util/config-file.h>
 
 void Layout::FillEmptyCells()
 {
-    // Make sure that every cell has a placeholder
-    std::vector<LayoutItem::Cell> empty;
-    for (int x = 0; x < m_cols; x++) {
-        for (int y = 0; y < m_rows; y++) {
-            LayoutItem::Cell c;
-            c.col = x;
-            c.row = y;
-            bool isFree = true;
-            for (auto const& item : m_layout_items) {
-                if (c.Overlaps(item->m_cell)) {
-                    isFree = false;
-                    break;
-                }
-            }
+    if (m_cols <= 0 || m_rows <= 0)
+        return;
 
-            if (isFree)
-                empty.emplace_back(c);
+    // Build occupancy once instead of scanning every item for every cell.
+    std::vector<bool> occupied(size_t(m_cols * m_rows), false);
+    for (auto const& item : m_layout_items) {
+        if (!item)
+            continue;
+        const int left = qMax(0, item->m_cell.left());
+        const int top = qMax(0, item->m_cell.top());
+        const int right = qMin(m_cols, item->m_cell.right());
+        const int bottom = qMin(m_rows, item->m_cell.bottom());
+        for (int y = top; y < bottom; ++y) {
+            for (int x = left; x < right; ++x)
+                occupied[size_t(y * m_cols + x)] = true;
         }
     }
 
-    for (auto const& c : empty) {
-        auto* Item = new PlaceholderItem(this, c.col, c.row);
-        Item->Update(m_cfg);
-        m_layout_items.emplace_back(Item);
+    for (int y = 0; y < m_rows; ++y) {
+        for (int x = 0; x < m_cols; ++x) {
+            if (occupied[size_t(y * m_cols + x)])
+                continue;
+            auto* item = new PlaceholderItem(this, x, y);
+            item->Update(m_cfg);
+            m_layout_items.emplace_back(item);
+        }
     }
+    m_placeholder_batch_dirty = true;
+}
+
+void Layout::RebuildPlaceholderBatch()
+{
+    if (m_placeholder_batch) {
+        gs_vertexbuffer_destroy(m_placeholder_batch);
+        m_placeholder_batch = nullptr;
+    }
+
+    gs_render_start(true);
+    size_t vertices = 0;
+    for (auto const& item : m_layout_items) {
+        if (!item || !item->IsPlaceholder())
+            continue;
+        const float x = item->m_rel_left + m_cfg.border;
+        const float y = item->m_rel_top + m_cfg.border;
+        const float right = x + item->m_inner_width;
+        const float bottom = y + item->m_inner_height;
+        gs_vertex2f(x, y);
+        gs_vertex2f(right, y);
+        gs_vertex2f(right, bottom);
+        gs_vertex2f(x, y);
+        gs_vertex2f(right, bottom);
+        gs_vertex2f(x, bottom);
+        vertices += 6;
+    }
+    if (vertices)
+        m_placeholder_batch = gs_render_save();
+    else
+        gs_render_stop(GS_TRIS);
+    m_placeholder_batch_dirty = false;
+    PerformanceStats::PlaceholderBatchRebuilt();
 }
 
 LayoutItem::Cell Layout::GetSelectedArea()
@@ -155,6 +192,11 @@ Layout::Layout(Durchblick* parent, int cols, int rows)
 
 Layout::~Layout()
 {
+    if (m_placeholder_batch) {
+        obs_enter_graphics();
+        gs_vertexbuffer_destroy(m_placeholder_batch);
+        obs_leave_graphics();
+    }
 }
 
 void Layout::MouseMoved(QMouseEvent* e)
@@ -276,6 +318,7 @@ void Layout::FreeSpace(LayoutItem::Cell const& c)
         return result;
     });
     m_layout_items.erase(it, m_layout_items.end());
+    m_placeholder_batch_dirty = true;
 }
 
 void Layout::AddWidget(Registry::ItemRegistry::Entry const& entry, const LayoutItem::Cell& c, QWidget* custom_widget)
@@ -298,12 +341,13 @@ void Layout::AddWidget(Registry::ItemRegistry::Entry const& entry, QWidget* cust
     AddWidget(entry, GetSelectedArea(), custom_widget);
 }
 
-void Layout::SetRegion(float bx, float by, float cx, float cy)
+void Layout::SetRegion(DurchblickItemConfig const& cfg, float bx, float by,
+    float cx, float cy)
 {
-    float vX = int(m_cfg.x + bx * m_cfg.scale);
-    float vY = int(m_cfg.y + by * m_cfg.scale);
-    float vCX = int(cx * m_cfg.scale);
-    float vCY = int(cy * m_cfg.scale);
+    float vX = int(cfg.x + bx * cfg.scale);
+    float vY = int(cfg.y + by * cfg.scale);
+    float vCX = int(cx * cfg.scale);
+    float vCY = int(cy * cfg.scale);
 
     float oL = bx;
     float oT = by;
@@ -312,32 +356,75 @@ void Layout::SetRegion(float bx, float by, float cx, float cy)
     StartRegion(vX, vY, vCX, vCY, oL, oR, oT, oB);
 }
 
-void Layout::Render(int, int, uint32_t, uint32_t)
+DurchblickItemConfig Layout::RenderConfigForSize(int cx, int cy) const
+{
+    DurchblickItemConfig cfg = m_cfg;
+    GetScaleAndCenterPos(cfg.cx, cfg.cy, cx, cy, cfg.x, cfg.y, cfg.scale);
+    return cfg;
+}
+
+void Layout::Render(int, int, uint32_t, uint32_t,
+    DurchblickItemConfig const* render_cfg)
 {
     if (!m_durchblick->HasSize()) // We need at least one refresh/resize to be sure that we have all necessary data for rendering
         return;
+    const DurchblickItemConfig& cfg = render_cfg ? *render_cfg : m_cfg;
     // Define the whole usable region for the multiview
-    StartRegion(m_cfg.x, m_cfg.y, m_cfg.cx * m_cfg.scale, m_cfg.cy * m_cfg.scale, 0.0f, m_cfg.cx,
-        0.0f, m_cfg.cy);
-    LayoutItem::DrawBox(m_cfg.cx, m_cfg.cy, COLOR_BORDER_GRAY);
+    StartRegion(cfg.x, cfg.y, cfg.cx * cfg.scale, cfg.cy * cfg.scale,
+        0.0f, cfg.cx, 0.0f, cfg.cy);
+    LayoutItem::DrawBox(cfg.cx, cfg.cy, COLOR_BORDER_GRAY);
 
     m_layout_mutex.lock();
+    std::unordered_map<obs_source_t*, size_t> source_counts;
+    for (auto& item : m_layout_items) {
+        if (auto* source_item = dynamic_cast<SourceItem*>(item.get())) {
+            if (auto* source = source_item->CacheableRenderSource())
+                ++source_counts[source];
+        }
+    }
+    for (auto& item : m_layout_items) {
+        if (auto* source_item = dynamic_cast<SourceItem*>(item.get())) {
+            auto* source = source_item->CacheableRenderSource();
+            source_item->SetRenderCacheEnabled(
+                source && (source_counts[source] > 1 || SourceItem::HasDuplicateRenderSource(source)));
+        }
+    }
+    if (m_placeholder_batch_dirty)
+        RebuildPlaceholderBatch();
+    if (m_placeholder_batch) {
+        gs_load_vertexbuffer(m_placeholder_batch);
+        gs_effect_t* effect = obs_get_base_effect(OBS_EFFECT_SOLID);
+        gs_eparam_t* color = gs_effect_get_param_by_name(effect, "color");
+        gs_effect_set_color(color, COLOR_BLACK);
+        while (gs_effect_loop(effect, "Solid"))
+            gs_draw(GS_TRIS, 0, 0);
+    }
     for (auto& Item : m_layout_items) {
+        // Empty cells only need their black inset. Drawing it in the layout's
+        // existing projection avoids two viewport/projection changes per cell.
+        if (Item->IsPlaceholder()) {
+            continue;
+        }
         // Change region to item dimensions
         gs_matrix_push();
         gs_matrix_translate3f(Item->m_rel_left, Item->m_rel_top, 0);
 
-        SetRegion(Item->m_rel_left, Item->m_rel_top, Item->m_width, Item->m_height);
+        SetRegion(cfg, Item->m_rel_left, Item->m_rel_top, Item->m_width,
+            Item->m_height);
 
-        LayoutItem::DrawBox(0, 0, m_cfg.cell_width * Item->m_width, m_cfg.cell_height * Item->m_height, Item->GetFillColor());
+        LayoutItem::DrawBox(0, 0, cfg.cell_width * Item->m_width,
+            cfg.cell_height * Item->m_height, Item->GetFillColor());
 
         EndRegion();
         gs_matrix_pop();
 
         gs_matrix_push();
-        gs_matrix_translate3f(Item->m_rel_left + m_cfg.border, Item->m_rel_top + m_cfg.border, 0);
-        SetRegion(Item->m_rel_left + m_cfg.border, Item->m_rel_top + m_cfg.border, Item->m_inner_width, Item->m_inner_height);
-        Item->Render(m_cfg);
+        gs_matrix_translate3f(Item->m_rel_left + cfg.border,
+            Item->m_rel_top + cfg.border, 0);
+        SetRegion(cfg, Item->m_rel_left + cfg.border,
+            Item->m_rel_top + cfg.border, Item->m_inner_width,
+            Item->m_inner_height);
+        Item->Render(cfg);
         EndRegion();
         gs_matrix_pop();
     }
@@ -349,16 +436,22 @@ void Layout::Render(int, int, uint32_t, uint32_t)
         // Draw Selection rectangle
 
         // Top
-        LayoutItem::DrawBox(tx * m_cfg.cell_width, ty * m_cfg.cell_height - 1, cx * m_cfg.cell_width - 1, m_cfg.border + 1, COLOR_SELECTION_CYAN);
+        LayoutItem::DrawBox(tx * cfg.cell_width, ty * cfg.cell_height - 1,
+            cx * cfg.cell_width - 1, cfg.border + 1, COLOR_SELECTION_CYAN);
 
         // Bottom
-        LayoutItem::DrawBox(tx * m_cfg.cell_width, (ty + cy) * m_cfg.cell_height - m_cfg.border - 2, cx * m_cfg.cell_width - 1, m_cfg.border + 2, COLOR_SELECTION_CYAN);
+        LayoutItem::DrawBox(tx * cfg.cell_width,
+            (ty + cy) * cfg.cell_height - cfg.border - 2,
+            cx * cfg.cell_width - 1, cfg.border + 2, COLOR_SELECTION_CYAN);
 
         // Left
-        LayoutItem::DrawBox(tx * m_cfg.cell_width, ty * m_cfg.cell_height, m_cfg.border, cy * m_cfg.cell_height - 1, COLOR_SELECTION_CYAN);
+        LayoutItem::DrawBox(tx * cfg.cell_width, ty * cfg.cell_height,
+            cfg.border, cy * cfg.cell_height - 1, COLOR_SELECTION_CYAN);
 
         // Right
-        LayoutItem::DrawBox((tx + cx) * m_cfg.cell_width - m_cfg.border - 2, ty * m_cfg.cell_height, m_cfg.border + 1, cy * m_cfg.cell_height - 1, COLOR_SELECTION_CYAN);
+        LayoutItem::DrawBox((tx + cx) * cfg.cell_width - cfg.border - 2,
+            ty * cfg.cell_height, cfg.border + 1,
+            cy * cfg.cell_height - 1, COLOR_SELECTION_CYAN);
     }
     EndRegion();
 }
@@ -385,6 +478,7 @@ void Layout::Resize(int target_cx, int target_cy, int cx, int cy)
     m_layout_mutex.lock();
     for (auto& Item : m_layout_items)
         Item->Update(m_cfg);
+    m_placeholder_batch_dirty = true;
     m_layout_mutex.unlock();
 }
 
@@ -513,6 +607,7 @@ void Layout::DeleteLayout()
 {
     m_layout_mutex.lock();
     m_layout_items.clear();
+    m_placeholder_batch_dirty = true;
     m_layout_mutex.unlock();
 }
 
