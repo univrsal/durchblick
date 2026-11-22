@@ -17,6 +17,7 @@
  *************************************************************************/
 
 #include "scene_item.hpp"
+#include "../util/obs_settings.hpp"
 #include <util/config-file.h>
 
 QWidget* SceneItem::GetConfigWidget()
@@ -57,10 +58,8 @@ void SceneItem::LoadConfigFromWidget(QWidget* w)
 void SceneItem::MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
 {
     SourceItem::MouseEvent(e, cfg);
-    auto transitionOnDoubleClick = config_get_bool(
-        obs_frontend_get_app_config(), "BasicWindow", "TransitionOnDoubleClick");
-    auto switchOnClick = config_get_bool(obs_frontend_get_app_config(), "BasicWindow",
-        "MultiviewMouseSwitch");
+    auto transitionOnDoubleClick = ObsSettings::GetBasicWindowBool("TransitionOnDoubleClick");
+    auto switchOnClick = ObsSettings::GetBasicWindowBool("MultiviewMouseSwitch");
     if (Hovered()) {
         auto islmb = e.buttons & Qt::LeftButton;
         if (e.double_click && islmb) {
