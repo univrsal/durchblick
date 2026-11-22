@@ -21,6 +21,7 @@
 #include "config.hpp"
 #include "items/preview_program_item.hpp"
 #include "items/scene_item.hpp"
+#include "items/source_item.hpp"
 #include "ui/durchblick.hpp"
 #include "util/util.h"
 #include <QJsonArray>
@@ -81,6 +82,15 @@ void Layout::ClearSelection()
     FillEmptyCells();
     m_layout_mutex.unlock();
     Config::Save();
+}
+
+void Layout::ResolveSources()
+{
+    std::lock_guard<std::mutex> lock(m_layout_mutex);
+    for (auto& item : m_layout_items) {
+        if (auto* si = dynamic_cast<SourceItem*>(item.get()))
+            si->ResolveSource();
+    }
 }
 
 void Layout::FillSelectionWithScenes()

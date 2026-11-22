@@ -95,6 +95,12 @@ void RegisterCallbacks()
             db->GetLayout()->Clear();
         } else if (event == OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGED) {
             Load();
+        } else if (event == OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED) {
+            // Scenes were added/renamed/recreated, reconnect cells that lost theirs
+            if (db)
+                db->GetLayout()->ResolveSources();
+            if (dbdock && dbdock->GetDurchblick())
+                dbdock->GetDurchblick()->GetLayout()->ResolveSources();
         }
     },
         nullptr);

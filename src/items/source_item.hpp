@@ -113,6 +113,11 @@ protected:
     OBSSource m_src;
     OBSSourceAutoRelease m_label;
     OBSSignal removedSignal;
+    OBSSignal renamedSignal;
+    // Name of the source this cell should show. Kept even when the source
+    // can't be found (yet), so the cell can reconnect to it later instead of
+    // being stuck on (and saving) the placeholder.
+    QString m_source_name;
     QAction* m_toggle_safe_borders;
     QAction* m_toggle_label;
     QAction* m_toggle_volume;
@@ -131,6 +136,11 @@ public:
     static void Init();
     static void Deinit();
     static void OBSSourceRemoved(void* data, calldata_t* params);
+    static void OBSSourceRenamed(void* data, calldata_t* params);
+    static bool IsPlaceholder(obs_source_t* src);
+    // Looks the source up again by name if the cell currently shows the
+    // placeholder. Returns true if the cell now has a real source.
+    bool ResolveSource();
     SourceItem(Layout* parent, int x, int y, int w = 1, int h = 1);
     ~SourceItem();
 

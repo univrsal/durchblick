@@ -58,34 +58,53 @@ void SceneItem::LoadConfigFromWidget(QWidget* w)
 void SceneItem::MouseEvent(MouseData const& e, DurchblickItemConfig const& cfg)
 {
     SourceItem::MouseEvent(e, cfg);
+    if (!Hovered()) {
+        m_lmb_down = false;
+        return;
+    }
+
+    auto islmb = e.buttons & Qt::LeftButton;
+    bool is_release = e.type == QEvent::MouseButtonRelease && m_lmb_down;
+    if (e.type == QEvent::MouseButtonPress && islmb && !e.double_click) {
+        m_lmb_down = true;
+        return;
+    }
+    if (!(e.double_click && islmb) && !is_release)
+        return;
+    m_lmb_down = false;
+
+    // The cell might still point to the placeholder if the scene wasn't
+    // available when the layout was loaded. Try to find it again by name.
+    ResolveSource();
+
+    // Never switch to something that isn't a scene (e.g. the placeholder image)
+    if (IsPlaceholder(m_src) || !obs_scene_from_source(m_src)) {
+        bwarn("Clicked cell has no valid scene (saved name: '%s'). Configure the cell again.",
+            qt_to_utf8(m_source_name));
+        return;
+    }
+
     auto transitionOnDoubleClick = ObsSettings::GetBasicWindowBool("TransitionOnDoubleClick");
     auto switchOnClick = ObsSettings::GetBasicWindowBool("MultiviewMouseSwitch");
-    if (Hovered()) {
-        auto islmb = e.buttons & Qt::LeftButton;
-        if (e.double_click && islmb) {
-            if (!(obs_frontend_preview_program_mode_active() && transitionOnDoubleClick && switchOnClick))
-                return;
+    bool studioMode = obs_frontend_preview_program_mode_active();
+
+    if (e.double_click) {
+        // Double click in studio mode: send the scene to program (transition)
+        if (!(studioMode && transitionOnDoubleClick && switchOnClick))
+            return;
+        OBSSourceAutoRelease src = obs_frontend_get_current_scene();
+        if (src != m_src)
+            obs_frontend_set_current_scene(m_src);
+    } else if (switchOnClick) {
+        if (studioMode) {
+            OBSSourceAutoRelease src = obs_frontend_get_current_preview_scene();
+            if (src != m_src)
+                obs_frontend_set_current_preview_scene(m_src);
+        } else {
             OBSSourceAutoRelease src = obs_frontend_get_current_scene();
             if (src != m_src)
                 obs_frontend_set_current_scene(m_src);
-        } else if (e.type == QEvent::MouseButtonRelease && m_lmb_down) {
-            m_lmb_down = false;
-            if (obs_frontend_preview_program_mode_active()) {
-                if (!switchOnClick)
-                    return;
-                OBSSourceAutoRelease src = obs_frontend_get_current_preview_scene();
-                if (src != m_src)
-                    obs_frontend_set_current_preview_scene(m_src);
-            } else if (switchOnClick) {
-                OBSSourceAutoRelease src = obs_frontend_get_current_scene();
-                if (src != m_src)
-                    obs_frontend_set_current_scene(m_src);
-            }
-        } else if (e.type == QEvent::MouseButtonPress && islmb) {
-            m_lmb_down = true;
         }
-    } else {
-        m_lmb_down = false;
     }
 }
 

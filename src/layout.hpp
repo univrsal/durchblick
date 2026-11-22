@@ -111,6 +111,8 @@ private slots:
     void FillSelectionWithScenes();
 
 public:
+    // Reconnects cells that lost their source (e.g. after the scene list changed)
+    void ResolveSources();
     Layout(Durchblick* parent, int cols = 4, int rows = 4);
     ~Layout();
 
