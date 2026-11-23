@@ -17,9 +17,11 @@
  *************************************************************************/
 
 #include "layout.hpp"
+#include "util/obs_settings.hpp"
 #include "config.hpp"
 #include "items/preview_program_item.hpp"
 #include "items/scene_item.hpp"
+#include "items/source_item.hpp"
 #include "ui/durchblick.hpp"
 #include "util/util.h"
 #include <QJsonArray>
@@ -80,6 +82,15 @@ void Layout::ClearSelection()
     FillEmptyCells();
     m_layout_mutex.unlock();
     Config::Save();
+}
+
+void Layout::ResolveSources()
+{
+    std::lock_guard<std::mutex> lock(m_layout_mutex);
+    for (auto& item : m_layout_items) {
+        if (auto* si = dynamic_cast<SourceItem*>(item.get()))
+            si->ResolveSource();
+    }
 }
 
 void Layout::FillSelectionWithScenes()
@@ -456,13 +467,11 @@ void Layout::CreateDefaultLayout()
     m_layout_mutex.unlock();
     obs_frontend_source_list_free(&scenes);
 
-    auto cfg = obs_frontend_get_app_config();
-
     // Automatically set settings to user default
-    m_durchblick->SetHideFromDisplayCapture(config_get_bool(cfg, "BasicWindow", "HideOBSWindowsFromCapture"));
+    m_durchblick->SetHideFromDisplayCapture(ObsSettings::GetBasicWindowBool("HideOBSWindowsFromCapture"));
 
-    m_durchblick->SetHideCursor(config_get_bool(cfg, "BasicWindow", "HideProjectorCursor"));
-    m_durchblick->SetIsAlwaysOnTop(config_get_bool(cfg, "BasicWindow", "ProjectorAlwaysOnTop"));
+    m_durchblick->SetHideCursor(ObsSettings::GetBasicWindowBool("HideProjectorCursor"));
+    m_durchblick->SetIsAlwaysOnTop(ObsSettings::GetBasicWindowBool("ProjectorAlwaysOnTop"));
 }
 
 void Layout::Load(QJsonObject const& obj)

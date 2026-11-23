@@ -53,10 +53,10 @@ bool obs_module_load()
 void obs_module_post_load()
 {
 
-    // Speeds up loading
-    std::thread reg([] { Registry::RegisterDefaults(); });
-
-    reg.detach();
+    // Must finish before Config::Load(), which builds layout items from the
+    // registry. Running this on a detached thread raced with Config::Load()
+    // and could crash OBS on startup.
+    Registry::RegisterDefaults();
     Config::RegisterCallbacks();
     Config::Load();
 }

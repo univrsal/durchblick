@@ -74,9 +74,44 @@ void SourceItem::Deinit()
 void SourceItem::OBSSourceRemoved(void* data, calldata_t*)
 {
     SourceItem* window = reinterpret_cast<SourceItem*>(data);
+    // Keep m_source_name so the cell can find the source again if it is
+    // re-created (e.g. when OBS reloads the scene collection on startup)
+    if (window->m_src)
+        obs_source_dec_showing(window->m_src);
     window->m_src = placeholder_source;
+    if (placeholder_source)
+        obs_source_inc_showing(placeholder_source);
     if (window->m_vol_meter)
         window->m_vol_meter->SetSource(placeholder_source);
+}
+
+void SourceItem::OBSSourceRenamed(void* data, calldata_t* params)
+{
+    SourceItem* window = reinterpret_cast<SourceItem*>(data);
+    const char* new_name = calldata_string(params, "new_name");
+    if (new_name && *new_name)
+        window->m_source_name = utf8_to_qt(new_name);
+}
+
+bool SourceItem::IsPlaceholder(obs_source_t* src)
+{
+    return !src || src == placeholder_source;
+}
+
+bool SourceItem::ResolveSource()
+{
+    if (!IsPlaceholder(m_src))
+        return true;
+    if (m_source_name.isEmpty())
+        return false;
+
+    OBSSourceAutoRelease src = obs_get_source_by_name(qt_to_utf8(m_source_name));
+    if (!src)
+        return false;
+
+    binfo("Reconnected cell to source '%s'", qt_to_utf8(m_source_name));
+    SetSource(src);
+    return true;
 }
 
 SourceItem::SourceItem(Layout* parent, int x, int y, int w, int h)
@@ -145,10 +180,14 @@ void SourceItem::SetSource(obs_source_t* src)
 
     m_src = src;
     if (m_src) {
+        if (!IsPlaceholder(m_src))
+            m_source_name = utf8_to_qt(obs_source_get_name(m_src));
         if (m_vol_meter)
             m_vol_meter->SetSource(src);
         removedSignal = OBSSignal(obs_source_get_signal_handler(m_src), "remove",
             SourceItem::OBSSourceRemoved, this);
+        renamedSignal = OBSSignal(obs_source_get_signal_handler(m_src), "rename",
+            SourceItem::OBSSourceRenamed, this);
         obs_source_inc_showing(m_src);
         if (m_toggle_label->isChecked()) {
             struct obs_video_info ovi;
@@ -181,7 +220,11 @@ void SourceItem::ReadFromJson(QJsonObject const& Obj)
     if (Obj["volume_meter_y"].isDouble())
         m_volume_meter_y = Obj["volume_meter_y"].toDouble(10);
 
-    OBSSourceAutoRelease src = obs_get_source_by_name(qt_to_utf8(Obj["source"].toString()));
+    auto saved_name = Obj["source"].toString();
+    // Older versions could save the placeholder's name, ignore that
+    if (saved_name != "durchblick_placeholder")
+        m_source_name = saved_name;
+    OBSSourceAutoRelease src = obs_get_source_by_name(qt_to_utf8(m_source_name));
     if (src)
         SetSource(src);
     else
@@ -196,8 +239,10 @@ void SourceItem::ReadFromJson(QJsonObject const& Obj)
 void SourceItem::WriteToJson(QJsonObject& Obj)
 {
     LayoutItem::WriteToJson(Obj);
-    if (m_src)
+    if (!IsPlaceholder(m_src))
         Obj["source"] = utf8_to_qt(obs_source_get_name(m_src));
+    else if (!m_source_name.isEmpty())
+        Obj["source"] = m_source_name; // not loaded right now, keep what the user picked
     Obj["show_safe_borders"] = m_toggle_safe_borders->isChecked();
     Obj["show_label"] = m_toggle_label->isChecked();
     Obj["show_volume"] = m_toggle_volume->isChecked();
